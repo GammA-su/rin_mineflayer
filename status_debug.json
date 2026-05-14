@@ -1,0 +1,120 @@
+{
+    "ok":  true,
+    "connected":  true,
+    "username":  "AI_VTuber",
+    "entityReady":  true,
+    "position":  {
+                     "x":  -230.4184243255549,
+                     "y":  62,
+                     "z":  -53.49720315198128
+                 },
+    "dimension":  "overworld",
+    "time":  {
+                 "timeOfDay":  18230,
+                 "day":  20,
+                 "isDay":  false,
+                 "moonPhase":  4
+             },
+    "health":  20,
+    "food":  20,
+    "onGround":  true,
+    "inWater":  false,
+    "inLava":  false,
+    "inventory":  [
+                      {
+                          "name":  "spruce_log",
+                          "displayName":  "Spruce Log",
+                          "count":  1,
+                          "slot":  9
+                      },
+                      {
+                          "name":  "stick",
+                          "displayName":  "Stick",
+                          "count":  7,
+                          "slot":  10
+                      },
+                      {
+                          "name":  "wooden_pickaxe",
+                          "displayName":  "Wooden Pickaxe",
+                          "count":  1,
+                          "slot":  11
+                      },
+                      {
+                          "name":  "crafting_table",
+                          "displayName":  "Crafting Table",
+                          "count":  3,
+                          "slot":  36
+                      },
+                      {
+                          "name":  "spruce_sapling",
+                          "displayName":  "Spruce Sapling",
+                          "count":  2,
+                          "slot":  37
+                      },
+                      {
+                          "name":  "spruce_planks",
+                          "displayName":  "Spruce Planks",
+                          "count":  9,
+                          "slot":  38
+                      },
+                      {
+                          "name":  "dirt",
+                          "displayName":  "Dirt",
+                          "count":  8,
+                          "slot":  39
+                      }
+                  ],
+    "nearbyPlayers":  [
+                          {
+                              "username":  "rlyGammA",
+                              "position":  {
+                                               "x":  -231.64764765098326,
+                                               "y":  64,
+                                               "z":  -53.93754024535257
+                                           },
+                              "distance":  2.3884904729924807
+                          }
+                      ],
+    "nearbyEntities":  [
+                           {
+                               "id":  658,
+                               "name":  "player",
+                               "type":  "player",
+                               "username":  "rlyGammA",
+                               "hostile":  false,
+                               "position":  {
+                                                "x":  -231.64764765098326,
+                                                "y":  64,
+                                                "z":  -53.93754024535257
+                                            },
+                               "distance":  2.3884904729924807
+                           }
+                       ],
+    "nearbyBlockCounts":  {
+                              "stone":  1568,
+                              "dirt":  1043,
+                              "grass_block":  379,
+                              "snow":  203,
+                              "water":  86,
+                              "spruce_leaves":  68,
+                              "coal_ore":  25,
+                              "ice":  23,
+                              "spruce_log":  21,
+                              "large_fern":  12,
+                              "copper_ore":  6,
+                              "fern":  3,
+                              "short_grass":  2,
+                              "crafting_table":  1
+                          },
+    "nearbyBlocks":  {
+                         "crafting_table":  {
+                                                "name":  "crafting_table",
+                                                "position":  {
+                                                                 "x":  -231,
+                                                                 "y":  65,
+                                                                 "z":  -56
+                                                             },
+                                                "distance":  3.949964851433328
+                                            }
+                     }
+}

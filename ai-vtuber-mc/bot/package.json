@@ -1,0 +1,19 @@
+{
+  "name": "ai-vtuber-mc-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Safe Mineflayer bridge for ai-vtuber-mc.",
+  "main": "mineflayer_bot.js",
+  "scripts": {
+    "start": "node mineflayer_bot.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "mineflayer": "^4.27.0",
+    "mineflayer-collectblock": "^1.6.0",
+    "mineflayer-pathfinder": "^2.4.5",
+    "mineflayer-tool": "^1.2.0"
+  }
+}

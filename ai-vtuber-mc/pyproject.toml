@@ -1,0 +1,20 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ai-vtuber-mc"
+version = "0.1.0"
+description = "A uv-first Python and Node.js Minecraft AI VTuber bridge."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "httpx",
+    "python-dotenv",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vtuber_ai"]
