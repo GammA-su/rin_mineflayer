@@ -12,6 +12,12 @@ def expect_valid(request: ActionRequest) -> None:
     assert validate_action(request) == request
 
 
+def expect_valid_sanitized(request: ActionRequest, expected_args: dict) -> None:
+    sanitized = validate_action(request)
+    assert sanitized.action == request.action
+    assert sanitized.args == expected_args
+
+
 def expect_error(request: ActionRequest, expected: str) -> None:
     try:
         validate_action(request)
@@ -48,10 +54,26 @@ def main() -> None:
     expect_valid(ActionRequest(action="craft_sticks", args={"count": 2}))
     expect_valid(ActionRequest(action="craft_crafting_table", args={"count": 1}))
     expect_valid(ActionRequest(action="place_crafting_table"))
+    expect_valid(ActionRequest(action="craft_item", args={"item": "furnace", "count": 1}))
+    expect_valid(ActionRequest(action="craft_item", args={"item": "torch", "count": 64}))
+    expect_valid(ActionRequest(action="craft_furnace"))
+    expect_valid_sanitized(ActionRequest(action="craft_furnace", args={"count": 1}), {})
+    expect_valid(ActionRequest(action="craft_torches", args={"count": 4}))
+    expect_valid(ActionRequest(action="craft_chest"))
+    expect_valid(ActionRequest(action="craft_shield"))
+    expect_valid(ActionRequest(action="craft_bucket"))
+    expect_valid(ActionRequest(action="craft_iron_pickaxe"))
+    expect_valid(ActionRequest(action="craft_iron_sword"))
+    expect_valid(ActionRequest(action="craft_iron_armor"))
     expect_valid(ActionRequest(action="craft_wooden_pickaxe"))
     expect_valid(ActionRequest(action="mine_stone"))
     expect_valid(ActionRequest(action="mine_stone", args={"count": 3}))
+    expect_valid(ActionRequest(action="mine_coal", args={"count": 32}))
+    expect_valid(ActionRequest(action="mine_iron_ore", args={"count": 3}))
     expect_valid(ActionRequest(action="craft_stone_pickaxe"))
+    expect_valid_sanitized(ActionRequest(action="craft_stone_pickaxe", args={"count": 1}), {})
+    expect_valid(ActionRequest(action="smelt_item", args={"input": "raw_iron", "fuel": "coal", "count": 3}))
+    expect_valid(ActionRequest(action="smelt_iron", args={"count": 3}))
     expect_valid(ActionRequest(action="flee"))
     expect_valid(ActionRequest(action="eat_food"))
 
@@ -86,13 +108,58 @@ def main() -> None:
     expect_error(ActionRequest(action="craft_sticks", args={"count": 0}), "between 1 and 64")
     expect_error(ActionRequest(action="craft_crafting_table", args={"count": "1"}), "must be an integer")
     expect_error(ActionRequest(action="place_crafting_table", args={"position": "here"}), "does not accept args")
-    expect_error(ActionRequest(action="craft_wooden_pickaxe", args={"count": 1}), "does not accept args")
+    expect_error(ActionRequest(action="craft_item", args={"item": "diamond_pickaxe"}), "must be one of")
+    expect_error(ActionRequest(action="craft_item", args={"item": "shield", "count": 2}), "must be 1")
+    expect_error(ActionRequest(action="craft_torches", args={"count": 65}), "between 1 and 64")
+    expect_valid_sanitized(ActionRequest(action="craft_shield", args={"count": 1}), {})
+    expect_valid_sanitized(ActionRequest(action="craft_wooden_pickaxe", args={"count": 1}), {})
     expect_error(ActionRequest(action="mine_stone", args={"depth": 3}), "unknown args")
     expect_error(ActionRequest(action="mine_stone", args={"count": 17}), "between 1 and 16")
     expect_error(ActionRequest(action="mine_stone", args={"count": False}), "must be an integer")
-    expect_error(ActionRequest(action="craft_stone_pickaxe", args={"count": 1}), "does not accept args")
+    expect_error(ActionRequest(action="mine_coal", args={"count": 33}), "between 1 and 32")
+    expect_error(ActionRequest(action="mine_iron_ore", args={"count": "3"}), "must be an integer")
+    expect_error(ActionRequest(action="smelt_item", args={"item": "raw_iron"}), "unknown args")
+    expect_error(ActionRequest(action="smelt_item", args={"input": "cobblestone"}), "must be one of")
+    expect_error(ActionRequest(action="smelt_item", args={"input": "raw_iron", "fuel": "lava_bucket"}), "must be one of")
+    expect_error(ActionRequest(action="smelt_iron", args={"count": 33}), "between 1 and 32")
     expect_error(ActionRequest(action="follow_player", args={"username": ""}), "non-empty string")
     expect_error(ActionRequest(action="set_vtuber_mood", args={"mood": "angry"}), "one of")
+
+    # --- return_to_workspace ---
+    expect_valid(ActionRequest(action="return_to_workspace"))
+    expect_valid(ActionRequest(action="return_to_workspace", args={"purpose": "crafting"}))
+    expect_valid(ActionRequest(action="return_to_workspace", args={"purpose": "smelting"}))
+    expect_valid(ActionRequest(action="return_to_workspace", args={"purpose": "storage"}))
+    expect_valid(ActionRequest(action="return_to_workspace", args={"purpose": "general"}))
+    expect_error(ActionRequest(action="return_to_workspace", args={"purpose": "mining"}), "must be one of")
+    expect_error(ActionRequest(action="return_to_workspace", args={"radius": 10}), "unknown args")
+
+    # --- return_to_position ---
+    expect_valid(ActionRequest(action="return_to_position", args={"x": 10.0, "y": 64.0, "z": 20.0}))
+    expect_valid(ActionRequest(action="return_to_position", args={"x": 10, "y": 64, "z": 20, "dimension": "overworld"}))
+    expect_valid(ActionRequest(action="return_to_position", args={"x": 10.0, "y": 64.0, "z": 20.0, "radius": 5}))
+    expect_valid(ActionRequest(action="return_to_position", args={"x": 0, "y": 64, "z": 0, "dimension": "the_nether", "radius": 3}))
+    expect_error(ActionRequest(action="return_to_position", args={"y": 64.0, "z": 20.0}), "requires args.x")
+    expect_error(ActionRequest(action="return_to_position", args={"x": 10.0, "z": 20.0}), "requires args.y")
+    expect_error(ActionRequest(action="return_to_position", args={"x": 10.0, "y": 64.0}), "requires args.z")
+    expect_error(ActionRequest(action="return_to_position", args={"x": 10.0, "y": 64.0, "z": 20.0, "dimension": "nether"}), "must be one of")
+    expect_error(ActionRequest(action="return_to_position", args={"x": 10.0, "y": 64.0, "z": 20.0, "radius": 0}), "1-16")
+    expect_error(ActionRequest(action="return_to_position", args={"x": 10.0, "y": 64.0, "z": 20.0, "radius": 17}), "1-16")
+    expect_error(ActionRequest(action="return_to_position", args={"x": 10.0, "y": 64.0, "z": 20.0, "speed": 5}), "unknown args")
+
+    # --- return_to_known_position ---
+    expect_valid(ActionRequest(action="return_to_known_position"))
+    expect_valid(ActionRequest(action="return_to_known_position", args={"label": "home"}))
+    expect_valid(ActionRequest(action="return_to_known_position", args={"label": "workspace"}))
+    expect_error(ActionRequest(action="return_to_known_position", args={"label": ""}), "non-empty string")
+    expect_error(ActionRequest(action="return_to_known_position", args={"label": "x" * 65}), "non-empty string")
+    expect_error(ActionRequest(action="return_to_known_position", args={"radius": 10}), "unknown args")
+
+    # --- collect_obsidian: canonical name passes policy ---
+    expect_valid(ActionRequest(action="collect_obsidian", args={"count": 5}))
+    expect_valid(ActionRequest(action="collect_obsidian", args={"count": 1}))
+    # --- mine_obsidian: alias not known to policy, correctly rejected ---
+    expect_error(ActionRequest(action="mine_obsidian"), "is not allowed")
 
     print("manual policy tests passed")
 

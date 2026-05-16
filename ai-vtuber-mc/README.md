@@ -662,6 +662,8 @@ uv run python tests/manual_memory_tests.py
 uv run python tests/manual_tts_tests.py
 uv run python tests/manual_agent_tests.py
 uv run python tests/manual_game_brain_tests.py
+uv run python tests/manual_action_catalog_tests.py
+powershell -ExecutionPolicy Bypass -File tests/manual_node_arg_normalizer_tests.ps1
 ```
 
 Node syntax check:
@@ -786,7 +788,284 @@ Provider-neutral TTS hook:
 - OBS, VTube Studio, Piper, ElevenLabs, Azure, or a local voice model can watch this file
 - this project does not require a paid TTS provider
 
-## 12. Next Features
+## 12. Action Capability Map v2
+
+The LLM only sees **implemented** or **partial** actions that the Node bridge supports and that have `exposes_to_llm=True` in `src/vtuber_ai/action_catalog.py`.
+
+**Planned** actions are roadmap only. They appear in `action_catalog.py` and `GET /actions_metadata` but are never sent to the LLM and are rejected by `policy.validate_action`.
+
+To promote a planned action to implemented:
+1. Implement it in `bot/mineflayer_bot.js` and add its name to the `ACTIONS` set.
+2. Set `status="implemented"` in `action_catalog.py`.
+3. Add its name to `ALLOWED_ACTIONS` in `policy.py`.
+4. Add it to `AUTONOMOUS_ALLOWED_ACTIONS` in `game_brain.py` if it should be brain-accessible.
+5. Restart both services.
+
+PowerShell diagnostics:
+
+```powershell
+# Python catalog validation and status counts
+Invoke-RestMethod "http://localhost:8000/actions/summary" | ConvertTo-Json -Depth 8
+
+# All planned Python catalog actions
+(Invoke-RestMethod "http://localhost:8000/actions/planned").actions |
+  Select-Object name,category,status,exposes_to_llm
+
+# Implemented Python catalog actions exposed to the LLM
+(Invoke-RestMethod "http://localhost:8000/actions/implemented").actions |
+  Where-Object { $_.exposes_to_llm } |
+  Select-Object name,category,status
+
+# Node bridge metadata duplicates removed during merge
+(Invoke-RestMethod "http://localhost:3001/actions_metadata").duplicates_removed |
+  Format-Table -AutoSize
+
+# Node bridge executable actions only
+(Invoke-RestMethod "http://localhost:3001/actions").actions
+
+# Manual Tier 2 iron-age body skill smoke
+powershell -ExecutionPolicy Bypass -File scripts/smoke_tier2_iron.ps1
+```
+
+### Core / Control
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| status | implemented | low | Return current bot status and observations | — |
+| say | implemented | low | Send a safe chat message | — |
+| look_around | implemented | low | Refresh nearby observations | — |
+| explore_nearby | implemented | low | Scout nearby terrain | — |
+| stop | implemented | low | Stop all movement | — |
+| jump | implemented | low | Perform one jump | — |
+| look_at_player | implemented | low | Look toward a player | — |
+| follow_player | implemented | low | Follow a player | — |
+| come_here | implemented | low | Navigate to a player | — |
+| navigate_to_block_type | implemented | low | Move near a target block type | target_block_in_radius |
+| acquire_blocks | implemented | medium | Collect allowlisted blocks | target_block_in_radius |
+| recover_position | planned | medium | Escape stuck/clipped position | — |
+| return_to_surface | planned | medium | Navigate upward to surface | bot_is_underground |
+| return_to_known_position | planned | medium | Navigate to saved position | waypoint_exists |
+| set_home_position | planned | low | Record current pos as home | — |
+| mark_waypoint | planned | low | Save named waypoint | — |
+| list_waypoints | planned | low | Return saved waypoints | — |
+| return_to_waypoint | planned | medium | Navigate to named waypoint | waypoint_exists |
+
+### Sensing
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| check_inventory | planned | low | Structured inventory summary | — |
+| check_time_of_day | planned | low | Current time and day/night flag | — |
+| check_light_level | planned | low | Light level at bot position | — |
+| check_biome | planned | low | Biome at bot position | — |
+| scan_for_hostiles | planned | low | List nearby hostile entities | — |
+| scan_for_passive_mobs | planned | low | List nearby passive mobs | — |
+| scan_for_chests | planned | low | Locate nearby chests | — |
+| scan_for_specific_block | planned | low | Locate a specific block type | — |
+| scan_for_liquids | planned | low | Detect water or lava nearby | — |
+| scan_for_structures | planned | low | Detect nearby structures | — |
+
+### Movement / Positioning
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| find_safe_workspace | planned | low | Find flat safe work area | — |
+| dig_staircase | planned | medium | Dig 1x2 staircase down | has_pickaxe |
+| pillar_up | planned | medium | Place blocks to rise | has_pillar_material |
+| bridge_gap | planned | high | Bridge a horizontal gap | has_bridge_material |
+| place_block_in_direction | planned | medium | Place block in a direction | has_block_in_inventory |
+| mlg_water_bucket | planned | high | Place water mid-fall | has_water_bucket, bot_is_falling |
+| enter_boat | planned | medium | Board nearby boat | boat_nearby |
+| exit_boat | planned | low | Dismount boat | bot_in_boat |
+| set_sneak | planned | low | Toggle sneak | — |
+| set_sprint | planned | low | Toggle sprint | — |
+
+### Generic Placement
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| place_crafting_table | implemented | low | Place crafting table from inventory | has_crafting_table_in_inventory |
+| place_block | planned | medium | Place any held block | has_block_in_inventory |
+| place_furnace | implemented | low | Place furnace | has_furnace_in_inventory |
+| place_torch | planned | low | Place torch on surface | has_torch_in_inventory |
+| place_chest | planned | low | Place chest | has_chest_in_inventory |
+| place_bed | planned | medium | Place bed | has_bed_in_inventory |
+| place_boat | planned | low | Place boat on water | has_boat_in_inventory, water_nearby |
+| place_water | planned | high | Pour water from bucket | has_water_bucket |
+| place_lava | planned | critical | Pour lava from bucket | has_lava_bucket |
+
+### Crafting
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| craft_planks | implemented | low | Craft planks from logs | has_logs_or_stems |
+| craft_sticks | implemented | low | Craft sticks from planks | has_planks |
+| craft_crafting_table | implemented | low | Craft crafting table | has_4_planks |
+| craft_wooden_pickaxe | implemented | low | Craft wooden pickaxe | has_nearby_crafting_table, has_3_planks, has_2_sticks |
+| craft_stone_pickaxe | implemented | low | Craft stone pickaxe | has_nearby_crafting_table, has_3_cobblestone, has_2_sticks |
+| craft_item | implemented | low | Allowlisted generic craft | crafting_table_nearby_if_needed |
+| craft_furnace | implemented | low | Craft furnace | has_nearby_crafting_table, has_8_cobblestone |
+| craft_torches | implemented | low | Craft torches | has_coal, has_sticks |
+| craft_chest | implemented | low | Craft chest | has_nearby_crafting_table, has_8_planks |
+| craft_shield | implemented | low | Craft shield | has_nearby_crafting_table, has_planks, has_iron_ingot |
+| craft_bucket | implemented | low | Craft iron bucket | has_nearby_crafting_table, has_3_iron_ingots |
+| craft_iron_pickaxe | implemented | low | Craft iron pickaxe | has_nearby_crafting_table, has_3_iron_ingots, has_2_sticks |
+| craft_iron_sword | implemented | low | Craft iron sword | has_nearby_crafting_table, has_2_iron_ingots, has_1_stick |
+| craft_iron_armor | implemented | low | Craft and equip iron armor pieces by priority | has_nearby_crafting_table, has_iron_ingots_for_at_least_one_piece |
+| craft_bow | planned | low | Craft bow | has_nearby_crafting_table, has_3_sticks, has_3_string |
+| craft_arrows | planned | low | Craft arrows | has_flint, has_sticks, has_feather |
+| craft_flint_and_steel | planned | medium | Craft flint and steel | has_nearby_crafting_table, has_iron_ingot, has_flint |
+| craft_boat | planned | low | Craft boat | has_nearby_crafting_table, has_5_planks |
+| craft_bed | planned | low | Craft bed | has_nearby_crafting_table, has_3_planks, has_3_wool |
+| craft_blaze_powder | planned | low | Craft blaze powder | has_blaze_rod |
+| craft_eyes_of_ender | planned | medium | Craft Eyes of Ender | has_ender_pearls, has_blaze_powder |
+| craft_diamond_pickaxe | planned | low | Craft diamond pickaxe | has_nearby_crafting_table, has_3_diamonds, has_2_sticks |
+| craft_diamond_sword | planned | low | Craft diamond sword | has_nearby_crafting_table, has_2_diamonds, has_1_stick |
+| craft_diamond_armor | planned | low | Craft full diamond armor | has_nearby_crafting_table, has_24_diamonds |
+
+### Resource Acquisition
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| collect_wood | implemented | low | Collect logs or stems | — |
+| mine_stone | implemented | medium | Mine stone for cobblestone | has_pickaxe, health_gte_10 |
+| mine_coal | implemented | medium | Mine coal ore | has_pickaxe |
+| mine_iron_ore | implemented | medium | Mine iron ore | has_stone_pickaxe_or_better |
+| mine_diamond_ore | planned | high | Mine diamond ore | has_iron_pickaxe_or_better |
+| mine_redstone | planned | medium | Mine redstone ore | has_iron_pickaxe_or_better |
+| mine_gold_ore | planned | medium | Mine gold ore | has_iron_pickaxe_or_better |
+| mine_gravel | planned | low | Mine gravel for flint | — |
+| collect_flint | planned | low | Collect flint from gravel | — |
+| collect_sand | planned | low | Collect sand | — |
+| collect_water | planned | medium | Fill bucket from water source | has_empty_bucket, water_source_nearby |
+| collect_lava | planned | critical | Fill bucket from lava source | has_empty_bucket, lava_source_nearby |
+| collect_obsidian | planned | high | Mine obsidian | has_diamond_pickaxe |
+| collect_food | planned | medium | Hunt or harvest food | — |
+
+### Furnace / Smelting
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| smelt_item | partial | low | Smelt allowlisted item in furnace | has_furnace_nearby, has_fuel |
+| smelt_iron | partial | low | Smelt raw iron to ingots | has_furnace_nearby, has_raw_iron, has_fuel |
+| smelt_food | planned | low | Cook raw food | has_furnace_nearby, has_raw_food, has_fuel |
+| smelt_gold | planned | low | Smelt raw gold to ingots | has_furnace_nearby, has_raw_gold, has_fuel |
+
+### Inventory / Equipment / Containers
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| eat_food | implemented | low | Eat food to recover hunger | has_food_in_inventory |
+| drop_item | planned | medium | Drop item from inventory | — |
+| equip_armor | planned | low | Equip best available armor | — |
+| equip_gold_armor | planned | medium | Equip gold armor (Nether) | has_gold_armor_in_inventory |
+| equip_tool | planned | low | Equip specific tool | — |
+| equip_best_tool | planned | low | Equip best tool for task | — |
+| equip_best_weapon | planned | low | Equip best weapon | — |
+| equip_best_armor | planned | low | Equip best armor | — |
+| select_hotbar_slot | planned | low | Move item to hotbar slot | — |
+| open_chest | planned | low | Open nearby chest | chest_nearby |
+| loot_chest | planned | medium | Take items from chest | chest_nearby |
+| deposit_items | planned | medium | Place items in chest | chest_nearby_open |
+| withdraw_items | planned | medium | Take items from chest | chest_nearby_open |
+
+### Survival
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| flee | implemented | medium | Move away from danger | — |
+| retreat_from_combat | planned | medium | Disengage and move to safety | — |
+| sleep_if_possible | planned | low | Sleep in bed at night | bed_nearby, is_night, no_hostiles |
+| set_spawn_with_bed | planned | low | Set spawn with bed | bed_nearby |
+| build_emergency_shelter | planned | high | Place emergency walls and roof | has_shelter_material |
+| avoid_hazard | planned | medium | Step away from nearby hazard | — |
+| escape_liquid | planned | high | Swim out of water or lava | — |
+| handle_stuck | planned | medium | Break block or strafe to unstick | — |
+
+### Death / Recovery
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| recover_death_items | planned | high | Navigate to death location to retrieve items | death_location_known |
+| abandon_death_recovery | planned | low | Give up on death recovery | — |
+| return_to_spawn_or_home | planned | medium | Navigate to home or world spawn | — |
+
+### Combat
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| attack_mob | planned | high | Attack specific mob | has_weapon_or_fists |
+| attack_nearest_hostile | planned | high | Attack nearest hostile | hostile_nearby |
+| kill_passive_mob | planned | medium | Kill passive mob for drops | passive_mob_nearby |
+| kill_blaze | planned | critical | Kill Blaze in Nether Fortress | in_nether_fortress, has_weapon |
+| kill_enderman | planned | high | Kill Enderman for pearl | has_sword |
+| block_with_shield | planned | high | Raise shield to block hit | has_shield |
+| shoot_bow | planned | high | Shoot bow at target | has_bow, has_arrows |
+| charge_bow | planned | medium | Fully draw bow | has_bow |
+| deflect_ghast_fireball | planned | critical | Hit fireball back to Ghast | in_nether, fireball_incoming |
+| kite_mob | planned | high | Move-and-hit a mob | has_weapon, hostile_nearby |
+| throw_ender_pearl | planned | high | Teleport with Ender Pearl | has_ender_pearl |
+
+### Nether Portal
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| find_lava_pool | planned | high | Locate lava pool for portal | — |
+| build_nether_portal | planned | high | Place obsidian portal frame | has_10_obsidian |
+| cast_nether_portal | planned | high | Cast portal with buckets | has_lava_bucket, has_water_bucket |
+| light_nether_portal | planned | high | Light portal with flint and steel | portal_frame_complete, has_flint_and_steel |
+| enter_nether | planned | critical | Step into lit portal | portal_lit_nearby |
+| leave_nether | planned | critical | Return through Nether-side portal | in_nether, portal_nearby |
+| return_to_portal | planned | high | Navigate to nearest portal | portal_location_known |
+
+### Nether Progression
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| navigate_nether_safely | planned | critical | Move through Nether avoiding hazards | in_nether |
+| avoid_opening_chests_near_piglins | planned | high | Override chest opens near Piglins | in_nether |
+| find_nether_fortress | planned | critical | Search for Nether Fortress | in_nether |
+| find_bastion_or_piglins | planned | high | Locate Bastion or Piglins | in_nether |
+| barter_with_piglins | planned | high | Trade gold with Piglins | has_gold_armor, has_gold_ingot, piglin_nearby |
+| collect_blaze_rods | planned | critical | Kill Blazes and collect rods | in_nether_fortress, has_weapon |
+| collect_ender_pearls | planned | high | Obtain ender pearls | has_weapon_or_gold_ingots |
+| retreat_from_nether_danger | planned | critical | Flee Nether threats | in_nether |
+| equip_gold_armor | planned | medium | Equip gold armor before Piglin areas | has_gold_armor_in_inventory |
+
+### Stronghold / End Portal
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| throw_eye_of_ender | planned | medium | Throw Eye to trace stronghold | has_ender_eye |
+| locate_stronghold_step | planned | high | Move toward stronghold | stronghold_direction_known |
+| dig_staircase_to_stronghold | planned | high | Mine down to stronghold | above_stronghold, has_pickaxe |
+| scan_for_end_portal_room | planned | high | Search stronghold for portal room | in_stronghold |
+| activate_end_portal | planned | critical | Fill portal frame with Eyes | has_ender_eyes_sufficient, portal_room_found |
+| enter_end | planned | critical | Jump into End Portal | end_portal_active |
+
+### End Fight
+
+| Action | Status | Risk | Description | Preconditions |
+|---|---|---|---|---|
+| end_safe_landing | planned | critical | Land without fall damage | in_the_end |
+| equip_pumpkin_head | planned | high | Equip pumpkin to prevent Enderman aggro | has_carved_pumpkin |
+| look_down_around_endermen | planned | medium | Avoid Enderman aggro via gaze | in_the_end |
+| scan_end_crystals | planned | high | Locate all active End Crystals | in_the_end |
+| destroy_end_crystal | planned | high | Break one End Crystal | has_ranged_or_melee_weapon |
+| destroy_caged_end_crystal | planned | high | Break caged End Crystal | has_pickaxe, has_ranged_weapon |
+| destroy_nearby_end_crystals | planned | high | Destroy all reachable crystals | has_ranged_or_melee_weapon |
+| attack_perched_dragon | planned | critical | Melee dragon while perched | has_sword, dragon_is_perched |
+| attack_dragon_with_bow | planned | critical | Shoot dragon while circling | has_bow, has_arrows |
+| use_bed_bomb | planned | critical | Detonate bed under dragon | has_bed, dragon_is_perched |
+| avoid_bed_explosion | planned | critical | Move away before bed explodes | in_the_end |
+| dragon_phase_crystals | planned | critical | Phase: destroy all crystals | in_the_end, crystals_remaining |
+| dragon_phase_circle | planned | critical | Phase: shoot circling dragon | has_bow, has_arrows |
+| dragon_phase_perch | planned | critical | Phase: attack perched dragon | has_sword_or_bed, dragon_is_perched |
+| fight_dragon_phase | planned | critical | Composite dragon fight driver | in_the_end |
+| return_to_overworld_via_end_portal | planned | critical | Exit through End Portal | dragon_dead, exit_portal_open |
+| finish_dragon_fight | planned | critical | Full dragon fight sequence | in_the_end |
+
+## 13. Next Features
 
 Good next steps:
 

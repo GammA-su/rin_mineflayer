@@ -55,6 +55,21 @@ def init_db(db_path: str = DEFAULT_DB_PATH) -> None:
                 )
                 """
             )
+            conn.execute(
+                """
+                create table if not exists death_events (
+                    id integer primary key autoincrement,
+                    ts text not null,
+                    source_ts_ms integer,
+                    dimension text,
+                    x real,
+                    y real,
+                    z real,
+                    cause text,
+                    inventory_json text
+                )
+                """
+            )
 
 
 def log_event(
@@ -130,7 +145,81 @@ def get_recent_events(limit: int = 20, db_path: str = DEFAULT_DB_PATH) -> list[d
             (safe_limit,),
         ).fetchall()
 
-    return [dict(row) for row in rows]
+    return [_enrich_json_fields(dict(row), ("args_json", "result_json")) for row in rows]
+
+
+def log_death_event(
+    *,
+    x: float,
+    y: float,
+    z: float,
+    dimension: str,
+    source_ts_ms: int | None = None,
+    cause: str | None = None,
+    inventory: list[dict[str, Any]] | None = None,
+    db_path: str = DEFAULT_DB_PATH,
+) -> None:
+    init_db(db_path)
+    ts = datetime.now(UTC).isoformat()
+    inventory_json = json.dumps(inventory or [])
+
+    with closing(sqlite3.connect(db_path)) as conn:
+        with conn:
+            if source_ts_ms is not None:
+                existing = conn.execute(
+                    "select id from death_events where source_ts_ms = ? limit 1",
+                    (int(source_ts_ms),),
+                ).fetchone()
+                if existing:
+                    return
+            conn.execute(
+                """
+                insert into death_events (
+                    ts, source_ts_ms, dimension, x, y, z, cause, inventory_json
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ts,
+                    source_ts_ms,
+                    str(dimension or "overworld"),
+                    float(x),
+                    float(y),
+                    float(z),
+                    cause,
+                    inventory_json,
+                ),
+            )
+            conn.execute(
+                """
+                insert into events (
+                    ts, user, message, action, args_json, speech, reason, ok, result_json, error
+                )
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ts,
+                    "system",
+                    f"death_event dimension={dimension} x={x} y={y} z={z}",
+                    "death_event",
+                    "{}",
+                    "",
+                    "Recorded bot death state.",
+                    1,
+                    json.dumps(
+                        {
+                            "x": x,
+                            "y": y,
+                            "z": z,
+                            "dimension": dimension,
+                            "source_ts_ms": source_ts_ms,
+                            "cause": cause,
+                            "inventory_count": len(inventory or []),
+                        }
+                    ),
+                    None,
+                ),
+            )
 
 
 def log_agent_tick(
@@ -221,4 +310,34 @@ def get_recent_agent_ticks(limit: int = 20, db_path: str = DEFAULT_DB_PATH) -> l
             (safe_limit,),
         ).fetchall()
 
-    return [dict(row) for row in rows]
+    return [
+        _enrich_json_fields(
+            dict(row),
+            ("args_json", "before_state_json", "after_state_json", "verifier_json", "result_json"),
+        )
+        for row in rows
+    ]
+
+
+def _decode_json_field(value: Any) -> Any:
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return json.loads(value)
+    except json.JSONDecodeError:
+        return None
+
+
+def _enrich_json_fields(row: dict[str, Any], field_names: tuple[str, ...]) -> dict[str, Any]:
+    aliases = {
+        "args_json": "args",
+        "before_state_json": "before_state",
+        "after_state_json": "after_state",
+        "verifier_json": "verifier",
+        "result_json": "result",
+    }
+    for field_name in field_names:
+        decoded = _decode_json_field(row.get(field_name))
+        if decoded is not None:
+            row[aliases.get(field_name, field_name.removesuffix("_json"))] = decoded
+    return row

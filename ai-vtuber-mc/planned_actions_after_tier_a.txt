@@ -1,0 +1,27 @@
+
+name                     category           status  implemented
+----                     --------           ------  -----------
+avoid_hazard             survival           planned       False
+build_emergency_shelter  survival           planned       False
+collect_ender_pearls     nether_progression planned       False
+collect_flint            resource           planned       False
+collect_food             resource           planned       False
+collect_sand             resource           planned       False
+craft_arrows             crafting           planned       False
+craft_boat               crafting           planned       False
+craft_bow                crafting           planned       False
+escape_liquid            survival           planned       False
+find_bastion_or_piglins  nether_progression planned       False
+finish_dragon_fight      end_fight          planned       False
+handle_stuck             survival           planned       False
+mine_diamond_ore         resource           planned       False
+mine_gold_ore            resource           planned       False
+mine_gravel              resource           planned       False
+mine_redstone            resource           planned       False
+return_to_known_position core_control       planned       False
+set_home_position        core_control       planned       False
+smelt_food               smelting           planned       False
+smelt_gold               smelting           planned       False
+
+
+

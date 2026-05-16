@@ -1,0 +1,863 @@
+{
+    "ok":  true,
+    "mission":  "Use the remembered workspace for crafting or smelting if needed. Continue progressing toward beating Minecraft.",
+    "user":  "AI_VTuber",
+    "planner":  {
+                    "llm_latency_sec":  139.531,
+                    "prompt_size_chars":  14540,
+                    "prompt_budget_exceeded":  false,
+                    "llm_state_packet_preview":  "{\"mission\":\"Use the remembered workspace for crafting or smelting if needed. Continue progressing toward beating Minecraft.\",\"planner_instruction\":\"Current state and current_facts are authoritative. Memory may be stale. If memory conflicts with current inventory or nearby blocks, trust current_facts.\",\"last_failure_summary\":{\"action\":\"build_nether_portal\",\"ok\":false,\"error\":\"Need 14 obsidian for full frame (have 0). Mine more obsidian or use cast_nether_portal.\",\"failure_type\":\"action_failed\",\"stop_reason\":\"action_failed\",\"can_retry\":true},\"health\":20,\"food\":20,\"dimension\":\"overworld\",\"time\":{\"timeOfDay\":5090,\"day\":100,\"isDay\":true},\"isDay\":true,\"position\":{\"x\":-224.5,\"y\":61,\"z\":-40.5},\"inventory_counts\":{\"crafting_table\":1,\"spruce_sapling\":2,\"spruce_planks\":9,\"dirt\":4,\"wooden_pickaxe\":1,\"stick\":5,\"spruce_log\":1,\"stone_pickaxe\":1,\"cobblestone\":16},\"current_facts\":{\"has_wooden_pickaxe\":true,\"has_stone_pickaxe\":true,\"has_iron_pickaxe\":false,\"has_cobblestone\":true,\"cobblestone_count\":16,\"has_inventory_crafting_table\":true,\"has_nearby_crafting_table\":false,\"has_nearby_furnace\":true,\"can_attempt_stone_pickaxe_materials\":false,\"planks_count\":9,\"sticks_count\":5,\"known_workspace_has_crafti",
+                    "last_failure_included":  true,
+                    "last_relevant_failure_included":  true,
+                    "memory_filtered_count":  2,
+                    "stale_memory_removed_count":  1,
+                    "full_catalog_count":  144,
+                    "compact_action_count":  141,
+                    "compact_action_chars":  3506,
+                    "detailed_action_docs_count":  12,
+                    "detailed_action_names":  [
+                                                  "status",
+                                                  "flee",
+                                                  "eat_food",
+                                                  "recover_position",
+                                                  "collect_wood",
+                                                  "craft_planks",
+                                                  "craft_sticks",
+                                                  "craft_crafting_table",
+                                                  "place_crafting_table",
+                                                  "craft_wooden_pickaxe",
+                                                  "mine_stone",
+                                                  "mine_iron_ore"
+                                              ],
+                    "available_actions_count":  141,
+                    "fallback_reason":  "LLM chose disallowed action: mine_obsidian.",
+                    "model":  "Qwen3.5-9B-Q4_K_M.gguf",
+                    "planner":  "hybrid",
+                    "source":  "fallback",
+                    "fallback_used":  true,
+                    "args_sanitized":  false,
+                    "removed_arg_keys":  [
+
+                                         ],
+                    "bridge_supported_actions_count":  146,
+                    "nearest_workspace_included":  true,
+                    "workspace_memory_count":  3
+                },
+    "source":  "fallback",
+    "fallback_used":  true,
+    "args_sanitized":  false,
+    "removed_arg_keys":  [
+
+                         ],
+    "last_failure_included":  true,
+    "available_actions_count":  141,
+    "llm_latency_sec":  139.531,
+    "prompt_size_chars":  14540,
+    "objective":  "Check status safely",
+    "mood":  "neutral",
+    "action":  {
+                   "action":  "status",
+                   "args":  {
+
+                            },
+                   "speech":  "I\u0027ll check status.",
+                   "reason":  "LLM chose disallowed action: mine_obsidian. Objective: Check status safely"
+               },
+    "result":  {
+                   "ok":  true,
+                   "action":  "status",
+                   "result":  {
+                                  "ok":  true,
+                                  "connected":  true,
+                                  "username":  "AI_VTuber",
+                                  "entityReady":  true,
+                                  "position":  {
+                                                   "x":  -224.5,
+                                                   "y":  61,
+                                                   "z":  -40.5
+                                               },
+                                  "dimension":  "overworld",
+                                  "time":  {
+                                               "timeOfDay":  7890,
+                                               "day":  100,
+                                               "isDay":  true,
+                                               "moonPhase":  4
+                                           },
+                                  "health":  20,
+                                  "food":  20,
+                                  "onGround":  true,
+                                  "inWater":  false,
+                                  "inLava":  false,
+                                  "inventory":  [
+                                                    {
+                                                        "name":  "crafting_table",
+                                                        "displayName":  "Crafting Table",
+                                                        "count":  1,
+                                                        "slot":  36
+                                                    },
+                                                    {
+                                                        "name":  "spruce_sapling",
+                                                        "displayName":  "Spruce Sapling",
+                                                        "count":  2,
+                                                        "slot":  37
+                                                    },
+                                                    {
+                                                        "name":  "spruce_planks",
+                                                        "displayName":  "Spruce Planks",
+                                                        "count":  9,
+                                                        "slot":  38
+                                                    },
+                                                    {
+                                                        "name":  "dirt",
+                                                        "displayName":  "Dirt",
+                                                        "count":  4,
+                                                        "slot":  39
+                                                    },
+                                                    {
+                                                        "name":  "wooden_pickaxe",
+                                                        "displayName":  "Wooden Pickaxe",
+                                                        "count":  1,
+                                                        "slot":  40
+                                                    },
+                                                    {
+                                                        "name":  "stick",
+                                                        "displayName":  "Stick",
+                                                        "count":  5,
+                                                        "slot":  41
+                                                    },
+                                                    {
+                                                        "name":  "spruce_log",
+                                                        "displayName":  "Spruce Log",
+                                                        "count":  1,
+                                                        "slot":  42
+                                                    },
+                                                    {
+                                                        "name":  "stone_pickaxe",
+                                                        "displayName":  "Stone Pickaxe",
+                                                        "count":  1,
+                                                        "slot":  43
+                                                    },
+                                                    {
+                                                        "name":  "cobblestone",
+                                                        "displayName":  "Cobblestone",
+                                                        "count":  16,
+                                                        "slot":  44
+                                                    }
+                                                ],
+                                  "nearbyPlayers":  [
+                                                        {
+                                                            "username":  "rlyGammA",
+                                                            "position":  {
+                                                                             "x":  -226.72630992519427,
+                                                                             "y":  63,
+                                                                             "z":  -43.0446392556037
+                                                                         },
+                                                            "distance":  3.9283132288779963
+                                                        }
+                                                    ],
+                                  "nearbyEntities":  [
+                                                         {
+                                                             "id":  517,
+                                                             "name":  "player",
+                                                             "type":  "player",
+                                                             "username":  "rlyGammA",
+                                                             "hostile":  false,
+                                                             "position":  {
+                                                                              "x":  -226.72630992519427,
+                                                                              "y":  63,
+                                                                              "z":  -43.0446392556037
+                                                                          },
+                                                             "distance":  3.9283132288779963
+                                                         }
+                                                     ],
+                                  "nearbyBlockCounts":  {
+                                                            "stone":  2099,
+                                                            "dirt":  1102,
+                                                            "grass_block":  378,
+                                                            "snow":  191,
+                                                            "granite":  51,
+                                                            "spruce_leaves":  47,
+                                                            "water":  22,
+                                                            "spruce_log":  13,
+                                                            "ice":  8,
+                                                            "copper_ore":  7,
+                                                            "brown_mushroom":  4,
+                                                            "short_grass":  3,
+                                                            "fern":  2,
+                                                            "crafting_table":  1,
+                                                            "furnace":  1
+                                                        },
+                                  "nearbyBlocks":  {
+                                                       "crafting_table":  null,
+                                                       "furnace":  {
+                                                                       "name":  "furnace",
+                                                                       "position":  {
+                                                                                        "x":  -222,
+                                                                                        "y":  63,
+                                                                                        "z":  -48
+                                                                                    },
+                                                                       "distance":  8.154753215150045
+                                                                   },
+                                                       "chest":  null
+                                                   },
+                                  "lastDeath":  null,
+                                  "last_death":  null,
+                                  "respawned_recently":  false,
+                                  "death_recovery":  {
+                                                         "known":  false,
+                                                         "respawned_recently":  false,
+                                                         "failures":  0
+                                                     }
+                              },
+                   "error":  null
+               },
+    "verifier":  {
+                     "success":  true,
+                     "evidence":  {
+                                      "action":  "status",
+                                      "result":  {
+                                                     "ok":  true,
+                                                     "connected":  true,
+                                                     "username":  "AI_VTuber",
+                                                     "entityReady":  true,
+                                                     "position":  {
+                                                                      "x":  -224.5,
+                                                                      "y":  61,
+                                                                      "z":  -40.5
+                                                                  },
+                                                     "dimension":  "overworld",
+                                                     "time":  {
+                                                                  "timeOfDay":  7890,
+                                                                  "day":  100,
+                                                                  "isDay":  true,
+                                                                  "moonPhase":  4
+                                                              },
+                                                     "health":  20,
+                                                     "food":  20,
+                                                     "onGround":  true,
+                                                     "inWater":  false,
+                                                     "inLava":  false,
+                                                     "inventory":  [
+                                                                       {
+                                                                           "name":  "crafting_table",
+                                                                           "displayName":  "Crafting Table",
+                                                                           "count":  1,
+                                                                           "slot":  36
+                                                                       },
+                                                                       {
+                                                                           "name":  "spruce_sapling",
+                                                                           "displayName":  "Spruce Sapling",
+                                                                           "count":  2,
+                                                                           "slot":  37
+                                                                       },
+                                                                       {
+                                                                           "name":  "spruce_planks",
+                                                                           "displayName":  "Spruce Planks",
+                                                                           "count":  9,
+                                                                           "slot":  38
+                                                                       },
+                                                                       {
+                                                                           "name":  "dirt",
+                                                                           "displayName":  "Dirt",
+                                                                           "count":  4,
+                                                                           "slot":  39
+                                                                       },
+                                                                       {
+                                                                           "name":  "wooden_pickaxe",
+                                                                           "displayName":  "Wooden Pickaxe",
+                                                                           "count":  1,
+                                                                           "slot":  40
+                                                                       },
+                                                                       {
+                                                                           "name":  "stick",
+                                                                           "displayName":  "Stick",
+                                                                           "count":  5,
+                                                                           "slot":  41
+                                                                       },
+                                                                       {
+                                                                           "name":  "spruce_log",
+                                                                           "displayName":  "Spruce Log",
+                                                                           "count":  1,
+                                                                           "slot":  42
+                                                                       },
+                                                                       {
+                                                                           "name":  "stone_pickaxe",
+                                                                           "displayName":  "Stone Pickaxe",
+                                                                           "count":  1,
+                                                                           "slot":  43
+                                                                       },
+                                                                       {
+                                                                           "name":  "cobblestone",
+                                                                           "displayName":  "Cobblestone",
+                                                                           "count":  16,
+                                                                           "slot":  44
+                                                                       }
+                                                                   ],
+                                                     "nearbyPlayers":  [
+                                                                           {
+                                                                               "username":  "rlyGammA",
+                                                                               "position":  {
+                                                                                                "x":  -226.72630992519427,
+                                                                                                "y":  63,
+                                                                                                "z":  -43.0446392556037
+                                                                                            },
+                                                                               "distance":  3.9283132288779963
+                                                                           }
+                                                                       ],
+                                                     "nearbyEntities":  [
+                                                                            {
+                                                                                "id":  517,
+                                                                                "name":  "player",
+                                                                                "type":  "player",
+                                                                                "username":  "rlyGammA",
+                                                                                "hostile":  false,
+                                                                                "position":  {
+                                                                                                 "x":  -226.72630992519427,
+                                                                                                 "y":  63,
+                                                                                                 "z":  -43.0446392556037
+                                                                                             },
+                                                                                "distance":  3.9283132288779963
+                                                                            }
+                                                                        ],
+                                                     "nearbyBlockCounts":  {
+                                                                               "stone":  2099,
+                                                                               "dirt":  1102,
+                                                                               "grass_block":  378,
+                                                                               "snow":  191,
+                                                                               "granite":  51,
+                                                                               "spruce_leaves":  47,
+                                                                               "water":  22,
+                                                                               "spruce_log":  13,
+                                                                               "ice":  8,
+                                                                               "copper_ore":  7,
+                                                                               "brown_mushroom":  4,
+                                                                               "short_grass":  3,
+                                                                               "fern":  2,
+                                                                               "crafting_table":  1,
+                                                                               "furnace":  1
+                                                                           },
+                                                     "nearbyBlocks":  {
+                                                                          "crafting_table":  null,
+                                                                          "furnace":  {
+                                                                                          "name":  "furnace",
+                                                                                          "position":  {
+                                                                                                           "x":  -222,
+                                                                                                           "y":  63,
+                                                                                                           "z":  -48
+                                                                                                       },
+                                                                                          "distance":  8.154753215150045
+                                                                                      },
+                                                                          "chest":  null
+                                                                      },
+                                                     "lastDeath":  null,
+                                                     "last_death":  null,
+                                                     "respawned_recently":  false,
+                                                     "death_recovery":  {
+                                                                            "known":  false,
+                                                                            "respawned_recently":  false,
+                                                                            "failures":  0
+                                                                        }
+                                                 },
+                                      "before":  {
+                                                     "health":  20,
+                                                     "food":  20,
+                                                     "position":  {
+                                                                      "x":  -224.5,
+                                                                      "y":  61,
+                                                                      "z":  -40.5
+                                                                  },
+                                                     "hostile_nearby":  false,
+                                                     "inventory_counts":  {
+                                                                              "crafting_table":  1,
+                                                                              "spruce_sapling":  2,
+                                                                              "spruce_planks":  9,
+                                                                              "dirt":  4,
+                                                                              "wooden_pickaxe":  1,
+                                                                              "stick":  5,
+                                                                              "spruce_log":  1,
+                                                                              "stone_pickaxe":  1,
+                                                                              "cobblestone":  16
+                                                                          }
+                                                 },
+                                      "after":  {
+                                                    "health":  20,
+                                                    "food":  20,
+                                                    "position":  {
+                                                                     "x":  -224.5,
+                                                                     "y":  61,
+                                                                     "z":  -40.5
+                                                                 },
+                                                    "hostile_nearby":  false,
+                                                    "inventory_counts":  {
+                                                                             "crafting_table":  1,
+                                                                             "spruce_sapling":  2,
+                                                                             "spruce_planks":  9,
+                                                                             "dirt":  4,
+                                                                             "wooden_pickaxe":  1,
+                                                                             "stick":  5,
+                                                                             "spruce_log":  1,
+                                                                             "stone_pickaxe":  1,
+                                                                             "cobblestone":  16
+                                                                         }
+                                                }
+                                  },
+                     "failure_type":  "none",
+                     "recommendation":  "Continue adapting from the updated state."
+                 },
+    "before_status":  {
+                          "ok":  true,
+                          "connected":  true,
+                          "username":  "AI_VTuber",
+                          "entityReady":  true,
+                          "position":  {
+                                           "x":  -224.5,
+                                           "y":  61,
+                                           "z":  -40.5
+                                       },
+                          "dimension":  "overworld",
+                          "time":  {
+                                       "timeOfDay":  5090,
+                                       "day":  100,
+                                       "isDay":  true,
+                                       "moonPhase":  4
+                                   },
+                          "health":  20,
+                          "food":  20,
+                          "onGround":  true,
+                          "inWater":  false,
+                          "inLava":  false,
+                          "inventory":  [
+                                            {
+                                                "name":  "crafting_table",
+                                                "displayName":  "Crafting Table",
+                                                "count":  1,
+                                                "slot":  36
+                                            },
+                                            {
+                                                "name":  "spruce_sapling",
+                                                "displayName":  "Spruce Sapling",
+                                                "count":  2,
+                                                "slot":  37
+                                            },
+                                            {
+                                                "name":  "spruce_planks",
+                                                "displayName":  "Spruce Planks",
+                                                "count":  9,
+                                                "slot":  38
+                                            },
+                                            {
+                                                "name":  "dirt",
+                                                "displayName":  "Dirt",
+                                                "count":  4,
+                                                "slot":  39
+                                            },
+                                            {
+                                                "name":  "wooden_pickaxe",
+                                                "displayName":  "Wooden Pickaxe",
+                                                "count":  1,
+                                                "slot":  40
+                                            },
+                                            {
+                                                "name":  "stick",
+                                                "displayName":  "Stick",
+                                                "count":  5,
+                                                "slot":  41
+                                            },
+                                            {
+                                                "name":  "spruce_log",
+                                                "displayName":  "Spruce Log",
+                                                "count":  1,
+                                                "slot":  42
+                                            },
+                                            {
+                                                "name":  "stone_pickaxe",
+                                                "displayName":  "Stone Pickaxe",
+                                                "count":  1,
+                                                "slot":  43
+                                            },
+                                            {
+                                                "name":  "cobblestone",
+                                                "displayName":  "Cobblestone",
+                                                "count":  16,
+                                                "slot":  44
+                                            }
+                                        ],
+                          "nearbyPlayers":  [
+                                                {
+                                                    "username":  "rlyGammA",
+                                                    "position":  {
+                                                                     "x":  -226.72630992519427,
+                                                                     "y":  63,
+                                                                     "z":  -43.0446392556037
+                                                                 },
+                                                    "distance":  3.9283132288779963
+                                                }
+                                            ],
+                          "nearbyEntities":  [
+                                                 {
+                                                     "id":  3258,
+                                                     "name":  "item",
+                                                     "type":  "other",
+                                                     "username":  null,
+                                                     "hostile":  false,
+                                                     "position":  {
+                                                                      "x":  -224.15537364377366,
+                                                                      "y":  60,
+                                                                      "z":  -39.875
+                                                                  },
+                                                     "distance":  1.228573288577383
+                                                 },
+                                                 {
+                                                     "id":  3263,
+                                                     "name":  "item",
+                                                     "type":  "other",
+                                                     "username":  null,
+                                                     "hostile":  false,
+                                                     "position":  {
+                                                                      "x":  -224.49088485257232,
+                                                                      "y":  61,
+                                                                      "z":  -38.91638327191563
+                                                                  },
+                                                     "distance":  1.583642960828381
+                                                 },
+                                                 {
+                                                     "id":  517,
+                                                     "name":  "player",
+                                                     "type":  "player",
+                                                     "username":  "rlyGammA",
+                                                     "hostile":  false,
+                                                     "position":  {
+                                                                      "x":  -226.72630992519427,
+                                                                      "y":  63,
+                                                                      "z":  -43.0446392556037
+                                                                  },
+                                                     "distance":  3.9283132288779963
+                                                 },
+                                                 {
+                                                     "id":  3228,
+                                                     "name":  "item",
+                                                     "type":  "other",
+                                                     "username":  null,
+                                                     "hostile":  false,
+                                                     "position":  {
+                                                                      "x":  -226.125,
+                                                                      "y":  62,
+                                                                      "z":  -44.125
+                                                                  },
+                                                     "distance":  4.096492402043485
+                                                 }
+                                             ],
+                          "nearbyBlockCounts":  {
+                                                    "stone":  2099,
+                                                    "dirt":  1103,
+                                                    "grass_block":  377,
+                                                    "snow":  190,
+                                                    "granite":  51,
+                                                    "spruce_leaves":  47,
+                                                    "water":  22,
+                                                    "spruce_log":  13,
+                                                    "ice":  8,
+                                                    "copper_ore":  7,
+                                                    "brown_mushroom":  4,
+                                                    "short_grass":  3,
+                                                    "fern":  2,
+                                                    "crafting_table":  1,
+                                                    "furnace":  1
+                                                },
+                          "nearbyBlocks":  {
+                                               "crafting_table":  null,
+                                               "furnace":  {
+                                                               "name":  "furnace",
+                                                               "position":  {
+                                                                                "x":  -222,
+                                                                                "y":  63,
+                                                                                "z":  -48
+                                                                            },
+                                                               "distance":  8.154753215150045
+                                                           },
+                                               "chest":  null
+                                           },
+                          "lastDeath":  null,
+                          "last_death":  null,
+                          "respawned_recently":  false,
+                          "death_recovery":  {
+                                                 "known":  false,
+                                                 "respawned_recently":  false,
+                                                 "failures":  0
+                                             }
+                      },
+    "after_status":  {
+                         "ok":  true,
+                         "connected":  true,
+                         "username":  "AI_VTuber",
+                         "entityReady":  true,
+                         "position":  {
+                                          "x":  -224.5,
+                                          "y":  61,
+                                          "z":  -40.5
+                                      },
+                         "dimension":  "overworld",
+                         "time":  {
+                                      "timeOfDay":  7890,
+                                      "day":  100,
+                                      "isDay":  true,
+                                      "moonPhase":  4
+                                  },
+                         "health":  20,
+                         "food":  20,
+                         "onGround":  true,
+                         "inWater":  false,
+                         "inLava":  false,
+                         "inventory":  [
+                                           {
+                                               "name":  "crafting_table",
+                                               "displayName":  "Crafting Table",
+                                               "count":  1,
+                                               "slot":  36
+                                           },
+                                           {
+                                               "name":  "spruce_sapling",
+                                               "displayName":  "Spruce Sapling",
+                                               "count":  2,
+                                               "slot":  37
+                                           },
+                                           {
+                                               "name":  "spruce_planks",
+                                               "displayName":  "Spruce Planks",
+                                               "count":  9,
+                                               "slot":  38
+                                           },
+                                           {
+                                               "name":  "dirt",
+                                               "displayName":  "Dirt",
+                                               "count":  4,
+                                               "slot":  39
+                                           },
+                                           {
+                                               "name":  "wooden_pickaxe",
+                                               "displayName":  "Wooden Pickaxe",
+                                               "count":  1,
+                                               "slot":  40
+                                           },
+                                           {
+                                               "name":  "stick",
+                                               "displayName":  "Stick",
+                                               "count":  5,
+                                               "slot":  41
+                                           },
+                                           {
+                                               "name":  "spruce_log",
+                                               "displayName":  "Spruce Log",
+                                               "count":  1,
+                                               "slot":  42
+                                           },
+                                           {
+                                               "name":  "stone_pickaxe",
+                                               "displayName":  "Stone Pickaxe",
+                                               "count":  1,
+                                               "slot":  43
+                                           },
+                                           {
+                                               "name":  "cobblestone",
+                                               "displayName":  "Cobblestone",
+                                               "count":  16,
+                                               "slot":  44
+                                           }
+                                       ],
+                         "nearbyPlayers":  [
+                                               {
+                                                   "username":  "rlyGammA",
+                                                   "position":  {
+                                                                    "x":  -226.72630992519427,
+                                                                    "y":  63,
+                                                                    "z":  -43.0446392556037
+                                                                },
+                                                   "distance":  3.9283132288779963
+                                               }
+                                           ],
+                         "nearbyEntities":  [
+                                                {
+                                                    "id":  517,
+                                                    "name":  "player",
+                                                    "type":  "player",
+                                                    "username":  "rlyGammA",
+                                                    "hostile":  false,
+                                                    "position":  {
+                                                                     "x":  -226.72630992519427,
+                                                                     "y":  63,
+                                                                     "z":  -43.0446392556037
+                                                                 },
+                                                    "distance":  3.9283132288779963
+                                                }
+                                            ],
+                         "nearbyBlockCounts":  {
+                                                   "stone":  2099,
+                                                   "dirt":  1102,
+                                                   "grass_block":  378,
+                                                   "snow":  191,
+                                                   "granite":  51,
+                                                   "spruce_leaves":  47,
+                                                   "water":  22,
+                                                   "spruce_log":  13,
+                                                   "ice":  8,
+                                                   "copper_ore":  7,
+                                                   "brown_mushroom":  4,
+                                                   "short_grass":  3,
+                                                   "fern":  2,
+                                                   "crafting_table":  1,
+                                                   "furnace":  1
+                                               },
+                         "nearbyBlocks":  {
+                                              "crafting_table":  null,
+                                              "furnace":  {
+                                                              "name":  "furnace",
+                                                              "position":  {
+                                                                               "x":  -222,
+                                                                               "y":  63,
+                                                                               "z":  -48
+                                                                           },
+                                                              "distance":  8.154753215150045
+                                                          },
+                                              "chest":  null
+                                          },
+                         "lastDeath":  null,
+                         "last_death":  null,
+                         "respawned_recently":  false,
+                         "death_recovery":  {
+                                                "known":  false,
+                                                "respawned_recently":  false,
+                                                "failures":  0
+                                            }
+                     },
+    "milestones":  {
+                       "groups":  {
+                                      "early":  {
+                                                    "has_logs":  true,
+                                                    "has_planks":  true,
+                                                    "has_crafting_table":  true,
+                                                    "has_nearby_crafting_table":  false,
+                                                    "has_wooden_pickaxe":  true,
+                                                    "has_stone_pickaxe":  true,
+                                                    "has_furnace":  true,
+                                                    "has_torches":  false
+                                                },
+                                      "iron":  {
+                                                   "has_coal":  false,
+                                                   "has_raw_iron":  false,
+                                                   "has_iron_ingot":  false,
+                                                   "has_shield":  false,
+                                                   "has_bucket":  false,
+                                                   "has_iron_pickaxe":  false,
+                                                   "has_iron_armor_piece":  false,
+                                                   "has_full_iron_armor":  false
+                                               },
+                                      "diamond_portal":  {
+                                                             "has_diamond":  false,
+                                                             "has_diamond_pickaxe":  false,
+                                                             "has_obsidian":  false,
+                                                             "has_flint":  false,
+                                                             "has_flint_and_steel":  false,
+                                                             "has_nether_portal":  false,
+                                                             "entered_nether":  false
+                                                         },
+                                      "nether":  {
+                                                     "has_gold_armor":  false,
+                                                     "found_fortress":  false,
+                                                     "has_blaze_rod":  false,
+                                                     "has_blaze_powder":  false,
+                                                     "has_ender_pearl":  false,
+                                                     "has_eye_of_ender":  false,
+                                                     "returned_from_nether":  false
+                                                 },
+                                      "stronghold_end":  {
+                                                             "stronghold_search_started":  false,
+                                                             "found_stronghold":  false,
+                                                             "found_end_portal_room":  false,
+                                                             "activated_end_portal":  false,
+                                                             "entered_end":  false
+                                                         },
+                                      "dragon":  {
+                                                     "end_safe_landing_done":  false,
+                                                     "crystals_remaining_unknown_or_known":  false,
+                                                     "crystals_destroyed":  false,
+                                                     "dragon_damaged":  false,
+                                                     "dragon_defeated":  false,
+                                                     "returned_to_overworld_via_end_portal":  false
+                                                 },
+                                      "death_recovery":  {
+                                                             "died":  false,
+                                                             "recovered_death_items":  false,
+                                                             "abandoned_death_recovery":  false
+                                                         }
+                                  },
+                       "completed":  {
+                                         "has_logs":  true,
+                                         "has_planks":  true,
+                                         "has_crafting_table":  true,
+                                         "has_nearby_crafting_table":  false,
+                                         "has_wooden_pickaxe":  true,
+                                         "has_stone_pickaxe":  true,
+                                         "has_furnace":  true,
+                                         "has_torches":  false,
+                                         "has_coal":  false,
+                                         "has_raw_iron":  false,
+                                         "has_iron_ingot":  false,
+                                         "has_shield":  false,
+                                         "has_bucket":  false,
+                                         "has_iron_pickaxe":  false,
+                                         "has_iron_armor_piece":  false,
+                                         "has_full_iron_armor":  false,
+                                         "has_diamond":  false,
+                                         "has_diamond_pickaxe":  false,
+                                         "has_obsidian":  false,
+                                         "has_flint":  false,
+                                         "has_flint_and_steel":  false,
+                                         "has_nether_portal":  false,
+                                         "entered_nether":  false,
+                                         "has_gold_armor":  false,
+                                         "found_fortress":  false,
+                                         "has_blaze_rod":  false,
+                                         "has_blaze_powder":  false,
+                                         "has_ender_pearl":  false,
+                                         "has_eye_of_ender":  false,
+                                         "returned_from_nether":  false,
+                                         "stronghold_search_started":  false,
+                                         "found_stronghold":  false,
+                                         "found_end_portal_room":  false,
+                                         "activated_end_portal":  false,
+                                         "entered_end":  false,
+                                         "end_safe_landing_done":  false,
+                                         "crystals_remaining_unknown_or_known":  false,
+                                         "crystals_destroyed":  false,
+                                         "dragon_damaged":  false,
+                                         "dragon_defeated":  false,
+                                         "returned_to_overworld_via_end_portal":  false,
+                                         "died":  false,
+                                         "recovered_death_items":  false,
+                                         "abandoned_death_recovery":  false
+                                     },
+                       "completed_milestones":  [
+                                                    "has_logs",
+                                                    "has_planks",
+                                                    "has_crafting_table",
+                                                    "has_wooden_pickaxe",
+                                                    "has_stone_pickaxe",
+                                                    "has_furnace"
+                                                ],
+                       "next_possible_milestones":  [
+                                                        "has_nearby_crafting_table",
+                                                        "has_torches"
+                                                    ],
+                       "counts":  {
+                                      "completed":  6,
+                                      "total":  44
+                                  }
+                   },
+    "newly_completed_milestones":  [
+
+                                   ],
+    "next_possible_milestones":  [
+                                     "has_nearby_crafting_table",
+                                     "has_torches"
+                                 ]
+}
