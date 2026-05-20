@@ -37,6 +37,7 @@ class AgentLiveRequest(BaseModel):
     max_ticks: int = Field(default=10, ge=1, le=50)
     allow_autonomy: bool = False
     tick_delay_sec: float = Field(default=1.0, ge=0.0, le=30.0)
+    stop_on_failure: bool = False
 
 
 class ActionRequest(BaseModel):

@@ -1,0 +1,2921 @@
+{
+  "batch": 1,
+  "ticks_run": 2,
+  "global_tick_start": 1,
+  "global_tick_end": 2,
+  "ticks": [
+    {
+      "ok": true,
+      "mission": "Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.",
+      "user": "AI_VTuber",
+      "planner": {
+        "llm_latency_sec": 0.988,
+        "prompt_size_chars": 20599,
+        "prompt_budget_exceeded": true,
+        "planner_output_mode": "compact",
+        "llm_state_packet_preview": "{\"mission\":\"Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.\",\"planner_instruction\":\"Current state and current_facts are authoritative. Memory may be stale. If memory conflicts with current inventory or nearby blocks, trust current_facts.\",\"current_intent\":null,\"unresolved_failure\":{\"action\":\"mine_coal\",\"ok\":false,\"error\":\"Mined target block but drop collection failed: drop_collection_partial_progress\",\"failure_type\":\"partial_progress_timeout\",\"stop_reason\":\"drop_collection_partial_progress\",\"can_retry\":true,\"verifier\":{\"failure_type\":\"partial_progress_timeout\",\"stop_reason\":\"drop_collection_partial_progress\",\"suggested_next_action\":null,\"recommendation\":\"Partial progress means continuing may be reasonable, but you may choose any valid action.\",\"failed_because\":[{\"kind\":\"mined_target_but_drop_not_collected\",\"action\":\"mine_coal\",\"stop_reason\":\"drop_collection_partial_progress\",\"drop_collection_reason\":\"drop_collection_partial_progress\",\"minedTargetBlocks\":1,\"nearbyDropsFound\":1,\"relevantDropsFound\":1,\"nearestDropDistance\":2.4,\"dropEntityPosition\":{\"x",
+        "last_failure_included": false,
+        "last_relevant_failure_included": false,
+        "unresolved_failure_included": true,
+        "unresolved_failure_action": "mine_coal",
+        "unresolved_failure_age_ticks": 4,
+        "unresolved_failure_possible_next_actions": null,
+        "current_intent_included": false,
+        "current_intent_goal_action": null,
+        "current_intent_blocking_problem": null,
+        "repair_attempts_count": 0,
+        "repeated_repair_failure_count": 0,
+        "observation_fresh": false,
+        "repeated_sensing_count": 0,
+        "last_observation_tick": null,
+        "last_observation_action": null,
+        "low_information_loop": false,
+        "state_changed_recently": true,
+        "ticks_since_last_material_progress": 0,
+        "ticks_since_last_position_progress": 1,
+        "last_meaningful_change": "smelt_item_inventory_changed",
+        "memory_filtered_count": 2,
+        "stale_memory_removed_count": 2,
+        "full_catalog_count": 146,
+        "compact_action_count": 142,
+        "compact_action_chars": 2500,
+        "detailed_action_docs_count": 6,
+        "detailed_action_names": [
+          "status",
+          "flee",
+          "eat_food",
+          "recover_position",
+          "mine_coal",
+          "collect_wood"
+        ],
+        "available_actions_count": 142,
+        "raw_llm_output_chars": 104,
+        "parsed_compact_output": true,
+        "completion_tokens": 30,
+        "station_affordances": {
+          "carried_stations": {
+            "crafting_table": 0,
+            "furnace": 3,
+            "chest": 0
+          },
+          "usable_nearby_stations": {
+            "crafting_table": true,
+            "furnace": true,
+            "chest": false
+          },
+          "station_gap_facts": []
+        },
+        "item_affordances": {
+          "has_fuel": true,
+          "fuel_items": {
+            "coal": 102,
+            "oak_planks": 6,
+            "spruce_planks": 1
+          },
+          "has_smeltable_items": true,
+          "smeltable_items": {
+            "raw_iron": 10
+          },
+          "has_building_blocks": true,
+          "tool_duplicates": {
+            "stone_pickaxe": 6
+          },
+          "low_consumables": {
+            "food": false,
+            "torches": false
+          }
+        },
+        "navigation_stall": null,
+        "progress_monitor": {
+          "state_changed_recently": true,
+          "inventory_changed_recently": true,
+          "position_changed_recently": true,
+          "world_observation_changed_recently": true,
+          "danger_changed_recently": false,
+          "recent_action_repetition": {
+            "action": "smelt_item",
+            "count": 1
+          },
+          "low_information_loop": false,
+          "ticks_since_last_material_progress": 0,
+          "ticks_since_last_position_progress": 1,
+          "last_meaningful_changes": [
+            "smelt_item_inventory_changed",
+            "approach_station_position_changed",
+            "approach_station_world_info_changed",
+            "mine_coal_inventory_changed",
+            "mine_coal_position_changed"
+          ],
+          "stagnation_reason": null,
+          "repeated_sensing_count": 0,
+          "last_meaningful_change": "smelt_item_inventory_changed"
+        },
+        "repeated_failed_action_loop": {
+          "active": true,
+          "action": "smelt_item",
+          "count": 2,
+          "failure_types": [
+            "missing_materials",
+            "invalid_args"
+          ],
+          "state_changed_since_first_failure": true,
+          "last_failed_because": [
+            {
+              "kind": "inventory_item",
+              "item": "raw_iron",
+              "need": 1,
+              "have": 11
+            }
+          ],
+          "lesson": "This action family has failed repeatedly. Repeating it without changed requirements is unlikely to help."
+        },
+        "repeated_failed_action_count": 2,
+        "repeated_failed_action_name": "smelt_item",
+        "repeated_failed_state_changed": true,
+        "invalid_action_loop": null,
+        "recent_completed_intents": [
+          {
+            "action": "smelt_item",
+            "result": "succeeded",
+            "age_ticks": 0,
+            "input": "raw_iron"
+          },
+          {
+            "action": "approach_station",
+            "result": "succeeded",
+            "age_ticks": 1,
+            "station": "furnace"
+          }
+        ],
+        "blocked_action_families_count": 0,
+        "blocked_action_families": [],
+        "chose_blocked_action_family": false,
+        "blocked_action_family_name": null,
+        "unblock_condition": null,
+        "model": "Qwen3.5-9B-Q4_K_M.gguf",
+        "args_sanitized": false,
+        "removed_arg_keys": [],
+        "planner": "hybrid",
+        "source": "llm",
+        "fallback_used": false,
+        "bridge_supported_actions_count": 149,
+        "nearest_workspace_included": true,
+        "workspace_memory_count": 50
+      },
+      "source": "llm",
+      "fallback_used": false,
+      "args_sanitized": false,
+      "removed_arg_keys": [],
+      "last_failure_included": false,
+      "available_actions_count": 142,
+      "llm_latency_sec": 0.988,
+      "prompt_size_chars": 20599,
+      "objective": "smelt_item",
+      "mood": "focused",
+      "action": {
+        "action": "smelt_item",
+        "args": {
+          "input": "raw_iron"
+        },
+        "speech": "",
+        "reason": "Continue smelting iron; previous smelt succeeded. Objective: smelt_item"
+      },
+      "result": {
+        "ok": true,
+        "action": "smelt_item",
+        "result": {
+          "input": "raw_iron",
+          "output": "iron_ingot",
+          "fuel": "coal",
+          "requested": 1,
+          "produced": 1,
+          "position": {
+            "x": -1397,
+            "y": 24,
+            "z": -3234
+          },
+          "inventory": [
+            {
+              "name": "raw_iron",
+              "displayName": "Raw Iron",
+              "count": 9,
+              "slot": 9
+            },
+            {
+              "name": "coal",
+              "displayName": "Coal",
+              "count": 37,
+              "slot": 10
+            },
+            {
+              "name": "wheat_seeds",
+              "displayName": "Wheat Seeds",
+              "count": 2,
+              "slot": 11
+            },
+            {
+              "name": "torch",
+              "displayName": "Torch",
+              "count": 12,
+              "slot": 12
+            },
+            {
+              "name": "oak_planks",
+              "displayName": "Oak Planks",
+              "count": 6,
+              "slot": 13
+            },
+            {
+              "name": "spruce_planks",
+              "displayName": "Spruce Planks",
+              "count": 1,
+              "slot": 14
+            },
+            {
+              "name": "stick",
+              "displayName": "Stick",
+              "count": 5,
+              "slot": 15
+            },
+            {
+              "name": "moss_block",
+              "displayName": "Moss Block",
+              "count": 23,
+              "slot": 17
+            },
+            {
+              "name": "iron_ingot",
+              "displayName": "Iron Ingot",
+              "count": 44,
+              "slot": 18
+            },
+            {
+              "name": "glow_berries",
+              "displayName": "Glow Berries",
+              "count": 1,
+              "slot": 19
+            },
+            {
+              "name": "moss_carpet",
+              "displayName": "Moss Carpet",
+              "count": 5,
+              "slot": 20
+            },
+            {
+              "name": "flowering_azalea",
+              "displayName": "Flowering Azalea",
+              "count": 1,
+              "slot": 21
+            },
+            {
+              "name": "granite",
+              "displayName": "Granite",
+              "count": 13,
+              "slot": 22
+            },
+            {
+              "name": "furnace",
+              "displayName": "Furnace",
+              "count": 3,
+              "slot": 23
+            },
+            {
+              "name": "azalea",
+              "displayName": "Azalea",
+              "count": 2,
+              "slot": 25
+            },
+            {
+              "name": "diorite",
+              "displayName": "Diorite",
+              "count": 23,
+              "slot": 26
+            },
+            {
+              "name": "andesite",
+              "displayName": "Andesite",
+              "count": 21,
+              "slot": 28
+            },
+            {
+              "name": "clay_ball",
+              "displayName": "Clay Ball",
+              "count": 4,
+              "slot": 29
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 61,
+              "slot": 30
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 64,
+              "slot": 31
+            },
+            {
+              "name": "rail",
+              "displayName": "Rail",
+              "count": 5,
+              "slot": 32
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 33
+            },
+            {
+              "name": "gravel",
+              "displayName": "Gravel",
+              "count": 3,
+              "slot": 34
+            },
+            {
+              "name": "coal",
+              "displayName": "Coal",
+              "count": 64,
+              "slot": 35
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 36
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 37
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 38
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 64,
+              "slot": 39
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 64,
+              "slot": 40
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 64,
+              "slot": 41
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 51,
+              "slot": 42
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 43
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 44
+            }
+          ]
+        },
+        "error": null
+      },
+      "verifier": {
+        "success": true,
+        "evidence": {
+          "action": "smelt_item",
+          "result": {
+            "input": "raw_iron",
+            "output": "iron_ingot",
+            "fuel": "coal",
+            "requested": 1,
+            "produced": 1,
+            "position": {
+              "x": -1397,
+              "y": 24,
+              "z": -3234
+            },
+            "inventory": [
+              {
+                "name": "raw_iron",
+                "displayName": "Raw Iron",
+                "count": 9,
+                "slot": 9
+              },
+              {
+                "name": "coal",
+                "displayName": "Coal",
+                "count": 37,
+                "slot": 10
+              },
+              {
+                "name": "wheat_seeds",
+                "displayName": "Wheat Seeds",
+                "count": 2,
+                "slot": 11
+              },
+              {
+                "name": "torch",
+                "displayName": "Torch",
+                "count": 12,
+                "slot": 12
+              },
+              {
+                "name": "oak_planks",
+                "displayName": "Oak Planks",
+                "count": 6,
+                "slot": 13
+              },
+              {
+                "name": "spruce_planks",
+                "displayName": "Spruce Planks",
+                "count": 1,
+                "slot": 14
+              },
+              {
+                "name": "stick",
+                "displayName": "Stick",
+                "count": 5,
+                "slot": 15
+              },
+              {
+                "name": "moss_block",
+                "displayName": "Moss Block",
+                "count": 23,
+                "slot": 17
+              },
+              {
+                "name": "iron_ingot",
+                "displayName": "Iron Ingot",
+                "count": 44,
+                "slot": 18
+              },
+              {
+                "name": "glow_berries",
+                "displayName": "Glow Berries",
+                "count": 1,
+                "slot": 19
+              },
+              {
+                "name": "moss_carpet",
+                "displayName": "Moss Carpet",
+                "count": 5,
+                "slot": 20
+              },
+              {
+                "name": "flowering_azalea",
+                "displayName": "Flowering Azalea",
+                "count": 1,
+                "slot": 21
+              },
+              {
+                "name": "granite",
+                "displayName": "Granite",
+                "count": 13,
+                "slot": 22
+              },
+              {
+                "name": "furnace",
+                "displayName": "Furnace",
+                "count": 3,
+                "slot": 23
+              },
+              {
+                "name": "azalea",
+                "displayName": "Azalea",
+                "count": 2,
+                "slot": 25
+              },
+              {
+                "name": "diorite",
+                "displayName": "Diorite",
+                "count": 23,
+                "slot": 26
+              },
+              {
+                "name": "andesite",
+                "displayName": "Andesite",
+                "count": 21,
+                "slot": 28
+              },
+              {
+                "name": "clay_ball",
+                "displayName": "Clay Ball",
+                "count": 4,
+                "slot": 29
+              },
+              {
+                "name": "cobblestone",
+                "displayName": "Cobblestone",
+                "count": 61,
+                "slot": 30
+              },
+              {
+                "name": "cobblestone",
+                "displayName": "Cobblestone",
+                "count": 64,
+                "slot": 31
+              },
+              {
+                "name": "rail",
+                "displayName": "Rail",
+                "count": 5,
+                "slot": 32
+              },
+              {
+                "name": "stone_pickaxe",
+                "displayName": "Stone Pickaxe",
+                "count": 1,
+                "slot": 33
+              },
+              {
+                "name": "gravel",
+                "displayName": "Gravel",
+                "count": 3,
+                "slot": 34
+              },
+              {
+                "name": "coal",
+                "displayName": "Coal",
+                "count": 64,
+                "slot": 35
+              },
+              {
+                "name": "stone_pickaxe",
+                "displayName": "Stone Pickaxe",
+                "count": 1,
+                "slot": 36
+              },
+              {
+                "name": "stone_pickaxe",
+                "displayName": "Stone Pickaxe",
+                "count": 1,
+                "slot": 37
+              },
+              {
+                "name": "stone_pickaxe",
+                "displayName": "Stone Pickaxe",
+                "count": 1,
+                "slot": 38
+              },
+              {
+                "name": "cobblestone",
+                "displayName": "Cobblestone",
+                "count": 64,
+                "slot": 39
+              },
+              {
+                "name": "cobblestone",
+                "displayName": "Cobblestone",
+                "count": 64,
+                "slot": 40
+              },
+              {
+                "name": "cobblestone",
+                "displayName": "Cobblestone",
+                "count": 64,
+                "slot": 41
+              },
+              {
+                "name": "cobblestone",
+                "displayName": "Cobblestone",
+                "count": 51,
+                "slot": 42
+              },
+              {
+                "name": "stone_pickaxe",
+                "displayName": "Stone Pickaxe",
+                "count": 1,
+                "slot": 43
+              },
+              {
+                "name": "stone_pickaxe",
+                "displayName": "Stone Pickaxe",
+                "count": 1,
+                "slot": 44
+              }
+            ]
+          },
+          "before": {
+            "health": 20,
+            "food": 20,
+            "position": {
+              "x": -1397.4643293309205,
+              "y": 24,
+              "z": -3233.3739184857754
+            },
+            "hostile_nearby": false,
+            "inventory_counts": {
+              "raw_iron": 10,
+              "coal": 102,
+              "wheat_seeds": 2,
+              "torch": 12,
+              "oak_planks": 6,
+              "spruce_planks": 1,
+              "stick": 5,
+              "moss_block": 23,
+              "iron_ingot": 43,
+              "glow_berries": 1,
+              "moss_carpet": 5,
+              "flowering_azalea": 1,
+              "granite": 13,
+              "furnace": 3,
+              "azalea": 2,
+              "diorite": 23,
+              "andesite": 21,
+              "clay_ball": 4,
+              "cobblestone": 368,
+              "rail": 5,
+              "stone_pickaxe": 6,
+              "gravel": 3
+            }
+          },
+          "after": {
+            "health": 20,
+            "food": 20,
+            "position": {
+              "x": -1397.4643293309205,
+              "y": 24,
+              "z": -3233.3739184857754
+            },
+            "hostile_nearby": false,
+            "inventory_counts": {
+              "raw_iron": 9,
+              "coal": 101,
+              "wheat_seeds": 2,
+              "torch": 12,
+              "oak_planks": 6,
+              "spruce_planks": 1,
+              "stick": 5,
+              "moss_block": 23,
+              "iron_ingot": 44,
+              "glow_berries": 1,
+              "moss_carpet": 5,
+              "flowering_azalea": 1,
+              "granite": 13,
+              "furnace": 3,
+              "azalea": 2,
+              "diorite": 23,
+              "andesite": 21,
+              "clay_ball": 4,
+              "cobblestone": 368,
+              "rail": 5,
+              "stone_pickaxe": 6,
+              "gravel": 3
+            }
+          }
+        },
+        "failure_type": "none",
+        "recommendation": "Continue adapting from the updated state."
+      },
+      "before_status": {
+        "ok": true,
+        "connected": true,
+        "username": "AI_VTuber",
+        "entityReady": true,
+        "position": {
+          "x": -1397.4643293309205,
+          "y": 24,
+          "z": -3233.3739184857754
+        },
+        "dimension": "overworld",
+        "time": {
+          "timeOfDay": 8798,
+          "day": 181,
+          "isDay": true,
+          "moonPhase": 5
+        },
+        "health": 20,
+        "food": 20,
+        "onGround": true,
+        "inWater": false,
+        "inLava": false,
+        "inventory": [
+          {
+            "name": "raw_iron",
+            "displayName": "Raw Iron",
+            "count": 10,
+            "slot": 9
+          },
+          {
+            "name": "coal",
+            "displayName": "Coal",
+            "count": 38,
+            "slot": 10
+          },
+          {
+            "name": "wheat_seeds",
+            "displayName": "Wheat Seeds",
+            "count": 2,
+            "slot": 11
+          },
+          {
+            "name": "torch",
+            "displayName": "Torch",
+            "count": 12,
+            "slot": 12
+          },
+          {
+            "name": "oak_planks",
+            "displayName": "Oak Planks",
+            "count": 6,
+            "slot": 13
+          },
+          {
+            "name": "spruce_planks",
+            "displayName": "Spruce Planks",
+            "count": 1,
+            "slot": 14
+          },
+          {
+            "name": "stick",
+            "displayName": "Stick",
+            "count": 5,
+            "slot": 15
+          },
+          {
+            "name": "moss_block",
+            "displayName": "Moss Block",
+            "count": 23,
+            "slot": 17
+          },
+          {
+            "name": "iron_ingot",
+            "displayName": "Iron Ingot",
+            "count": 43,
+            "slot": 18
+          },
+          {
+            "name": "glow_berries",
+            "displayName": "Glow Berries",
+            "count": 1,
+            "slot": 19
+          },
+          {
+            "name": "moss_carpet",
+            "displayName": "Moss Carpet",
+            "count": 5,
+            "slot": 20
+          },
+          {
+            "name": "flowering_azalea",
+            "displayName": "Flowering Azalea",
+            "count": 1,
+            "slot": 21
+          },
+          {
+            "name": "granite",
+            "displayName": "Granite",
+            "count": 13,
+            "slot": 22
+          },
+          {
+            "name": "furnace",
+            "displayName": "Furnace",
+            "count": 3,
+            "slot": 23
+          },
+          {
+            "name": "azalea",
+            "displayName": "Azalea",
+            "count": 2,
+            "slot": 25
+          },
+          {
+            "name": "diorite",
+            "displayName": "Diorite",
+            "count": 23,
+            "slot": 26
+          },
+          {
+            "name": "andesite",
+            "displayName": "Andesite",
+            "count": 21,
+            "slot": 28
+          },
+          {
+            "name": "clay_ball",
+            "displayName": "Clay Ball",
+            "count": 4,
+            "slot": 29
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 61,
+            "slot": 30
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 31
+          },
+          {
+            "name": "rail",
+            "displayName": "Rail",
+            "count": 5,
+            "slot": 32
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 33
+          },
+          {
+            "name": "gravel",
+            "displayName": "Gravel",
+            "count": 3,
+            "slot": 34
+          },
+          {
+            "name": "coal",
+            "displayName": "Coal",
+            "count": 64,
+            "slot": 35
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 36
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 37
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 38
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 39
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 40
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 41
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 51,
+            "slot": 42
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 43
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 44
+          }
+        ],
+        "nearbyPlayers": [],
+        "nearbyEntities": [],
+        "nearbyBlockCounts": {
+          "stone": 1972,
+          "andesite": 550,
+          "cave_air": 500,
+          "diorite": 228,
+          "oak_planks": 94,
+          "granite": 56,
+          "gravel": 42,
+          "copper_ore": 30,
+          "oak_log": 23,
+          "oak_fence": 16,
+          "rail": 9,
+          "dirt": 8,
+          "glow_lichen": 3,
+          "cobweb": 2,
+          "furnace": 1,
+          "crafting_table": 1,
+          "cobblestone": 1
+        },
+        "nearbyBlocks": {
+          "crafting_table": {
+            "name": "crafting_table",
+            "position": {
+              "x": -1396,
+              "y": 24,
+              "z": -3231
+            },
+            "distance": 2.789220207602901
+          },
+          "furnace": {
+            "name": "furnace",
+            "position": {
+              "x": -1397,
+              "y": 24,
+              "z": -3234
+            },
+            "distance": 0.7794740470386127
+          },
+          "chest": null
+        },
+        "stationFacts": {
+          "usable_radius": 6,
+          "crafting_table": {
+            "visible": true,
+            "usable": true,
+            "distance": 2.789220207602901,
+            "position": {
+              "x": -1396,
+              "y": 24,
+              "z": -3231
+            }
+          },
+          "furnace": {
+            "visible": true,
+            "usable": true,
+            "distance": 0.7794740470386127,
+            "position": {
+              "x": -1397,
+              "y": 24,
+              "z": -3234
+            }
+          },
+          "chest": {
+            "visible": false,
+            "usable": false,
+            "distance": null,
+            "position": null
+          }
+        },
+        "has_nearby_crafting_table_usable": true,
+        "nearest_crafting_table_distance": 2.789220207602901,
+        "nearest_crafting_table_position": {
+          "x": -1396,
+          "y": 24,
+          "z": -3231
+        },
+        "has_visible_crafting_table": true,
+        "has_nearby_furnace_usable": true,
+        "nearest_furnace_distance": 0.7794740470386127,
+        "nearest_furnace_position": {
+          "x": -1397,
+          "y": 24,
+          "z": -3234
+        },
+        "lastKickReason": null,
+        "lastDisconnectReason": null,
+        "lastError": null,
+        "reconnectAttempts": 0,
+        "lastActionStartedAt": null,
+        "currentActionName": null,
+        "currentActionElapsedMs": null,
+        "lastDeath": null,
+        "last_death": null,
+        "respawned_recently": false,
+        "death_recovery": {
+          "known": false,
+          "respawned_recently": false,
+          "failures": 0
+        }
+      },
+      "after_status": {
+        "ok": true,
+        "connected": true,
+        "username": "AI_VTuber",
+        "entityReady": true,
+        "position": {
+          "x": -1397.4643293309205,
+          "y": 24,
+          "z": -3233.3739184857754
+        },
+        "dimension": "overworld",
+        "time": {
+          "timeOfDay": 9158,
+          "day": 181,
+          "isDay": true,
+          "moonPhase": 5
+        },
+        "health": 20,
+        "food": 20,
+        "onGround": true,
+        "inWater": false,
+        "inLava": false,
+        "inventory": [
+          {
+            "name": "raw_iron",
+            "displayName": "Raw Iron",
+            "count": 9,
+            "slot": 9
+          },
+          {
+            "name": "coal",
+            "displayName": "Coal",
+            "count": 37,
+            "slot": 10
+          },
+          {
+            "name": "wheat_seeds",
+            "displayName": "Wheat Seeds",
+            "count": 2,
+            "slot": 11
+          },
+          {
+            "name": "torch",
+            "displayName": "Torch",
+            "count": 12,
+            "slot": 12
+          },
+          {
+            "name": "oak_planks",
+            "displayName": "Oak Planks",
+            "count": 6,
+            "slot": 13
+          },
+          {
+            "name": "spruce_planks",
+            "displayName": "Spruce Planks",
+            "count": 1,
+            "slot": 14
+          },
+          {
+            "name": "stick",
+            "displayName": "Stick",
+            "count": 5,
+            "slot": 15
+          },
+          {
+            "name": "moss_block",
+            "displayName": "Moss Block",
+            "count": 23,
+            "slot": 17
+          },
+          {
+            "name": "iron_ingot",
+            "displayName": "Iron Ingot",
+            "count": 44,
+            "slot": 18
+          },
+          {
+            "name": "glow_berries",
+            "displayName": "Glow Berries",
+            "count": 1,
+            "slot": 19
+          },
+          {
+            "name": "moss_carpet",
+            "displayName": "Moss Carpet",
+            "count": 5,
+            "slot": 20
+          },
+          {
+            "name": "flowering_azalea",
+            "displayName": "Flowering Azalea",
+            "count": 1,
+            "slot": 21
+          },
+          {
+            "name": "granite",
+            "displayName": "Granite",
+            "count": 13,
+            "slot": 22
+          },
+          {
+            "name": "furnace",
+            "displayName": "Furnace",
+            "count": 3,
+            "slot": 23
+          },
+          {
+            "name": "azalea",
+            "displayName": "Azalea",
+            "count": 2,
+            "slot": 25
+          },
+          {
+            "name": "diorite",
+            "displayName": "Diorite",
+            "count": 23,
+            "slot": 26
+          },
+          {
+            "name": "andesite",
+            "displayName": "Andesite",
+            "count": 21,
+            "slot": 28
+          },
+          {
+            "name": "clay_ball",
+            "displayName": "Clay Ball",
+            "count": 4,
+            "slot": 29
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 61,
+            "slot": 30
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 31
+          },
+          {
+            "name": "rail",
+            "displayName": "Rail",
+            "count": 5,
+            "slot": 32
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 33
+          },
+          {
+            "name": "gravel",
+            "displayName": "Gravel",
+            "count": 3,
+            "slot": 34
+          },
+          {
+            "name": "coal",
+            "displayName": "Coal",
+            "count": 64,
+            "slot": 35
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 36
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 37
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 38
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 39
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 40
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 41
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 51,
+            "slot": 42
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 43
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 44
+          }
+        ],
+        "nearbyPlayers": [],
+        "nearbyEntities": [],
+        "nearbyBlockCounts": {
+          "stone": 1972,
+          "andesite": 550,
+          "cave_air": 500,
+          "diorite": 228,
+          "oak_planks": 94,
+          "granite": 56,
+          "gravel": 42,
+          "copper_ore": 30,
+          "oak_log": 23,
+          "oak_fence": 16,
+          "rail": 9,
+          "dirt": 8,
+          "glow_lichen": 3,
+          "cobweb": 2,
+          "furnace": 1,
+          "crafting_table": 1,
+          "cobblestone": 1
+        },
+        "nearbyBlocks": {
+          "crafting_table": {
+            "name": "crafting_table",
+            "position": {
+              "x": -1396,
+              "y": 24,
+              "z": -3231
+            },
+            "distance": 2.789220207602901
+          },
+          "furnace": {
+            "name": "furnace",
+            "position": {
+              "x": -1397,
+              "y": 24,
+              "z": -3234
+            },
+            "distance": 0.7794740470386127
+          },
+          "chest": null
+        },
+        "stationFacts": {
+          "usable_radius": 6,
+          "crafting_table": {
+            "visible": true,
+            "usable": true,
+            "distance": 2.789220207602901,
+            "position": {
+              "x": -1396,
+              "y": 24,
+              "z": -3231
+            }
+          },
+          "furnace": {
+            "visible": true,
+            "usable": true,
+            "distance": 0.7794740470386127,
+            "position": {
+              "x": -1397,
+              "y": 24,
+              "z": -3234
+            }
+          },
+          "chest": {
+            "visible": false,
+            "usable": false,
+            "distance": null,
+            "position": null
+          }
+        },
+        "has_nearby_crafting_table_usable": true,
+        "nearest_crafting_table_distance": 2.789220207602901,
+        "nearest_crafting_table_position": {
+          "x": -1396,
+          "y": 24,
+          "z": -3231
+        },
+        "has_visible_crafting_table": true,
+        "has_nearby_furnace_usable": true,
+        "nearest_furnace_distance": 0.7794740470386127,
+        "nearest_furnace_position": {
+          "x": -1397,
+          "y": 24,
+          "z": -3234
+        },
+        "lastKickReason": null,
+        "lastDisconnectReason": null,
+        "lastError": null,
+        "reconnectAttempts": 0,
+        "lastActionStartedAt": null,
+        "currentActionName": null,
+        "currentActionElapsedMs": null,
+        "lastDeath": null,
+        "last_death": null,
+        "respawned_recently": false,
+        "death_recovery": {
+          "known": false,
+          "respawned_recently": false,
+          "failures": 0
+        }
+      },
+      "milestones": {
+        "groups": {
+          "early": {
+            "has_logs": false,
+            "has_planks": true,
+            "has_crafting_table": false,
+            "has_nearby_crafting_table": true,
+            "has_wooden_pickaxe": false,
+            "has_stone_pickaxe": true,
+            "has_furnace": true,
+            "has_torches": true
+          },
+          "iron": {
+            "has_coal": true,
+            "has_raw_iron": true,
+            "has_iron_ingot": true,
+            "has_shield": false,
+            "has_bucket": false,
+            "has_iron_pickaxe": false,
+            "has_iron_armor_piece": false,
+            "has_full_iron_armor": false
+          },
+          "diamond_portal": {
+            "has_diamond": false,
+            "has_diamond_pickaxe": false,
+            "has_obsidian": false,
+            "has_flint": false,
+            "has_flint_and_steel": false,
+            "has_nether_portal": false,
+            "entered_nether": false
+          },
+          "nether": {
+            "has_gold_armor": false,
+            "found_fortress": false,
+            "has_blaze_rod": false,
+            "has_blaze_powder": false,
+            "has_ender_pearl": false,
+            "has_eye_of_ender": false,
+            "returned_from_nether": false
+          },
+          "stronghold_end": {
+            "stronghold_search_started": false,
+            "found_stronghold": false,
+            "found_end_portal_room": false,
+            "activated_end_portal": false,
+            "entered_end": false
+          },
+          "dragon": {
+            "end_safe_landing_done": false,
+            "crystals_remaining_unknown_or_known": false,
+            "crystals_destroyed": false,
+            "dragon_damaged": false,
+            "dragon_defeated": false,
+            "returned_to_overworld_via_end_portal": false
+          },
+          "death_recovery": {
+            "died": false,
+            "recovered_death_items": false,
+            "abandoned_death_recovery": false
+          }
+        },
+        "completed": {
+          "has_logs": false,
+          "has_planks": true,
+          "has_crafting_table": false,
+          "has_nearby_crafting_table": true,
+          "has_wooden_pickaxe": false,
+          "has_stone_pickaxe": true,
+          "has_furnace": true,
+          "has_torches": true,
+          "has_coal": true,
+          "has_raw_iron": true,
+          "has_iron_ingot": true,
+          "has_shield": false,
+          "has_bucket": false,
+          "has_iron_pickaxe": false,
+          "has_iron_armor_piece": false,
+          "has_full_iron_armor": false,
+          "has_diamond": false,
+          "has_diamond_pickaxe": false,
+          "has_obsidian": false,
+          "has_flint": false,
+          "has_flint_and_steel": false,
+          "has_nether_portal": false,
+          "entered_nether": false,
+          "has_gold_armor": false,
+          "found_fortress": false,
+          "has_blaze_rod": false,
+          "has_blaze_powder": false,
+          "has_ender_pearl": false,
+          "has_eye_of_ender": false,
+          "returned_from_nether": false,
+          "stronghold_search_started": false,
+          "found_stronghold": false,
+          "found_end_portal_room": false,
+          "activated_end_portal": false,
+          "entered_end": false,
+          "end_safe_landing_done": false,
+          "crystals_remaining_unknown_or_known": false,
+          "crystals_destroyed": false,
+          "dragon_damaged": false,
+          "dragon_defeated": false,
+          "returned_to_overworld_via_end_portal": false,
+          "died": false,
+          "recovered_death_items": false,
+          "abandoned_death_recovery": false
+        },
+        "completed_milestones": [
+          "has_planks",
+          "has_nearby_crafting_table",
+          "has_stone_pickaxe",
+          "has_furnace",
+          "has_torches",
+          "has_coal",
+          "has_raw_iron",
+          "has_iron_ingot"
+        ],
+        "next_possible_milestones": [
+          "has_logs",
+          "has_crafting_table",
+          "has_wooden_pickaxe"
+        ],
+        "counts": {
+          "completed": 8,
+          "total": 44
+        }
+      },
+      "newly_completed_milestones": [],
+      "next_possible_milestones": [
+        "has_logs",
+        "has_crafting_table",
+        "has_wooden_pickaxe"
+      ],
+      "tick": 1
+    },
+    {
+      "ok": false,
+      "mission": "Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.",
+      "user": "AI_VTuber",
+      "planner": {
+        "llm_latency_sec": 1.021,
+        "prompt_size_chars": 20613,
+        "prompt_budget_exceeded": true,
+        "planner_output_mode": "compact",
+        "llm_state_packet_preview": "{\"mission\":\"Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.\",\"planner_instruction\":\"Current state and current_facts are authoritative. Memory may be stale. If memory conflicts with current inventory or nearby blocks, trust current_facts.\",\"current_intent\":null,\"unresolved_failure\":{\"action\":\"mine_coal\",\"ok\":false,\"error\":\"Mined target block but drop collection failed: drop_collection_partial_progress\",\"failure_type\":\"partial_progress_timeout\",\"stop_reason\":\"drop_collection_partial_progress\",\"can_retry\":true,\"verifier\":{\"failure_type\":\"partial_progress_timeout\",\"stop_reason\":\"drop_collection_partial_progress\",\"suggested_next_action\":null,\"recommendation\":\"Partial progress means continuing may be reasonable, but you may choose any valid action.\",\"failed_because\":[{\"kind\":\"mined_target_but_drop_not_collected\",\"action\":\"mine_coal\",\"stop_reason\":\"drop_collection_partial_progress\",\"drop_collection_reason\":\"drop_collection_partial_progress\",\"minedTargetBlocks\":1,\"nearbyDropsFound\":1,\"relevantDropsFound\":1,\"nearestDropDistance\":2.4,\"dropEntityPosition\":{\"x",
+        "last_failure_included": false,
+        "last_relevant_failure_included": false,
+        "unresolved_failure_included": true,
+        "unresolved_failure_action": "mine_coal",
+        "unresolved_failure_age_ticks": 5,
+        "unresolved_failure_possible_next_actions": null,
+        "current_intent_included": false,
+        "current_intent_goal_action": null,
+        "current_intent_blocking_problem": null,
+        "repair_attempts_count": 0,
+        "repeated_repair_failure_count": 0,
+        "observation_fresh": false,
+        "repeated_sensing_count": 0,
+        "last_observation_tick": null,
+        "last_observation_action": null,
+        "low_information_loop": false,
+        "state_changed_recently": true,
+        "ticks_since_last_material_progress": 0,
+        "ticks_since_last_position_progress": 2,
+        "last_meaningful_change": "smelt_item_inventory_changed",
+        "memory_filtered_count": 2,
+        "stale_memory_removed_count": 0,
+        "full_catalog_count": 146,
+        "compact_action_count": 142,
+        "compact_action_chars": 2500,
+        "detailed_action_docs_count": 6,
+        "detailed_action_names": [
+          "status",
+          "flee",
+          "eat_food",
+          "recover_position",
+          "mine_coal",
+          "collect_wood"
+        ],
+        "available_actions_count": 142,
+        "raw_llm_output_chars": 118,
+        "parsed_compact_output": true,
+        "completion_tokens": 32,
+        "station_affordances": {
+          "carried_stations": {
+            "crafting_table": 0,
+            "furnace": 3,
+            "chest": 0
+          },
+          "usable_nearby_stations": {
+            "crafting_table": true,
+            "furnace": true,
+            "chest": false
+          },
+          "station_gap_facts": []
+        },
+        "item_affordances": {
+          "has_fuel": true,
+          "fuel_items": {
+            "coal": 101,
+            "oak_planks": 6,
+            "spruce_planks": 1
+          },
+          "has_smeltable_items": true,
+          "smeltable_items": {
+            "raw_iron": 9
+          },
+          "has_building_blocks": true,
+          "tool_duplicates": {
+            "stone_pickaxe": 6
+          },
+          "low_consumables": {
+            "food": false,
+            "torches": false
+          }
+        },
+        "navigation_stall": null,
+        "progress_monitor": {
+          "state_changed_recently": true,
+          "inventory_changed_recently": true,
+          "position_changed_recently": true,
+          "world_observation_changed_recently": true,
+          "danger_changed_recently": false,
+          "recent_action_repetition": {
+            "action": "smelt_item",
+            "count": 2
+          },
+          "low_information_loop": false,
+          "ticks_since_last_material_progress": 0,
+          "ticks_since_last_position_progress": 2,
+          "last_meaningful_changes": [
+            "smelt_item_inventory_changed",
+            "smelt_item_inventory_changed",
+            "approach_station_position_changed",
+            "approach_station_world_info_changed",
+            "mine_coal_inventory_changed"
+          ],
+          "stagnation_reason": null,
+          "repeated_sensing_count": 0,
+          "last_meaningful_change": "smelt_item_inventory_changed"
+        },
+        "repeated_failed_action_loop": {
+          "active": true,
+          "action": "smelt_item",
+          "count": 2,
+          "failure_types": [
+            "missing_materials",
+            "invalid_args"
+          ],
+          "state_changed_since_first_failure": true,
+          "last_failed_because": [
+            {
+              "kind": "inventory_item",
+              "item": "raw_iron",
+              "need": 1,
+              "have": 11
+            }
+          ],
+          "lesson": "This action family has failed repeatedly. Repeating it without changed requirements is unlikely to help."
+        },
+        "repeated_failed_action_count": 2,
+        "repeated_failed_action_name": "smelt_item",
+        "repeated_failed_state_changed": true,
+        "invalid_action_loop": null,
+        "recent_completed_intents": [
+          {
+            "action": "smelt_item",
+            "result": "succeeded",
+            "age_ticks": 0,
+            "input": "raw_iron"
+          },
+          {
+            "action": "smelt_item",
+            "result": "succeeded",
+            "age_ticks": 1,
+            "input": "raw_iron"
+          },
+          {
+            "action": "approach_station",
+            "result": "succeeded",
+            "age_ticks": 2,
+            "station": "furnace"
+          }
+        ],
+        "blocked_action_families_count": 0,
+        "blocked_action_families": [],
+        "chose_blocked_action_family": false,
+        "blocked_action_family_name": null,
+        "unblock_condition": null,
+        "model": "Qwen3.5-9B-Q4_K_M.gguf",
+        "args_sanitized": false,
+        "removed_arg_keys": [],
+        "planner": "hybrid",
+        "source": "llm",
+        "fallback_used": false,
+        "bridge_supported_actions_count": 149,
+        "nearest_workspace_included": true,
+        "workspace_memory_count": 50
+      },
+      "source": "llm",
+      "fallback_used": false,
+      "args_sanitized": false,
+      "removed_arg_keys": [],
+      "last_failure_included": false,
+      "available_actions_count": 142,
+      "llm_latency_sec": 1.021,
+      "prompt_size_chars": 20613,
+      "objective": "mine_coal",
+      "mood": "focused",
+      "action": {
+        "action": "mine_coal",
+        "args": {
+          "count": 16,
+          "radius": 8
+        },
+        "speech": "",
+        "reason": "Continue coal mining; previous attempt made partial progress. Objective: mine_coal"
+      },
+      "result": {
+        "ok": false,
+        "action": "mine_coal",
+        "result": {
+          "requested": 16,
+          "collected": 0,
+          "targets": [
+            "coal_ore",
+            "deepslate_coal_ore"
+          ],
+          "radius": 8,
+          "partial_success": false,
+          "can_retry": false,
+          "suggested_next_action": "explore_nearby",
+          "last_target_position": null,
+          "last_stand_position": null,
+          "stop_reason": "no_targets_found",
+          "strategy": "failed",
+          "targetCandidatesFound": 0,
+          "targetCandidatesFoundRaw": 0,
+          "exposedCandidatesFound": 0,
+          "accessCandidatesFound": 0,
+          "candidates_seen": 0,
+          "candidates_evaluated": 0,
+          "candidatesEvaluated": 0,
+          "scan_limited": false,
+          "excavatedBlocks": 0,
+          "minedTargetBlocks": 0,
+          "currentSubstep": "excavate_staircase",
+          "rejectedDangerous": 0,
+          "rejectedProtected": 0,
+          "rejectedUnsupported": 0,
+          "rejectedNoSafeStand": 0,
+          "rejectedNotExposed": 0,
+          "rejectedUnreachable": 0,
+          "nearestTargetDistance": null,
+          "nearestTargetPosition": null,
+          "nearestTargetDistanceEnd": null,
+          "nearestRawTargetDistance": null,
+          "nearestRawTargetPosition": null,
+          "selectedTargetDistance": null,
+          "selectedTargetPosition": null,
+          "selectedTargetMode": null,
+          "selectedCloseRangeTargetPosition": null,
+          "selectedAccessTargetDistance": null,
+          "selectedAccessTargetPosition": null,
+          "dropCollectionAttempted": false,
+          "closeDropPickupAttempted": false,
+          "closeDropPickupTicks": 0,
+          "dropCollectionPasses": 0,
+          "dropsCollectedThisAction": 0,
+          "targetInventoryDelta": 0,
+          "inventoryBefore": {
+            "raw_iron": 9,
+            "coal": 101,
+            "wheat_seeds": 2,
+            "torch": 12,
+            "oak_planks": 6,
+            "spruce_planks": 1,
+            "stick": 5,
+            "moss_block": 23,
+            "iron_ingot": 44,
+            "glow_berries": 1,
+            "moss_carpet": 5,
+            "flowering_azalea": 1,
+            "granite": 13,
+            "furnace": 3,
+            "azalea": 2,
+            "diorite": 23,
+            "andesite": 21,
+            "clay_ball": 4,
+            "cobblestone": 368,
+            "rail": 5,
+            "stone_pickaxe": 6,
+            "gravel": 3
+          },
+          "inventoryAfter": {
+            "raw_iron": 9,
+            "coal": 101,
+            "wheat_seeds": 2,
+            "torch": 12,
+            "oak_planks": 6,
+            "spruce_planks": 1,
+            "stick": 5,
+            "moss_block": 23,
+            "iron_ingot": 44,
+            "glow_berries": 1,
+            "moss_carpet": 5,
+            "flowering_azalea": 1,
+            "granite": 13,
+            "furnace": 3,
+            "azalea": 2,
+            "diorite": 23,
+            "andesite": 21,
+            "clay_ball": 4,
+            "cobblestone": 368,
+            "rail": 5,
+            "stone_pickaxe": 6,
+            "gravel": 3
+          },
+          "nearbyDropsFound": 0,
+          "relevantDropsFound": 0,
+          "nearestDropDistance": null,
+          "dropPathAttempts": 0,
+          "dropCollectionTimeoutMs": null,
+          "dropCollectionMethod": null,
+          "dropDirectWalkAttempted": false,
+          "dropDirectWalkTicks": 0,
+          "dropVerticalDelta": null,
+          "dropEntityPosition": null,
+          "distanceToDropStart": null,
+          "distanceToDropEnd": null,
+          "dropEntityDisappeared": false,
+          "dropEntityStillExists": null,
+          "distanceToDropMin": null,
+          "dropDistanceImproved": false,
+          "dropCollectionSucceeded": false,
+          "localDropRecoveryAttempted": false,
+          "dropSafeStandCandidatesFound": 0,
+          "selectedDropStandPosition": null,
+          "dropLocalPathAttempted": false,
+          "dropLocalPathSucceeded": false,
+          "dropLocalExcavationSteps": 0,
+          "dropBlockedBy": null,
+          "dropBlockedByDiggable": null,
+          "dropBlockedBySafeToDig": null,
+          "dropBlockedByWithinReach": null,
+          "blockerReason": null,
+          "blockerIntersectsMovementVolume": null,
+          "dropCollectionAbandoned": false,
+          "abandonedDropReason": null,
+          "resource_action_still_valid": null,
+          "dropLocalExcavationAttempted": false,
+          "dropLocalExcavationBlocksDug": 0,
+          "dropRecoveryFailureReason": null,
+          "distanceToDropAfterLocalRecovery": null,
+          "distanceToDropAfterExcavation": null,
+          "directWalkNoMovement": false,
+          "botPositionChanged": null,
+          "inventoryDeltaAfterDig": null,
+          "inventoryDeltaAfterDropCollection": null,
+          "targetBlockStillExists": null,
+          "pathfindingTimeoutMs": 15000,
+          "resourcePathfindingTimeoutMs": 12000,
+          "pathAttempts": 0,
+          "digAttempts": 0,
+          "closeRangeFallbackAttempted": 0,
+          "directDigAttempted": 0,
+          "localStandAdjustmentAttempted": false,
+          "localExcavationSteps": 0,
+          "closeRangeFailureReason": null,
+          "reusedLastTarget": false,
+          "lastTargetStillExists": false,
+          "distanceToLastTarget": null,
+          "pathPlannerError": null,
+          "dropCollectabilityScore": null,
+          "expectedDropSafeStandCandidates": null,
+          "expectedDropVerticalRisk": null,
+          "targetRejectedForDropRisk": false,
+          "inventory": [
+            {
+              "name": "raw_iron",
+              "displayName": "Raw Iron",
+              "count": 9,
+              "slot": 9
+            },
+            {
+              "name": "coal",
+              "displayName": "Coal",
+              "count": 37,
+              "slot": 10
+            },
+            {
+              "name": "wheat_seeds",
+              "displayName": "Wheat Seeds",
+              "count": 2,
+              "slot": 11
+            },
+            {
+              "name": "torch",
+              "displayName": "Torch",
+              "count": 12,
+              "slot": 12
+            },
+            {
+              "name": "oak_planks",
+              "displayName": "Oak Planks",
+              "count": 6,
+              "slot": 13
+            },
+            {
+              "name": "spruce_planks",
+              "displayName": "Spruce Planks",
+              "count": 1,
+              "slot": 14
+            },
+            {
+              "name": "stick",
+              "displayName": "Stick",
+              "count": 5,
+              "slot": 15
+            },
+            {
+              "name": "moss_block",
+              "displayName": "Moss Block",
+              "count": 23,
+              "slot": 17
+            },
+            {
+              "name": "iron_ingot",
+              "displayName": "Iron Ingot",
+              "count": 44,
+              "slot": 18
+            },
+            {
+              "name": "glow_berries",
+              "displayName": "Glow Berries",
+              "count": 1,
+              "slot": 19
+            },
+            {
+              "name": "moss_carpet",
+              "displayName": "Moss Carpet",
+              "count": 5,
+              "slot": 20
+            },
+            {
+              "name": "flowering_azalea",
+              "displayName": "Flowering Azalea",
+              "count": 1,
+              "slot": 21
+            },
+            {
+              "name": "granite",
+              "displayName": "Granite",
+              "count": 13,
+              "slot": 22
+            },
+            {
+              "name": "furnace",
+              "displayName": "Furnace",
+              "count": 3,
+              "slot": 23
+            },
+            {
+              "name": "azalea",
+              "displayName": "Azalea",
+              "count": 2,
+              "slot": 25
+            },
+            {
+              "name": "diorite",
+              "displayName": "Diorite",
+              "count": 23,
+              "slot": 26
+            },
+            {
+              "name": "andesite",
+              "displayName": "Andesite",
+              "count": 21,
+              "slot": 28
+            },
+            {
+              "name": "clay_ball",
+              "displayName": "Clay Ball",
+              "count": 4,
+              "slot": 29
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 61,
+              "slot": 30
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 64,
+              "slot": 31
+            },
+            {
+              "name": "rail",
+              "displayName": "Rail",
+              "count": 5,
+              "slot": 32
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 33
+            },
+            {
+              "name": "gravel",
+              "displayName": "Gravel",
+              "count": 3,
+              "slot": 34
+            },
+            {
+              "name": "coal",
+              "displayName": "Coal",
+              "count": 64,
+              "slot": 35
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 36
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 37
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 38
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 64,
+              "slot": 39
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 64,
+              "slot": 40
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 64,
+              "slot": 41
+            },
+            {
+              "name": "cobblestone",
+              "displayName": "Cobblestone",
+              "count": 51,
+              "slot": 42
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 43
+            },
+            {
+              "name": "stone_pickaxe",
+              "displayName": "Stone Pickaxe",
+              "count": 1,
+              "slot": 44
+            }
+          ],
+          "inventory_delta": {},
+          "bot_position": {
+            "x": -1397.4643293309205,
+            "y": 24,
+            "z": -3233.3739184857754
+          },
+          "allowExcavate": true,
+          "accessMode": "safe_staircase",
+          "failure_type": "target_not_found"
+        },
+        "error": "No target block found nearby. Try explore_nearby."
+      },
+      "verifier": {
+        "success": false,
+        "partial_success": false,
+        "usable_for_station": false,
+        "distance_improved": false,
+        "failed_because": [],
+        "repeatable_now": true,
+        "relevant_state": {},
+        "repeat_condition": null,
+        "evidence": {
+          "action": "mine_coal",
+          "action_error": "No target block found nearby. Try explore_nearby.",
+          "failure_type": "target_not_found",
+          "stop_reason": "no_targets_found",
+          "suggested_next_action": "explore_nearby",
+          "fallback_suggested_next_action": null,
+          "can_retry": false,
+          "needed": null,
+          "station_needed": null,
+          "nearest_station_distance": null,
+          "usable_radius": null,
+          "missing_materials": [],
+          "possible_next_actions": null,
+          "lesson": null,
+          "partial_success": false,
+          "usable_for_station": false,
+          "distance_improved": false,
+          "diagnostics": {},
+          "before": {
+            "health": 20,
+            "food": 20,
+            "position": {
+              "x": -1397.4643293309205,
+              "y": 24,
+              "z": -3233.3739184857754
+            },
+            "hostile_nearby": false,
+            "inventory_counts": {
+              "raw_iron": 9,
+              "coal": 101,
+              "wheat_seeds": 2,
+              "torch": 12,
+              "oak_planks": 6,
+              "spruce_planks": 1,
+              "stick": 5,
+              "moss_block": 23,
+              "iron_ingot": 44,
+              "glow_berries": 1,
+              "moss_carpet": 5,
+              "flowering_azalea": 1,
+              "granite": 13,
+              "furnace": 3,
+              "azalea": 2,
+              "diorite": 23,
+              "andesite": 21,
+              "clay_ball": 4,
+              "cobblestone": 368,
+              "rail": 5,
+              "stone_pickaxe": 6,
+              "gravel": 3
+            }
+          },
+          "after": {
+            "health": 20,
+            "food": 20,
+            "position": {
+              "x": -1397.4643293309205,
+              "y": 24,
+              "z": -3233.3739184857754
+            },
+            "hostile_nearby": false,
+            "inventory_counts": {
+              "raw_iron": 9,
+              "coal": 101,
+              "wheat_seeds": 2,
+              "torch": 12,
+              "oak_planks": 6,
+              "spruce_planks": 1,
+              "stick": 5,
+              "moss_block": 23,
+              "iron_ingot": 44,
+              "glow_berries": 1,
+              "moss_carpet": 5,
+              "flowering_azalea": 1,
+              "granite": 13,
+              "furnace": 3,
+              "azalea": 2,
+              "diorite": 23,
+              "andesite": 21,
+              "clay_ball": 4,
+              "cobblestone": 368,
+              "rail": 5,
+              "stone_pickaxe": 6,
+              "gravel": 3
+            }
+          }
+        },
+        "failure_type": "target_not_found",
+        "stop_reason": "no_targets_found",
+        "suggested_next_action": "explore_nearby",
+        "fallback_suggested_next_action": null,
+        "can_retry": false,
+        "needed": null,
+        "station_needed": null,
+        "nearest_station_distance": null,
+        "usable_radius": null,
+        "missing_materials": [],
+        "possible_next_actions": null,
+        "lesson": null,
+        "diagnostics": {},
+        "recommendation": "Consider explore_nearby before retrying."
+      },
+      "before_status": {
+        "ok": true,
+        "connected": true,
+        "username": "AI_VTuber",
+        "entityReady": true,
+        "position": {
+          "x": -1397.4643293309205,
+          "y": 24,
+          "z": -3233.3739184857754
+        },
+        "dimension": "overworld",
+        "time": {
+          "timeOfDay": 9178,
+          "day": 181,
+          "isDay": true,
+          "moonPhase": 5
+        },
+        "health": 20,
+        "food": 20,
+        "onGround": true,
+        "inWater": false,
+        "inLava": false,
+        "inventory": [
+          {
+            "name": "raw_iron",
+            "displayName": "Raw Iron",
+            "count": 9,
+            "slot": 9
+          },
+          {
+            "name": "coal",
+            "displayName": "Coal",
+            "count": 37,
+            "slot": 10
+          },
+          {
+            "name": "wheat_seeds",
+            "displayName": "Wheat Seeds",
+            "count": 2,
+            "slot": 11
+          },
+          {
+            "name": "torch",
+            "displayName": "Torch",
+            "count": 12,
+            "slot": 12
+          },
+          {
+            "name": "oak_planks",
+            "displayName": "Oak Planks",
+            "count": 6,
+            "slot": 13
+          },
+          {
+            "name": "spruce_planks",
+            "displayName": "Spruce Planks",
+            "count": 1,
+            "slot": 14
+          },
+          {
+            "name": "stick",
+            "displayName": "Stick",
+            "count": 5,
+            "slot": 15
+          },
+          {
+            "name": "moss_block",
+            "displayName": "Moss Block",
+            "count": 23,
+            "slot": 17
+          },
+          {
+            "name": "iron_ingot",
+            "displayName": "Iron Ingot",
+            "count": 44,
+            "slot": 18
+          },
+          {
+            "name": "glow_berries",
+            "displayName": "Glow Berries",
+            "count": 1,
+            "slot": 19
+          },
+          {
+            "name": "moss_carpet",
+            "displayName": "Moss Carpet",
+            "count": 5,
+            "slot": 20
+          },
+          {
+            "name": "flowering_azalea",
+            "displayName": "Flowering Azalea",
+            "count": 1,
+            "slot": 21
+          },
+          {
+            "name": "granite",
+            "displayName": "Granite",
+            "count": 13,
+            "slot": 22
+          },
+          {
+            "name": "furnace",
+            "displayName": "Furnace",
+            "count": 3,
+            "slot": 23
+          },
+          {
+            "name": "azalea",
+            "displayName": "Azalea",
+            "count": 2,
+            "slot": 25
+          },
+          {
+            "name": "diorite",
+            "displayName": "Diorite",
+            "count": 23,
+            "slot": 26
+          },
+          {
+            "name": "andesite",
+            "displayName": "Andesite",
+            "count": 21,
+            "slot": 28
+          },
+          {
+            "name": "clay_ball",
+            "displayName": "Clay Ball",
+            "count": 4,
+            "slot": 29
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 61,
+            "slot": 30
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 31
+          },
+          {
+            "name": "rail",
+            "displayName": "Rail",
+            "count": 5,
+            "slot": 32
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 33
+          },
+          {
+            "name": "gravel",
+            "displayName": "Gravel",
+            "count": 3,
+            "slot": 34
+          },
+          {
+            "name": "coal",
+            "displayName": "Coal",
+            "count": 64,
+            "slot": 35
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 36
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 37
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 38
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 39
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 40
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 41
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 51,
+            "slot": 42
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 43
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 44
+          }
+        ],
+        "nearbyPlayers": [],
+        "nearbyEntities": [],
+        "nearbyBlockCounts": {
+          "stone": 1972,
+          "andesite": 550,
+          "cave_air": 500,
+          "diorite": 228,
+          "oak_planks": 94,
+          "granite": 56,
+          "gravel": 42,
+          "copper_ore": 30,
+          "oak_log": 23,
+          "oak_fence": 16,
+          "rail": 9,
+          "dirt": 8,
+          "glow_lichen": 3,
+          "cobweb": 2,
+          "furnace": 1,
+          "crafting_table": 1,
+          "cobblestone": 1
+        },
+        "nearbyBlocks": {
+          "crafting_table": {
+            "name": "crafting_table",
+            "position": {
+              "x": -1396,
+              "y": 24,
+              "z": -3231
+            },
+            "distance": 2.789220207602901
+          },
+          "furnace": {
+            "name": "furnace",
+            "position": {
+              "x": -1397,
+              "y": 24,
+              "z": -3234
+            },
+            "distance": 0.7794740470386127
+          },
+          "chest": null
+        },
+        "stationFacts": {
+          "usable_radius": 6,
+          "crafting_table": {
+            "visible": true,
+            "usable": true,
+            "distance": 2.789220207602901,
+            "position": {
+              "x": -1396,
+              "y": 24,
+              "z": -3231
+            }
+          },
+          "furnace": {
+            "visible": true,
+            "usable": true,
+            "distance": 0.7794740470386127,
+            "position": {
+              "x": -1397,
+              "y": 24,
+              "z": -3234
+            }
+          },
+          "chest": {
+            "visible": false,
+            "usable": false,
+            "distance": null,
+            "position": null
+          }
+        },
+        "has_nearby_crafting_table_usable": true,
+        "nearest_crafting_table_distance": 2.789220207602901,
+        "nearest_crafting_table_position": {
+          "x": -1396,
+          "y": 24,
+          "z": -3231
+        },
+        "has_visible_crafting_table": true,
+        "has_nearby_furnace_usable": true,
+        "nearest_furnace_distance": 0.7794740470386127,
+        "nearest_furnace_position": {
+          "x": -1397,
+          "y": 24,
+          "z": -3234
+        },
+        "lastKickReason": null,
+        "lastDisconnectReason": null,
+        "lastError": null,
+        "reconnectAttempts": 0,
+        "lastActionStartedAt": null,
+        "currentActionName": null,
+        "currentActionElapsedMs": null,
+        "lastDeath": null,
+        "last_death": null,
+        "respawned_recently": false,
+        "death_recovery": {
+          "known": false,
+          "respawned_recently": false,
+          "failures": 0
+        }
+      },
+      "after_status": {
+        "ok": true,
+        "connected": true,
+        "username": "AI_VTuber",
+        "entityReady": true,
+        "position": {
+          "x": -1397.4643293309205,
+          "y": 24,
+          "z": -3233.3739184857754
+        },
+        "dimension": "overworld",
+        "time": {
+          "timeOfDay": 9198,
+          "day": 181,
+          "isDay": true,
+          "moonPhase": 5
+        },
+        "health": 20,
+        "food": 20,
+        "onGround": true,
+        "inWater": false,
+        "inLava": false,
+        "inventory": [
+          {
+            "name": "raw_iron",
+            "displayName": "Raw Iron",
+            "count": 9,
+            "slot": 9
+          },
+          {
+            "name": "coal",
+            "displayName": "Coal",
+            "count": 37,
+            "slot": 10
+          },
+          {
+            "name": "wheat_seeds",
+            "displayName": "Wheat Seeds",
+            "count": 2,
+            "slot": 11
+          },
+          {
+            "name": "torch",
+            "displayName": "Torch",
+            "count": 12,
+            "slot": 12
+          },
+          {
+            "name": "oak_planks",
+            "displayName": "Oak Planks",
+            "count": 6,
+            "slot": 13
+          },
+          {
+            "name": "spruce_planks",
+            "displayName": "Spruce Planks",
+            "count": 1,
+            "slot": 14
+          },
+          {
+            "name": "stick",
+            "displayName": "Stick",
+            "count": 5,
+            "slot": 15
+          },
+          {
+            "name": "moss_block",
+            "displayName": "Moss Block",
+            "count": 23,
+            "slot": 17
+          },
+          {
+            "name": "iron_ingot",
+            "displayName": "Iron Ingot",
+            "count": 44,
+            "slot": 18
+          },
+          {
+            "name": "glow_berries",
+            "displayName": "Glow Berries",
+            "count": 1,
+            "slot": 19
+          },
+          {
+            "name": "moss_carpet",
+            "displayName": "Moss Carpet",
+            "count": 5,
+            "slot": 20
+          },
+          {
+            "name": "flowering_azalea",
+            "displayName": "Flowering Azalea",
+            "count": 1,
+            "slot": 21
+          },
+          {
+            "name": "granite",
+            "displayName": "Granite",
+            "count": 13,
+            "slot": 22
+          },
+          {
+            "name": "furnace",
+            "displayName": "Furnace",
+            "count": 3,
+            "slot": 23
+          },
+          {
+            "name": "azalea",
+            "displayName": "Azalea",
+            "count": 2,
+            "slot": 25
+          },
+          {
+            "name": "diorite",
+            "displayName": "Diorite",
+            "count": 23,
+            "slot": 26
+          },
+          {
+            "name": "andesite",
+            "displayName": "Andesite",
+            "count": 21,
+            "slot": 28
+          },
+          {
+            "name": "clay_ball",
+            "displayName": "Clay Ball",
+            "count": 4,
+            "slot": 29
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 61,
+            "slot": 30
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 31
+          },
+          {
+            "name": "rail",
+            "displayName": "Rail",
+            "count": 5,
+            "slot": 32
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 33
+          },
+          {
+            "name": "gravel",
+            "displayName": "Gravel",
+            "count": 3,
+            "slot": 34
+          },
+          {
+            "name": "coal",
+            "displayName": "Coal",
+            "count": 64,
+            "slot": 35
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 36
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 37
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 38
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 39
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 40
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 64,
+            "slot": 41
+          },
+          {
+            "name": "cobblestone",
+            "displayName": "Cobblestone",
+            "count": 51,
+            "slot": 42
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 43
+          },
+          {
+            "name": "stone_pickaxe",
+            "displayName": "Stone Pickaxe",
+            "count": 1,
+            "slot": 44
+          }
+        ],
+        "nearbyPlayers": [],
+        "nearbyEntities": [],
+        "nearbyBlockCounts": {
+          "stone": 1972,
+          "andesite": 550,
+          "cave_air": 500,
+          "diorite": 228,
+          "oak_planks": 94,
+          "granite": 56,
+          "gravel": 42,
+          "copper_ore": 30,
+          "oak_log": 23,
+          "oak_fence": 16,
+          "rail": 9,
+          "dirt": 8,
+          "glow_lichen": 3,
+          "cobweb": 2,
+          "furnace": 1,
+          "crafting_table": 1,
+          "cobblestone": 1
+        },
+        "nearbyBlocks": {
+          "crafting_table": {
+            "name": "crafting_table",
+            "position": {
+              "x": -1396,
+              "y": 24,
+              "z": -3231
+            },
+            "distance": 2.789220207602901
+          },
+          "furnace": {
+            "name": "furnace",
+            "position": {
+              "x": -1397,
+              "y": 24,
+              "z": -3234
+            },
+            "distance": 0.7794740470386127
+          },
+          "chest": null
+        },
+        "stationFacts": {
+          "usable_radius": 6,
+          "crafting_table": {
+            "visible": true,
+            "usable": true,
+            "distance": 2.789220207602901,
+            "position": {
+              "x": -1396,
+              "y": 24,
+              "z": -3231
+            }
+          },
+          "furnace": {
+            "visible": true,
+            "usable": true,
+            "distance": 0.7794740470386127,
+            "position": {
+              "x": -1397,
+              "y": 24,
+              "z": -3234
+            }
+          },
+          "chest": {
+            "visible": false,
+            "usable": false,
+            "distance": null,
+            "position": null
+          }
+        },
+        "has_nearby_crafting_table_usable": true,
+        "nearest_crafting_table_distance": 2.789220207602901,
+        "nearest_crafting_table_position": {
+          "x": -1396,
+          "y": 24,
+          "z": -3231
+        },
+        "has_visible_crafting_table": true,
+        "has_nearby_furnace_usable": true,
+        "nearest_furnace_distance": 0.7794740470386127,
+        "nearest_furnace_position": {
+          "x": -1397,
+          "y": 24,
+          "z": -3234
+        },
+        "lastKickReason": null,
+        "lastDisconnectReason": null,
+        "lastError": null,
+        "reconnectAttempts": 0,
+        "lastActionStartedAt": null,
+        "currentActionName": null,
+        "currentActionElapsedMs": null,
+        "lastDeath": null,
+        "last_death": null,
+        "respawned_recently": false,
+        "death_recovery": {
+          "known": false,
+          "respawned_recently": false,
+          "failures": 0
+        }
+      },
+      "milestones": {
+        "groups": {
+          "early": {
+            "has_logs": false,
+            "has_planks": true,
+            "has_crafting_table": false,
+            "has_nearby_crafting_table": true,
+            "has_wooden_pickaxe": false,
+            "has_stone_pickaxe": true,
+            "has_furnace": true,
+            "has_torches": true
+          },
+          "iron": {
+            "has_coal": true,
+            "has_raw_iron": true,
+            "has_iron_ingot": true,
+            "has_shield": false,
+            "has_bucket": false,
+            "has_iron_pickaxe": false,
+            "has_iron_armor_piece": false,
+            "has_full_iron_armor": false
+          },
+          "diamond_portal": {
+            "has_diamond": false,
+            "has_diamond_pickaxe": false,
+            "has_obsidian": false,
+            "has_flint": false,
+            "has_flint_and_steel": false,
+            "has_nether_portal": false,
+            "entered_nether": false
+          },
+          "nether": {
+            "has_gold_armor": false,
+            "found_fortress": false,
+            "has_blaze_rod": false,
+            "has_blaze_powder": false,
+            "has_ender_pearl": false,
+            "has_eye_of_ender": false,
+            "returned_from_nether": false
+          },
+          "stronghold_end": {
+            "stronghold_search_started": false,
+            "found_stronghold": false,
+            "found_end_portal_room": false,
+            "activated_end_portal": false,
+            "entered_end": false
+          },
+          "dragon": {
+            "end_safe_landing_done": false,
+            "crystals_remaining_unknown_or_known": false,
+            "crystals_destroyed": false,
+            "dragon_damaged": false,
+            "dragon_defeated": false,
+            "returned_to_overworld_via_end_portal": false
+          },
+          "death_recovery": {
+            "died": false,
+            "recovered_death_items": false,
+            "abandoned_death_recovery": false
+          }
+        },
+        "completed": {
+          "has_logs": false,
+          "has_planks": true,
+          "has_crafting_table": false,
+          "has_nearby_crafting_table": true,
+          "has_wooden_pickaxe": false,
+          "has_stone_pickaxe": true,
+          "has_furnace": true,
+          "has_torches": true,
+          "has_coal": true,
+          "has_raw_iron": true,
+          "has_iron_ingot": true,
+          "has_shield": false,
+          "has_bucket": false,
+          "has_iron_pickaxe": false,
+          "has_iron_armor_piece": false,
+          "has_full_iron_armor": false,
+          "has_diamond": false,
+          "has_diamond_pickaxe": false,
+          "has_obsidian": false,
+          "has_flint": false,
+          "has_flint_and_steel": false,
+          "has_nether_portal": false,
+          "entered_nether": false,
+          "has_gold_armor": false,
+          "found_fortress": false,
+          "has_blaze_rod": false,
+          "has_blaze_powder": false,
+          "has_ender_pearl": false,
+          "has_eye_of_ender": false,
+          "returned_from_nether": false,
+          "stronghold_search_started": false,
+          "found_stronghold": false,
+          "found_end_portal_room": false,
+          "activated_end_portal": false,
+          "entered_end": false,
+          "end_safe_landing_done": false,
+          "crystals_remaining_unknown_or_known": false,
+          "crystals_destroyed": false,
+          "dragon_damaged": false,
+          "dragon_defeated": false,
+          "returned_to_overworld_via_end_portal": false,
+          "died": false,
+          "recovered_death_items": false,
+          "abandoned_death_recovery": false
+        },
+        "completed_milestones": [
+          "has_planks",
+          "has_nearby_crafting_table",
+          "has_stone_pickaxe",
+          "has_furnace",
+          "has_torches",
+          "has_coal",
+          "has_raw_iron",
+          "has_iron_ingot"
+        ],
+        "next_possible_milestones": [
+          "has_logs",
+          "has_crafting_table",
+          "has_wooden_pickaxe"
+        ],
+        "counts": {
+          "completed": 8,
+          "total": 44
+        }
+      },
+      "newly_completed_milestones": [],
+      "next_possible_milestones": [
+        "has_logs",
+        "has_crafting_table",
+        "has_wooden_pickaxe"
+      ],
+      "tick": 2
+    }
+  ]
+}

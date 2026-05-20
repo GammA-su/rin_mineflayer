@@ -1,0 +1,12 @@
+Stream loop starting — output: out/stream_runs/20260519T181144Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+Press Ctrl+C to stop.
+
+[1] mine_iron_ore {"count":1} -> ok=false failure=partial_progress_timeout stop=mined_target_but_drop_not_collected collected=0 error='Mined target block but drop collection failed: drop_collection_timeout'
+[2] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[3] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=station_visible_but_too_far error='Furnace is visible but too far to use (11.5 blocks).'
+  [batch 1 saved  ticks 1-3 (partial)]
+
+Stopped. 3 ticks total. Output: out/stream_runs/20260519T181144Z

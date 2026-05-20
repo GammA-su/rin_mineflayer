@@ -8,6 +8,139 @@ from typing import Any
 from vtuber_ai.schemas import ActionRequest, ActionResult
 
 DEFAULT_DB_PATH = "data/memory.sqlite"
+OBSERVATION_ACTIONS = frozenset({
+    "status",
+    "check_inventory",
+    "check_time_of_day",
+    "check_light_level",
+    "check_biome",
+    "look_around",
+    "scan_for_hostiles",
+    "scan_for_passive_mobs",
+    "scan_for_chests",
+    "scan_for_specific_block",
+    "scan_for_liquids",
+    "scan_for_structures",
+    "scan_workspace",
+    "list_waypoints",
+    "describe_actions",
+})
+LOW_INFORMATION_ACTIONS = OBSERVATION_ACTIONS
+
+
+def is_observation_action(action: Any) -> bool:
+    return isinstance(action, str) and (action in OBSERVATION_ACTIONS or action.startswith("scan_"))
+
+
+def is_low_information_action(action: Any) -> bool:
+    return isinstance(action, str) and (action in LOW_INFORMATION_ACTIONS or action.startswith("scan_"))
+
+
+_MINE_PREFIX = "mine_"
+_COLLECT_PREFIX = "collect_"
+
+
+def schema_blocked_family_key(action: str, failed_because: list[dict[str, Any]]) -> str | None:
+    """Return an action_schema family key from an invalid_args failed_because list, or None.
+
+    Scans failed_because for the first entry with kind='invalid_args' and a missing_arg field.
+    Returns e.g. 'action_schema:smelt_item:missing_input'.
+    """
+    for entry in (failed_because or []):
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("kind") == "invalid_args" and isinstance(entry.get("missing_arg"), str):
+            return f"action_schema:{action}:missing_{entry['missing_arg']}"
+    return None
+
+
+def action_family_key(action: str, args: dict[str, Any] | None = None) -> str | None:
+    """Return the blocked-family key for an action + args, or None if no family applies.
+
+    Families:
+      resource_acquisition:<block>  — mine_*, collect_*, navigate_to_block_type targeting a block
+      action:<name>                 — smelt_item, scan_for_specific_block, other repeated-failure actions
+      navigation_target:<suffix>    — navigate_to_* (non-resource)
+      action_schema:<action>:missing_<arg>  — built from schema_blocked_family_key, not here
+
+    Virtual families (created by game_brain, never returned here):
+      drop_collection:<resource>        — mining succeeded but drop unreachable (normal)
+      drop_collection:<resource>:<pos>  — deep/unreachable drop at specific position; does NOT
+                                          block resource_acquisition:* so mining can continue
+    """
+    if not isinstance(action, str):
+        return None
+    _args = args or {}
+
+    # scan_for_specific_block: classified before the observation guard so repeated
+    # invalid-args failures are still trackable.
+    if action == "scan_for_specific_block":
+        return "action:scan_for_specific_block"
+
+    if is_observation_action(action):
+        return None
+
+    if action.startswith(_MINE_PREFIX):
+        return f"resource_acquisition:{action[len(_MINE_PREFIX):]}"
+
+    if action.startswith(_COLLECT_PREFIX):
+        resource = action[len(_COLLECT_PREFIX):]
+        return f"resource_acquisition:{resource}"
+
+    if action == "collect_obsidian":
+        return "resource_acquisition:obsidian"
+
+    if action in {"navigate_to_block_type", "acquire_blocks"}:
+        targets = _args.get("targets")
+        if isinstance(targets, list) and targets:
+            return f"resource_acquisition:{targets[0]}"
+        target = _args.get("target")
+        if isinstance(target, str) and target:
+            return f"resource_acquisition:{target}"
+        return None
+
+    if action == "smelt_item":
+        return "action:smelt_item"
+
+    if action.startswith("navigate_to_"):
+        return f"navigation_target:{action[len('navigate_to_'):]}"
+
+    return None
+
+
+RA_BLOCK_TTL_TICKS: int = 6
+RA_BUCKET_GRANULARITY: int = 8
+
+
+def pos_bucket(pos: dict[str, Any] | None, granularity: int = RA_BUCKET_GRANULARITY) -> str:
+    """Return a string like '8_64_8' for the 8-block bucket containing pos."""
+    if not pos:
+        return "unknown"
+    x = int(pos.get("x", 0)) // granularity * granularity
+    y = int(pos.get("y", 0)) // granularity * granularity
+    z = int(pos.get("z", 0)) // granularity * granularity
+    return f"{x}_{y}_{z}"
+
+
+def _access_sig_from_verifier(tick: dict[str, Any]) -> str:
+    """Return the failure mode (access signature) from a tick's verifier."""
+    verifier = tick.get("verifier")
+    if not isinstance(verifier, dict):
+        return "unknown"
+    sig = verifier.get("stop_reason") or verifier.get("failure_type") or ""
+    return sig if sig and sig not in {"", "none"} else "unknown"
+
+
+def resource_acquisition_scoped_key(
+    resource: str,
+    dimension: str | None,
+    pos: dict[str, Any] | None,
+    access_sig: str,
+) -> str:
+    """Return a position-and-access-scoped block key for a resource acquisition family."""
+    dim = (dimension or "unknown").lower()
+    bucket = pos_bucket(pos)
+    return f"resource_acquisition:{resource}:{dim}:{bucket}:{access_sig}"
 
 
 def init_db(db_path: str = DEFAULT_DB_PATH) -> None:

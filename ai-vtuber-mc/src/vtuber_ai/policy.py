@@ -64,6 +64,7 @@ ALLOWED_ACTIONS = frozenset(
         "return_to_spawn_or_home",
         "find_safe_workspace",
         "setup_workspace",
+        "approach_station",
         "return_to_position",
         "return_to_workspace",
         "return_to_known_position",
@@ -165,6 +166,7 @@ ALLOWED_ACTIONS = frozenset(
         "retreat_from_nether_danger",
         "leave_nether",
         "describe_actions",
+        "debug_collect_drops",
     }
 )
 
@@ -207,7 +209,7 @@ ALLOWED_ACQUIRE_TARGETS = frozenset(
     }
 )
 
-ALLOWED_ACQUIRE_ACCESS_MODES = frozenset({"surface_first", "safe_staircase"})
+ALLOWED_ACQUIRE_ACCESS_MODES = frozenset({"exposed", "surface_first", "safe_staircase"})
 
 PLACE_BLOCK_ALLOWED_ITEMS = frozenset({
     "dirt", "cobblestone", "stone", "crafting_table", "furnace",
@@ -216,6 +218,7 @@ PLACE_BLOCK_ALLOWED_ITEMS = frozenset({
 })
 PLACE_MODES = frozenset({"nearby", "floor", "wall", "forward", "under_self", "workspace"})
 WORKSPACE_PURPOSES = frozenset({"crafting", "smelting", "storage", "general"})
+STATION_TYPES = frozenset({"crafting_table", "furnace", "chest"})
 PLACE_DIRECTIONS = frozenset({"north", "south", "east", "west", "up", "down", "forward", "back", "left", "right"})
 PLACE_WATER_MODES = frozenset({"nearby", "downward_safety", "portal_casting", "mlg"})
 
@@ -263,6 +266,37 @@ CRAFT_ITEM_SINGLE_COUNT = frozenset({
     "iron_boots",
     "iron_armor",
 })
+CRAFT_ITEM_ACTION_ALIASES: dict[str, str] = {
+    "crafting_table": "craft_crafting_table",
+    "workbench": "craft_crafting_table",
+    "planks": "craft_planks",
+    "spruce_planks": "craft_planks",
+    "oak_planks": "craft_planks",
+    "sticks": "craft_sticks",
+    "stick": "craft_sticks",
+    "wooden_pickaxe": "craft_wooden_pickaxe",
+    "stone_pickaxe": "craft_stone_pickaxe",
+    "furnace": "craft_furnace",
+    "torch": "craft_torches",
+    "torches": "craft_torches",
+    "chest": "craft_chest",
+    "shield": "craft_shield",
+    "bucket": "craft_bucket",
+    "iron_pickaxe": "craft_iron_pickaxe",
+    "iron_sword": "craft_iron_sword",
+    "iron_armor": "craft_iron_armor",
+    "diamond_pickaxe": "craft_diamond_pickaxe",
+    "diamond_sword": "craft_diamond_sword",
+    "diamond_armor": "craft_diamond_armor",
+    "blaze_powder": "craft_blaze_powder",
+    "eye_of_ender": "craft_eyes_of_ender",
+    "eyes_of_ender": "craft_eyes_of_ender",
+    "bed": "craft_bed",
+    "bow": "craft_bow",
+    "arrows": "craft_arrows",
+    "boat": "craft_boat",
+}
+CRAFT_ITEM_COUNT_TARGETS = frozenset({"craft_planks", "craft_sticks", "craft_torches", "craft_arrows"})
 SMELT_INPUTS = frozenset({
     "raw_iron",
     "raw_gold",
@@ -335,10 +369,10 @@ _ACTION_ARGS: dict[str, frozenset[str]] = {
     "place_bed": frozenset(),
     "place_boat": frozenset(),
     "place_chest": frozenset(),
-    "place_furnace": frozenset(),
+    "place_furnace": frozenset({"radius", "allowPrepareArea"}),
     "place_torch": frozenset(),
     "craft_wooden_pickaxe": frozenset(),
-    "mine_stone": frozenset({"count"}),
+    "mine_stone": frozenset({"count", "radius"}),
     "craft_stone_pickaxe": frozenset(),
     "recover_position": frozenset(),
     "check_inventory": frozenset(),
@@ -366,6 +400,7 @@ _ACTION_ARGS: dict[str, frozenset[str]] = {
     "recover_death_items": frozenset(),
     "find_safe_workspace": frozenset({"radius", "purpose"}),
     "setup_workspace": frozenset({"need_crafting_table", "need_furnace", "need_chest", "radius"}),
+    "approach_station": frozenset({"station", "radius"}),
     "return_to_position": frozenset({"x", "y", "z", "dimension", "radius"}),
     "return_to_workspace": frozenset({"purpose"}),
     "return_to_known_position": frozenset({"label"}),
@@ -413,8 +448,8 @@ _ACTION_ARGS: dict[str, frozenset[str]] = {
     "craft_diamond_pickaxe": frozenset(),
     "craft_diamond_sword": frozenset(),
     "craft_diamond_armor": frozenset(),
-    "mine_coal": frozenset({"count"}),
-    "mine_iron_ore": frozenset({"count"}),
+    "mine_coal": frozenset({"count", "radius", "allowExcavate", "accessMode"}),
+    "mine_iron_ore": frozenset({"count", "radius"}),
     "mine_diamond_ore": frozenset({"count"}),
     "mine_redstone": frozenset({"count"}),
     "mine_gold_ore": frozenset({"count"}),
@@ -492,6 +527,17 @@ _ACTION_ARGS: dict[str, frozenset[str]] = {
     "return_to_overworld_via_end_portal": frozenset(),
     "finish_dragon_fight": frozenset(),
     "describe_actions": frozenset({"actions"}),
+    "debug_collect_drops": frozenset({"radius", "targetItems"}),
+}
+
+_BOOLEAN_ARG_KEYS: dict[str, frozenset[str]] = {
+    "acquire_blocks": frozenset({"allowExcavate"}),
+    "mine_coal": frozenset({"allowExcavate"}),
+    "setup_workspace": frozenset({"need_crafting_table", "need_furnace", "need_chest"}),
+    "drop_item": frozenset({"force"}),
+    "set_sneak": frozenset({"enabled"}),
+    "set_sprint": frozenset({"enabled"}),
+    "place_furnace": frozenset({"allowPrepareArea"}),
 }
 
 HARMLESS_COUNT_NO_ARG_ACTIONS = frozenset({
@@ -514,7 +560,6 @@ HARMLESS_COUNT_NO_ARG_ACTIONS = frozenset({
     "craft_wooden_pickaxe",
     "craft_stone_pickaxe",
     "place_crafting_table",
-    "place_furnace",
     "place_chest",
     "place_bed",
     "place_boat",
@@ -535,9 +580,85 @@ HARMLESS_COUNT_NO_ARG_ACTIONS = frozenset({
 class PolicyError(ValueError):
     """Raised when an action is outside the safe Minecraft action policy."""
 
+    def __init__(self, message: str, details: dict[str, Any] | None = None):
+        super().__init__(message)
+        self.details = details or {}
+
+
+def canonicalize_action_request(action_request: ActionRequest) -> tuple[ActionRequest, dict[str, Any]]:
+    """Rewrite forgiving LLM/API aliases to canonical policy actions."""
+    request = ActionRequest.model_validate(action_request)
+    if request.action != "craft_item":
+        return request, {}
+
+    args = dict(request.args or {})
+    raw_item = args.get("item")
+    if not isinstance(raw_item, str):
+        return request, {}
+
+    item = _normalize_craft_item_alias(raw_item)
+    canonical_action = CRAFT_ITEM_ACTION_ALIASES.get(item)
+    if canonical_action is None:
+        return request, {}
+
+    new_args: dict[str, Any] = {}
+    if canonical_action in CRAFT_ITEM_COUNT_TARGETS and "count" in args:
+        new_args["count"] = args["count"]
+
+    canonical_request = request.model_copy(update={"action": canonical_action, "args": new_args})
+    return canonical_request, {
+        "action_canonicalized": True,
+        "original_action": "craft_item",
+        "original_args": dict(request.args or {}),
+        "canonical_action": canonical_action,
+        "canonicalization_reason": "craft_item item alias",
+    }
+
+
+def normalize_action_args(action_request: ActionRequest) -> tuple[ActionRequest, dict[str, Any]]:
+    """Normalize common compact JSON arg shapes before validation."""
+    request = ActionRequest.model_validate(action_request)
+    list_arg_keys = _list_string_arg_keys(request.action)
+    boolean_arg_keys = _BOOLEAN_ARG_KEYS.get(request.action, frozenset())
+
+    args = dict(request.args or {})
+    normalized_keys: list[str] = []
+    normalization_reasons: list[str] = []
+    for key in sorted(list_arg_keys):
+        value = args.get(key)
+        if isinstance(value, str) and value.strip():
+            args[key] = [value.strip()]
+            normalized_keys.append(key)
+            if "string_to_singleton_list" not in normalization_reasons:
+                normalization_reasons.append("string_to_singleton_list")
+
+    for key in sorted(boolean_arg_keys):
+        value = args.get(key)
+        if isinstance(value, str) and value in {"true", "True"}:
+            args[key] = True
+            normalized_keys.append(key)
+            if "string_boolean_to_boolean" not in normalization_reasons:
+                normalization_reasons.append("string_boolean_to_boolean")
+        elif isinstance(value, str) and value in {"false", "False"}:
+            args[key] = False
+            normalized_keys.append(key)
+            if "string_boolean_to_boolean" not in normalization_reasons:
+                normalization_reasons.append("string_boolean_to_boolean")
+
+    if not normalized_keys:
+        return request, {}
+
+    return request.model_copy(update={"args": args}), {
+        "args_normalized": True,
+        "normalized_arg_keys": normalized_keys,
+        "normalization_reason": normalization_reasons[0] if len(normalization_reasons) == 1 else "multiple",
+        "normalization_reasons": normalization_reasons,
+    }
+
 
 def validate_action(action_request: ActionRequest) -> ActionRequest:
-    request = ActionRequest.model_validate(action_request)
+    request, _canonical_info = canonicalize_action_request(action_request)
+    request, _normalization_info = normalize_action_args(request)
 
     # Gate 1: action must be in ALLOWED_ACTIONS.
     if request.action not in ALLOWED_ACTIONS:
@@ -588,8 +709,12 @@ def validate_action(action_request: ActionRequest) -> ActionRequest:
         pass
     elif request.action == "mine_stone":
         _validate_optional_count(request.action, request.args, max_count=16)
-    elif request.action in {"mine_coal", "mine_iron_ore"}:
+        _validate_optional_int_range(request.action, request.args, "radius", min_value=4, max_value=96)
+    elif request.action == "mine_coal":
+        _validate_mine_coal(request.args)
+    elif request.action == "mine_iron_ore":
         _validate_optional_count(request.action, request.args, max_count=32)
+        _validate_optional_int_range(request.action, request.args, "radius", min_value=4, max_value=96)
     elif request.action == "smelt_item":
         _validate_smelt_item(request.args)
     elif request.action == "smelt_iron":
@@ -600,6 +725,8 @@ def validate_action(action_request: ActionRequest) -> ActionRequest:
         _validate_optional_int_range(request.action, request.args, "radius", min_value=8, max_value=32)
     elif request.action == "equip_best_tool":
         _validate_item_name(request.action, request.args, field="block")
+    elif request.action == "debug_collect_drops":
+        _validate_debug_collect_drops(request.args)
     elif request.action in {"scan_for_hostiles", "scan_for_passive_mobs", "scan_for_chests", "scan_for_liquids"}:
         _validate_optional_int_range(request.action, request.args, "radius", 8, 64)
     elif request.action == "scan_for_structures":
@@ -636,6 +763,9 @@ def validate_action(action_request: ActionRequest) -> ActionRequest:
         _validate_boolean_flag("setup_workspace", request.args, "need_crafting_table")
         _validate_boolean_flag("setup_workspace", request.args, "need_furnace")
         _validate_boolean_flag("setup_workspace", request.args, "need_chest")
+    elif request.action == "approach_station":
+        _validate_required_enum("approach_station", request.args, "station", STATION_TYPES)
+        _validate_optional_int_range("approach_station", request.args, "radius", 2, 6)
     elif request.action == "return_to_position":
         _validate_return_to_position(request.args)
     elif request.action == "return_to_workspace":
@@ -646,6 +776,9 @@ def validate_action(action_request: ActionRequest) -> ActionRequest:
             raise PolicyError("Action 'return_to_known_position' args.label must be a non-empty string ≤64 chars.")
     elif request.action == "set_home_position":
         pass  # no args
+    elif request.action == "place_furnace":
+        _validate_optional_int_range("place_furnace", request.args, "radius", 1, 8)
+        _validate_boolean_flag("place_furnace", request.args, "allowPrepareArea")
     elif request.action == "dig_staircase":
         _validate_dig_staircase(request.args)
     elif request.action == "pillar_up":
@@ -718,6 +851,21 @@ def validate_action(action_request: ActionRequest) -> ActionRequest:
 # ---------------------------------------------------------------------------
 # Validation helpers
 # ---------------------------------------------------------------------------
+
+
+def _list_string_arg_keys(action: str) -> frozenset[str]:
+    spec = CATALOG.get(action)
+    if spec is None or not isinstance(spec.args_schema, dict):
+        return frozenset()
+
+    keys: set[str] = set()
+    for key, description in spec.args_schema.items():
+        text = str(description).lower()
+        if "list" not in text:
+            continue
+        if "name" in text or "string" in text or "block" in text or "item" in text or "action" in text:
+            keys.add(str(key))
+    return frozenset(keys)
 
 def _sanitize_action_args(request: ActionRequest) -> ActionRequest:
     args = dict(request.args or {})
@@ -795,20 +943,69 @@ def _validate_craft_item(args: dict[str, Any]) -> None:
     if not isinstance(item, str) or not item.strip():
         raise PolicyError("Action 'craft_item' requires args.item as a non-empty string.")
     if item not in CRAFT_ITEM_ALLOWED_ITEMS:
-        allowed = ", ".join(sorted(CRAFT_ITEM_ALLOWED_ITEMS))
-        raise PolicyError(f"Action 'craft_item' args.item must be one of: {allowed}.")
+        allowed_items = sorted(set(CRAFT_ITEM_ALLOWED_ITEMS) | set(CRAFT_ITEM_ACTION_ALIASES))
+        possible_next_actions = sorted({
+            action for action in CRAFT_ITEM_ACTION_ALIASES.values()
+            if action in ALLOWED_ACTIONS
+        } | {
+            "describe_actions",
+            "look_around",
+            "status",
+        })
+        allowed = ", ".join(allowed_items)
+        normalized_item = _normalize_craft_item_alias(item)
+        raise PolicyError(
+            f"Action 'craft_item' args.item is unsupported_craft_item: {item}. Allowed items: {allowed}.",
+            details={
+                "failure_type": "invalid_action_args",
+                "stop_reason": "unsupported_craft_item",
+                "invalid_item": normalized_item,
+                "allowed_items": allowed_items,
+                "possible_next_actions": possible_next_actions,
+            },
+        )
     _validate_optional_count("craft_item", args, max_count=64)
     if item in CRAFT_ITEM_SINGLE_COUNT and args.get("count", 1) != 1:
         raise PolicyError(f"Action 'craft_item' args.count must be 1 for {item}.")
 
 
+def _normalize_craft_item_alias(item: str) -> str:
+    return item.strip().lower().replace("-", "_").replace(" ", "_")
+
+
 def _validate_smelt_item(args: dict[str, Any]) -> None:
     input_name = args.get("input")
     if not isinstance(input_name, str) or not input_name.strip():
-        raise PolicyError("Action 'smelt_item' requires args.input as a non-empty string.")
+        raise PolicyError(
+            "Action 'smelt_item' requires args.input as a non-empty string.",
+            details={
+                "failure_type": "invalid_args",
+                "repeatable_now": False,
+                "repeat_condition": "Provide a valid args.input before retrying.",
+                "failed_because": [{
+                    "kind": "invalid_args",
+                    "action": "smelt_item",
+                    "missing_arg": "input",
+                    "expected": "one of allowed smeltable item ids",
+                }],
+            },
+        )
     if input_name not in SMELT_INPUTS:
-        allowed = ", ".join(sorted(SMELT_INPUTS))
-        raise PolicyError(f"Action 'smelt_item' args.input must be one of: {allowed}.")
+        raise PolicyError(
+            f"Action 'smelt_item' args.input must be one of: {', '.join(sorted(SMELT_INPUTS))}.",
+            details={
+                "failure_type": "invalid_args",
+                "repeatable_now": False,
+                "repeat_condition": "Choose a valid input from allowed_values before retrying.",
+                "failed_because": [{
+                    "kind": "invalid_enum_value",
+                    "action": "smelt_item",
+                    "arg": "input",
+                    "received": input_name,
+                    "allowed_values": sorted(SMELT_INPUTS),
+                }],
+            },
+        )
     _validate_optional_count("smelt_item", args, max_count=64)
     fuel = args.get("fuel")
     if fuel is None:
@@ -818,6 +1015,17 @@ def _validate_smelt_item(args: dict[str, Any]) -> None:
     if fuel not in SMELT_FUELS:
         allowed = ", ".join(sorted(SMELT_FUELS))
         raise PolicyError(f"Action 'smelt_item' args.fuel must be one of: {allowed}.")
+
+
+def _validate_mine_coal(args: dict[str, Any]) -> None:
+    _validate_optional_count("mine_coal", args, max_count=32)
+    _validate_optional_int_range("mine_coal", args, "radius", min_value=8, max_value=96)
+    if "allowExcavate" in args and not isinstance(args["allowExcavate"], bool):
+        raise PolicyError("Action 'mine_coal' args.allowExcavate must be a boolean when provided.")
+    access_mode = args.get("accessMode")
+    if access_mode is not None and access_mode not in ALLOWED_ACQUIRE_ACCESS_MODES:
+        allowed = ", ".join(sorted(ALLOWED_ACQUIRE_ACCESS_MODES))
+        raise PolicyError(f"Action 'mine_coal' args.accessMode must be one of: {allowed}.")
 
 
 def _validate_acquire_blocks(args: dict[str, Any]) -> None:
@@ -842,12 +1050,61 @@ def _validate_navigate_to_block_type(args: dict[str, Any]) -> None:
 def _validate_acquire_targets(action: str, args: dict[str, Any]) -> None:
     targets = args.get("targets")
     if not isinstance(targets, list) or len(targets) == 0:
-        raise PolicyError(f"Action '{action}' requires args.targets as a non-empty list.")
+        raise PolicyError(
+            f"Action '{action}' requires args.targets as a non-empty list of allowed resource block names.",
+            details={
+                "failure_type": "invalid_args",
+                "stop_reason": "missing_required_arg",
+                "repeatable_now": False,
+                "repeat_condition": "Provide a valid non-empty targets list before retrying.",
+                "failed_because": [{
+                    "kind": "invalid_args",
+                    "action": action,
+                    "missing_arg": "targets",
+                    "expected": "non-empty list of allowed resource blocks",
+                }],
+            },
+        )
 
     for target in targets:
-        if not isinstance(target, str) or target not in ALLOWED_ACQUIRE_TARGETS:
+        if not isinstance(target, str):
+            raise PolicyError(
+                f"Action '{action}' targets must be strings.",
+                details={
+                    "failure_type": "invalid_args",
+                    "repeatable_now": False,
+                    "failed_because": [{"kind": "invalid_args", "action": action, "missing_arg": "targets", "expected": "list of strings"}],
+                },
+            )
+        # Station blocks are not resource-navigation targets.
+        if target in STATION_TYPES:
+            raise PolicyError(
+                f"navigate_to_block_type cannot target '{target}' — stations use approach_station, not navigate_to_block_type.",
+                details={
+                    "failure_type": "wrong_action_for_target_type",
+                    "stop_reason": "wrong_action_for_target_type",
+                    "repeatable_now": False,
+                    "repeat_condition": "Use approach_station for station blocks (crafting_table, furnace, chest).",
+                    "failed_because": [{
+                        "kind": "wrong_action_for_target_type",
+                        "target": target,
+                        "target_type": "station",
+                        "action_used": action,
+                        "appropriate_action_family": "station_access",
+                        "station_action": "approach_station",
+                    }],
+                },
+            )
+        if target not in ALLOWED_ACQUIRE_TARGETS:
             allowed = ", ".join(sorted(ALLOWED_ACQUIRE_TARGETS))
-            raise PolicyError(f"Action '{action}' target is not allowed: {target}. Allowed targets: {allowed}.")
+            raise PolicyError(
+                f"Action '{action}' target is not allowed: {target}. Allowed targets: {allowed}.",
+                details={
+                    "failure_type": "invalid_args",
+                    "repeatable_now": False,
+                    "failed_because": [{"kind": "invalid_args", "action": action, "missing_arg": "targets", "expected": "allowed resource block name"}],
+                },
+            )
 
 
 def _validate_optional_int_range(
@@ -910,15 +1167,50 @@ def _validate_item_name(action: str, args: dict[str, Any], field: str = "item") 
         raise PolicyError(f"Action '{action}' args.{field} must be a non-empty string when provided.")
 
 
+def _validate_debug_collect_drops(args: dict[str, Any]) -> None:
+    _validate_optional_int_range("debug_collect_drops", args, "radius", 2, 32)
+    target_items = args.get("targetItems")
+    if target_items is not None:
+        if not isinstance(target_items, list) or len(target_items) == 0:
+            raise PolicyError("Action 'debug_collect_drops' args.targetItems must be a non-empty list when provided.")
+        for t in target_items:
+            if not isinstance(t, str) or not t.strip():
+                raise PolicyError("Action 'debug_collect_drops' args.targetItems entries must be non-empty strings.")
+
+
 def _validate_scan_specific_block(args: dict[str, Any]) -> None:
     targets = args.get("targets")
     if not isinstance(targets, list) or len(targets) == 0:
         raise PolicyError(
-            "Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+            "Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names.",
+            details={
+                "failure_type": "invalid_args",
+                "repeatable_now": False,
+                "repeat_condition": "Provide a non-empty targets list before retrying.",
+                "failed_because": [{
+                    "kind": "invalid_args",
+                    "action": "scan_for_specific_block",
+                    "missing_arg": "targets",
+                    "expected": "non-empty list of block names to scan for",
+                }],
+            },
         )
     for t in targets:
         if not isinstance(t, str) or not t.strip():
-            raise PolicyError("Action 'scan_for_specific_block' targets must be non-empty strings.")
+            raise PolicyError(
+                "Action 'scan_for_specific_block' targets must be non-empty strings.",
+                details={
+                    "failure_type": "invalid_args",
+                    "repeatable_now": False,
+                    "repeat_condition": "Provide valid non-empty string block names in targets.",
+                    "failed_because": [{
+                        "kind": "invalid_args",
+                        "action": "scan_for_specific_block",
+                        "missing_arg": "targets",
+                        "expected": "all targets must be non-empty strings",
+                    }],
+                },
+            )
     _validate_optional_int_range("scan_for_specific_block", args, "radius", 8, 96)
 
 
@@ -949,6 +1241,12 @@ def _validate_drop_item(args: dict[str, Any]) -> None:
 def _validate_enum_optional(action: str, args: dict[str, Any], field: str, allowed: frozenset[str]) -> None:
     value = args.get(field)
     if value is not None and value not in allowed:
+        raise PolicyError(f"Action '{action}' args.{field} must be one of: {', '.join(sorted(allowed))}.")
+
+
+def _validate_required_enum(action: str, args: dict[str, Any], field: str, allowed: frozenset[str]) -> None:
+    value = args.get(field)
+    if value not in allowed:
         raise PolicyError(f"Action '{action}' args.{field} must be one of: {', '.join(sorted(allowed))}.")
 
 

@@ -13,6 +13,8 @@ from typing import Any
 
 DEFAULT_DB_PATH = "data/memory.sqlite"
 
+STALE_WORKSPACE_CONFIDENCE_THRESHOLD = 0.3
+
 VALID_WAYPOINT_KINDS = frozenset(
     {
         "home",
@@ -275,6 +277,8 @@ def remember_workspace(
 def nearest_workspace(
     current_position: dict[str, Any] | None,
     dimension: str,
+    *,
+    min_confidence: float = STALE_WORKSPACE_CONFIDENCE_THRESHOLD,
     db_path: str = DEFAULT_DB_PATH,
 ) -> dict[str, Any] | None:
     init_world_memory(db_path)
@@ -290,7 +294,8 @@ def nearest_workspace(
             """,
             (str(dimension or "overworld"),),
         ).fetchall()
-    places = [_decode_known_place(dict(row)) for row in rows]
+    all_places = [_decode_known_place(dict(row)) for row in rows]
+    places = [p for p in all_places if float(p.get("confidence") or 0.0) >= min_confidence]
     if not places:
         return None
     if current is None:
@@ -298,6 +303,29 @@ def nearest_workspace(
     for place in places:
         place["distance"] = _distance(current, (place["x"], place["y"], place["z"]))
     return sorted(places, key=lambda item: (item.get("distance", 999999.0), -float(item.get("confidence", 0))))[0]
+
+
+def mark_workspace_unreachable(
+    position: dict[str, Any] | None,
+    dimension: str,
+    db_path: str = DEFAULT_DB_PATH,
+) -> bool:
+    """Lower confidence of nearest workspace after repeated path failures.
+
+    Returns True if a workspace was found and updated.
+    """
+    init_world_memory(db_path)
+    workspace = nearest_workspace(position, dimension, min_confidence=0.0, db_path=db_path)
+    if workspace is None:
+        return False
+    new_confidence = max(0.1, float(workspace.get("confidence") or 0.5) - 0.3)
+    with closing(sqlite3.connect(db_path)) as conn:
+        with conn:
+            conn.execute(
+                "update known_places set confidence = ? where name = ?",
+                (new_confidence, workspace["name"]),
+            )
+    return True
 
 
 def nearest_known_place(
@@ -363,14 +391,22 @@ def update_workspace_station(
     )
 
 
-def get_relevant_known_places(status: dict[str, Any] | None, db_path: str = DEFAULT_DB_PATH) -> dict[str, Any]:
+def get_relevant_known_places(status: dict[str, Any] | None = None, db_path: str = DEFAULT_DB_PATH) -> dict[str, Any]:
     status = status if isinstance(status, dict) else {}
     position = status.get("position") if isinstance(status.get("position"), dict) else None
     dimension = str(status.get("dimension") or "overworld")
     workspace = nearest_workspace(position, dimension, db_path=db_path)
-    return {
+    stale_workspace_filtered = False
+    if workspace is None:
+        any_workspace = nearest_workspace(position, dimension, min_confidence=0.0, db_path=db_path)
+        if any_workspace is not None:
+            stale_workspace_filtered = True
+    result: dict[str, Any] = {
         "nearest_workspace": _compact_workspace(workspace) if workspace else {"exists": False},
     }
+    if stale_workspace_filtered:
+        result["stale_workspace_filtered"] = True
+    return result
 
 
 def list_known_places(
@@ -631,6 +667,7 @@ def _compact_workspace(workspace: dict[str, Any]) -> dict[str, Any]:
         "exists": True,
         "name": workspace.get("name"),
         "kind": workspace.get("kind"),
+        "confidence": round(float(workspace.get("confidence") or 0.0), 2),
         "distance": round(float(workspace.get("distance", 0.0)), 1) if workspace.get("distance") is not None else None,
         "dimension": workspace.get("dimension"),
         "position": {"x": workspace.get("x"), "y": workspace.get("y"), "z": workspace.get("z")},

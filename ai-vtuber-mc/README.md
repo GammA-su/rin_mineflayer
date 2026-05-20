@@ -1080,3 +1080,93 @@ Good next steps:
 - add Docker or scripts for repeatable startup
 
 Start with private local testing before adding any autonomous behavior.
+
+## 14. Connecting the personality engine
+
+The stream loop can forward each tick result to a separate FastAPI personality
+service as a compact `BrainTickEvent` JSON.  Publishing is best-effort — if the
+personality service is offline or slow the gameplay loop continues unaffected.
+
+Start the personality service in one terminal:
+
+```bash
+cd ai-vtuber-personality-engine
+uv run vtuber-personality serve --host 127.0.0.1 --port 8010
+```
+
+Start the stream loop with the `--personality-url` flag in another terminal:
+
+```bash
+cd ai-vtuber-mc
+uv run python scripts/run_stream_loop.py \
+  --api-url http://127.0.0.1:8000 \
+  --mission "Beat Minecraft while playing naturally and surviving." \
+  --user AI_VTuber \
+  --max-ticks-per-batch 25 \
+  --tick-delay-sec 1 \
+  --personality-url http://127.0.0.1:8010/events/tick
+```
+
+The startup banner confirms the personality endpoint:
+
+```text
+  personality: http://127.0.0.1:8010/events/tick  timeout=0.75s
+```
+
+When disabled (no URL provided):
+
+```text
+  personality: disabled
+```
+
+**Environment variable equivalents** (useful for running without CLI flags):
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PERSONALITY_ENGINE_URL` | `""` | Personality event endpoint URL |
+| `PERSONALITY_ENGINE_TIMEOUT_SEC` | `0.75` | Max seconds to wait for the service |
+| `PERSONALITY_ENGINE_ENABLED` | `false` | Set to `true` to enable when URL comes from env |
+
+When the URL comes from `--personality-url` on the CLI, `PERSONALITY_ENGINE_ENABLED`
+is ignored — the CLI flag always enables publishing.  When the URL comes only from
+`PERSONALITY_ENGINE_URL`, you must also set `PERSONALITY_ENGINE_ENABLED=true`.
+
+**Event shape** — each tick sends:
+
+```json
+{
+  "tick_id": 11,
+  "run_id": "20260519T120000Z",
+  "mission": "Beat Minecraft…",
+  "objective": "mine_coal",
+  "action": "mine_coal",
+  "args": {"count": 1, "radius": 8},
+  "ok": true,
+  "failure": null,
+  "stop": "collected_requested",
+  "error": null,
+  "collected": 1,
+  "reason": "Need coal for fuel. Objective: mine_coal",
+  "verifier": {"success": true},
+  "inventory": {"coal": 1},
+  "position": {"x": 10, "y": 64, "z": 20},
+  "health": 20,
+  "hunger": 18,
+  "raw": {
+    "planner": {"mode": "hybrid", "llm_latency_sec": 0.5},
+    "result": {"ok": true, "action": "mine_coal", "result": {…}}
+  }
+}
+```
+
+Long strings are truncated to 1 000 characters.  `raw.planner` and `raw.result`
+are capped at 4 096 bytes each and replaced with `{"_truncated": true, "_size_bytes": N}`
+when they exceed the limit.
+
+**Running the publisher tests:**
+
+```bash
+cd ai-vtuber-mc
+uv sync
+uv run pytest -q
+```

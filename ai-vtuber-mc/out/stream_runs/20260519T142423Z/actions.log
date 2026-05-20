@@ -1,0 +1,20 @@
+Stream loop starting — output: out/stream_runs/20260519T142423Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+Press Ctrl+C to stop.
+
+[1] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[2] mine_iron_ore {"count":1} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[3] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[4] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[5] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[6] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[7] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[8] mine_iron_ore {"count":1} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[9] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[10] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[11] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+  [batch 1 saved  ticks 1-11 (partial)]
+
+Stopped. 11 ticks total. Output: out/stream_runs/20260519T142423Z

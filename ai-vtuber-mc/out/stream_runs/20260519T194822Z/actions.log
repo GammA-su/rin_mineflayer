@@ -1,0 +1,1140 @@
+Stream loop starting — output: out/stream_runs/20260519T194822Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+  personality: http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] explore_nearby {} -> ok=true failure=none
+[2] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[3] mine_coal {"count":1,"radius":8,"allowExcavate":true,"accessMode":"surface_first"} -> ok=false failure=resource_candidates_rejected stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[4] navigate_to_block_type {"targets":["coal_ore","deepslate_coal_ore"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[5] mine_coal {} -> ok=true failure=none stop=collected_requested collected=4
+[6] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[7] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 60000ms.'
+[8] mine_coal {"radius":32,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=partial_collected collected=1
+[9] approach_station {"station":"furnace"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach furnace: Timed out pathing after 20000ms.'
+[10] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[11] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[12] mine_iron_ore {} -> ok=true failure=none stop=collected_drop collected=3
+[13] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[14] craft_stone_pickaxe {} -> ok=true failure=none
+[15] approach_station {"station":"furnace"} -> ok=true failure=none
+[16] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[17] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[18] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[19] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[20] smelt_item {"input":"raw_iron","count":10} -> ok=false failure=missing_materials stop=action_timeout error='Timed out smelt_item after 45000ms.'
+[21] status {} -> ok=true failure=none
+[22] smelt_item {"input":"raw_iron","count":1} -> ok=false failure=missing_materials stop=smelt_interrupted error="Smelting started but did not complete: Can't find raw_iron in slots [3 - 39], (item id: 867)"
+[23] craft_item {"count":1} -> ok=false failure=invalid_action error="Action 'craft_item' requires args.item as a non-empty string."
+[24] craft_stone_pickaxe {} -> ok=true failure=none
+[25] smelt_item {"input":"coal"} -> ok=false failure=invalid_args error="Action 'smelt_item' args.input must be one of: cod, potato, raw_beef, raw_chicken, raw_gold, raw_iron, raw_mutton, raw_porkchop, raw_rabbit, salmon."
+  [batch 1 saved  ticks 1-25]
+[26] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need raw_iron.'
+[27] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[28] navigate_to_block_type {"targets":["iron_ore"],"radius":8} -> ok=true failure=none
+[29] mine_iron_ore {"count":1} -> ok=true failure=none stop=collected_drop collected=2
+[30] smelt_item {"input":"raw_iron","count":2,"fuel":"coal"} -> ok=false failure=missing_materials stop=no_furnace_nearby error='No furnace found within radius 24.'
+[31] setup_workspace {"need_furnace":true,"radius":8} -> ok=true failure=none
+[32] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[33] smelt_item {"input":"raw_iron","count":2} -> ok=true failure=none
+[34] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need raw_iron.'
+[35] mine_iron_ore {} -> ok=true failure=none stop=navigation_failed collected=1
+[36] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[37] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[38] place_block {"item":"torch","direction":"up"} -> ok=true failure=none
+[39] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need raw_iron.'
+[40] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[41] mine_iron_ore {"count":1} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[42] navigate_to_block_type {"targets":["iron_ore"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[43] approach_station {"station":"furnace"} -> ok=true failure=none
+[44] mine_iron_ore {} -> ok=true failure=none stop=navigation_failed collected=1
+[45] approach_station {"station":"furnace"} -> ok=true failure=none
+[46] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[47] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[48] mine_iron_ore {} -> ok=false failure=navigation_failed stop=navigation_failed collected=0 error='Took to long to decide path to goal!'
+[49] approach_station {"station":"furnace"} -> ok=true failure=none
+[50] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+  [batch 2 saved  ticks 26-50]
+[51] navigate_to_block_type {"targets":["iron_ore"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[52] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[53] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[54] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[55] mine_iron_ore {"count":1} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[56] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[57] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[58] approach_station {"station":"furnace"} -> ok=true failure=none
+[59] mine_iron_ore {"count":1} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[60] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[61] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[62] mine_iron_ore {"count":1} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[63] navigate_to_block_type {"targets":["iron_ore"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[64] approach_station {"station":"furnace"} -> ok=true failure=none
+[65] mine_iron_ore {} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[66] approach_station {"station":"furnace"} -> ok=true failure=none
+[67] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[68] mine_iron_ore {"count":1} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[69] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[70] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[71] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=station_visible_but_too_far error='Furnace is visible but too far to use (5.6 blocks).'
+[72] approach_station {"station":"furnace"} -> ok=true failure=none
+[73] smelt_item {"input":"raw_iron","count":1,"fuel":"coal"} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+[74] smelt_item {"input":"raw_iron"} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+[75] smelt_item {"input":"raw_iron","count":1,"fuel":"coal"} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+  [batch 3 saved  ticks 51-75]
+[76] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[77] navigate_to_block_type {"targets":["iron_ore"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[78] explore_nearby {} -> ok=true failure=none
+[79] approach_station {"station":"furnace"} -> ok=true failure=none
+[80] mine_stone {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[81] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[82] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[83] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[84] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[85] mine_iron_ore {"count":1} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[86] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[87] navigate_to_block_type {"targets":["iron_ore"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[88] approach_station {"station":"crafting_table"} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting_table visible within radius 24.'
+[89] return_to_workspace {} -> ok=true failure=none
+[90] place_crafting_table {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[91] craft_crafting_table {} -> ok=true failure=none
+[92] place_crafting_table {} -> ok=false failure=no_safe_placement stop=no_station_placement_candidate error='No safe placement position found nearby.'
+[93] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[94] setup_workspace {} -> ok=true failure=none
+[95] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[96] mine_stone {} -> ok=true failure=none stop=collected_drop collected=1
+[97] status {} -> ok=true failure=none
+[98] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[99] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[100] craft_stone_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 1.'
+  [batch 4 saved  ticks 76-100]
+[101] craft_sticks {} -> ok=true failure=none
+[102] craft_stone_pickaxe {} -> ok=true failure=none
+[103] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[104] craft_stone_pickaxe {} -> ok=true failure=none
+[105] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[106] craft_stone_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 1.'
+[107] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[108] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[109] craft_sticks {"count":1} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[110] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[111] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[112] explore_nearby {} -> ok=true failure=none
+[113] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[114] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[115] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[116] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[117] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[118] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[119] explore_nearby {} -> ok=true failure=none
+[120] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[121] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[122] craft_stone_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 1.'
+[123] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[124] craft_planks {"count":2} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[125] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+  [batch 5 saved  ticks 101-125]
+[126] explore_nearby {} -> ok=true failure=none
+[127] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[128] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[129] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[130] collect_wood {"count":16} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[131] explore_nearby {"radius":32} -> ok=false failure=partial_progress stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[132] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[133] look_around {} -> ok=true failure=none
+[134] craft_planks {"count":1} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[135] collect_wood {"count":16} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[136] explore_nearby {} -> ok=true failure=none
+[137] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[138] craft_stone_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 1.'
+[139] look_around {} -> ok=true failure=none
+[140] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[141] craft_planks {"count":2} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[142] collect_wood {"count":16} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[143] explore_nearby {"radius":16} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe nearby exploration target found within radius 16.'
+[144] find_safe_workspace {"radius":16,"purpose":"crafting"} -> ok=true failure=none
+[145] craft_crafting_table {"count":1} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[146] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[147] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[148] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[149] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[150] collect_wood {"count":16} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+  [batch 6 saved  ticks 126-150]
+[151] explore_nearby {"radius":32} -> ok=false failure=partial_progress stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[152] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[153] look_around {} -> ok=true failure=none
+[154] craft_planks {"count":1} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[155] collect_wood {"count":16} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[156] explore_nearby {"radius":64} -> ok=false failure=partial_progress stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[157] status {} -> ok=true failure=none
+[158] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (17.4 blocks).'
+[159] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[160] approach_station {"station":"crafting_table","radius":6} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[161] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (16.3 blocks).'
+[162] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[163] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[164] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[165] status {} -> ok=true failure=none
+[166] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[167] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[168] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[169] status {} -> ok=true failure=none
+[170] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[171] look_around {} -> ok=true failure=none
+[172] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[173] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[174] explore_nearby {"radius":32} -> ok=false failure=action_failed stop=action_failed error='Exploration path failed: The goal was changed before it could be completed!'
+[175] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+  [batch 7 saved  ticks 151-175]
+[176] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[177] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[178] status {} -> ok=true failure=none
+[179] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[180] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[181] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[182] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[183] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[184] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[185] status {} -> ok=true failure=none
+[186] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[187] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[188] explore_nearby {} -> ok=false failure=action_failed stop=action_failed error='Exploration path failed: The goal was changed before it could be completed!'
+[189] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[190] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[191] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[192] status {} -> ok=true failure=none
+[193] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[194] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[195] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[196] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[197] setup_workspace {"need_crafting_table":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[198] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[199] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[200] find_safe_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+  [batch 8 saved  ticks 176-200]
+[201] find_safe_workspace {"radius":32,"purpose":"crafting"} -> ok=false failure=action_failed stop=action_failed error='Path to workspace failed: The goal was changed before it could be completed!'
+[202] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[203] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[204] status {} -> ok=true failure=none
+[205] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[206] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[207] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[208] status {} -> ok=true failure=none
+[209] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[210] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[211] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[212] status {} -> ok=true failure=none
+[213] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[214] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[215] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[216] status {} -> ok=true failure=none
+[217] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[218] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[219] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[220] status {} -> ok=true failure=none
+[221] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[222] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[223] status {} -> ok=true failure=none
+[224] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[225] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+  [batch 9 saved  ticks 201-225]
+[226] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[227] status {} -> ok=true failure=none
+[228] status {} -> ok=true failure=none
+[229] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[230] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[231] status {} -> ok=true failure=none
+[232] place_crafting_table {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[233] look_around {} -> ok=true failure=none
+[234] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[235] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[236] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[237] status {} -> ok=true failure=none
+[238] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[239] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[240] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[241] status {} -> ok=true failure=none
+[242] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[243] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[244] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[245] status {} -> ok=true failure=none
+[246] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[247] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[248] status {} -> ok=true failure=none
+[249] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[250] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+  [batch 10 saved  ticks 226-250]
+[251] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[252] status {} -> ok=true failure=none
+[253] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[254] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[255] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[256] status {} -> ok=true failure=none
+[257] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[258] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[259] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[260] status {} -> ok=true failure=none
+[261] place_crafting_table {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[262] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[263] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[264] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[265] status {} -> ok=true failure=none
+[266] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[267] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[268] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[269] status {} -> ok=true failure=none
+[270] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[271] setup_workspace {"need_crafting_table":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[272] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[273] status {} -> ok=true failure=none
+[274] look_around {} -> ok=true failure=none
+[275] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+  [batch 11 saved  ticks 251-275]
+[276] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[277] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[278] status {} -> ok=true failure=none
+[279] look_around {} -> ok=true failure=none
+[280] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[281] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[282] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[283] status {} -> ok=true failure=none
+[284] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[285] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[286] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[287] status {} -> ok=true failure=none
+[288] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[289] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[290] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[291] status {} -> ok=true failure=none
+[292] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[293] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[294] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[295] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[296] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[297] status {} -> ok=true failure=none
+[298] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[299] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[300] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+  [batch 12 saved  ticks 276-300]
+[301] status {} -> ok=true failure=none
+[302] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[303] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[304] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[305] status {} -> ok=true failure=none
+[306] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[307] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[308] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[309] status {} -> ok=true failure=none
+[310] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[311] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[312] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[313] status {} -> ok=true failure=none
+[314] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[315] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[316] find_safe_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[317] find_safe_workspace {"radius":16,"purpose":"crafting"} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[318] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[319] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[320] status {} -> ok=true failure=none
+[321] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[322] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[323] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[324] status {} -> ok=true failure=none
+[325] status {} -> ok=true failure=none
+  [batch 13 saved  ticks 301-325]
+[326] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[327] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[328] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[329] status {} -> ok=true failure=none
+[330] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[331] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[332] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[333] status {} -> ok=true failure=none
+[334] place_crafting_table {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[335] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[336] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[337] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[338] status {} -> ok=true failure=none
+[339] place_crafting_table {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[340] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[341] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[342] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[343] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[344] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[345] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[346] status {} -> ok=true failure=none
+[347] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[348] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[349] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[350] status {} -> ok=true failure=none
+  [batch 14 saved  ticks 326-350]
+[351] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[352] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[353] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[354] status {} -> ok=true failure=none
+[355] look_around {} -> ok=true failure=none
+[356] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[357] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[358] status {} -> ok=true failure=none
+[359] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[360] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[361] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[362] status {} -> ok=true failure=none
+[363] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[364] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[365] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[366] status {} -> ok=true failure=none
+[367] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[368] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[369] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[370] status {} -> ok=true failure=none
+[371] craft_furnace {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (16.3 blocks).'
+[372] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[373] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[374] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[375] status {} -> ok=true failure=none
+  [batch 15 saved  ticks 351-375]
+[376] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[377] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[378] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[379] status {} -> ok=true failure=none
+[380] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[381] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[382] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[383] status {} -> ok=true failure=none
+[384] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[385] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[386] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[387] status {} -> ok=true failure=none
+[388] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[389] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[390] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[391] status {} -> ok=true failure=none
+[392] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[393] setup_workspace {"need_crafting_table":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[394] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[395] status {} -> ok=true failure=none
+[396] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[397] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[398] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[399] status {} -> ok=true failure=none
+[400] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+  [batch 16 saved  ticks 376-400]
+[401] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[402] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[403] status {} -> ok=true failure=none
+[404] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[405] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[406] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[407] status {} -> ok=true failure=none
+[408] mine_stone {"count":10} -> ok=true failure=none stop=close_range_access_failed collected=1
+[409] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[410] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[411] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[412] status {} -> ok=true failure=none
+[413] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[414] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[415] status {} -> ok=true failure=none
+[416] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 45000ms.'
+[417] status {} -> ok=true failure=none
+[418] recover_death_items {} -> ok=false failure=action_failed stop=action_failed error='Could not reach death location: The goal was changed before it could be completed!'
+[419] return_to_spawn_or_home {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach world spawn: Timed out pathing after 20000ms.'
+[420] find_safe_workspace {"purpose":"crafting","radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[421] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[422] status {} -> ok=true failure=none
+[423] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[424] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[425] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 17 saved  ticks 401-425]
+[426] status {} -> ok=true failure=none
+[427] recover_death_items {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach death location: Timed out pathing after 40000ms.'
+[428] abandon_death_recovery {} -> ok=true failure=none
+[429] return_to_spawn_or_home {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach world spawn: Timed out pathing after 20000ms.'
+[430] find_safe_workspace {"radius":64,"purpose":"crafting"} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[431] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[432] status {} -> ok=true failure=none
+[433] status {} -> ok=true failure=none
+[434] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[435] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[436] status {} -> ok=true failure=none
+[437] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[438] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[439] status {} -> ok=true failure=none
+[440] status {} -> ok=true failure=none
+[441] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[442] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[443] status {} -> ok=true failure=none
+[444] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[445] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[446] status {} -> ok=true failure=none
+[447] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[448] navigate_to_block_type {"targets":["stone"],"radius":20} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[449] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[450] status {} -> ok=true failure=none
+  [batch 18 saved  ticks 426-450]
+[451] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[452] navigate_to_block_type {"targets":["stone"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[453] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[454] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[455] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[456] status {} -> ok=true failure=none
+[457] status {} -> ok=true failure=none
+[458] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[459] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[460] status {} -> ok=true failure=none
+[461] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[462] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[463] status {} -> ok=true failure=none
+[464] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[465] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[466] status {} -> ok=true failure=none
+[467] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[468] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[469] status {} -> ok=true failure=none
+[470] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[471] recover_position {} -> ok=false failure=no_progress stop=action_failed error='No meaningful movement during recovery.'
+[472] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[473] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[474] status {} -> ok=true failure=none
+[475] status {} -> ok=true failure=none
+  [batch 19 saved  ticks 451-475]
+[476] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[477] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[478] status {} -> ok=true failure=none
+[479] status {} -> ok=true failure=none
+[480] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[481] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[482] status {} -> ok=true failure=none
+[483] status {} -> ok=true failure=none
+[484] status {} -> ok=true failure=none
+[485] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[486] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[487] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[488] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[489] status {} -> ok=true failure=none
+[490] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[491] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[492] status {} -> ok=true failure=none
+[493] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[494] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[495] status {} -> ok=true failure=none
+[496] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[497] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[498] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[499] status {} -> ok=true failure=none
+[500] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+  [batch 20 saved  ticks 476-500]
+[501] navigate_to_block_type {"targets":["stone"],"radius":20} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[502] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[503] status {} -> ok=true failure=none
+[504] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[505] recover_position {} -> ok=false failure=no_progress stop=action_failed error='No meaningful movement during recovery.'
+[506] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[507] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[508] status {} -> ok=true failure=none
+[509] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[510] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[511] collect_wood {"count":16} -> ok=false failure=partial_progress_timeout stop=drop_unreachable collected=0 error='Mined target block but drop collection failed: drop_unreachable'
+[512] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[513] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[514] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[515] collect_wood {"count":4} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[516] collect_wood {"count":16} -> ok=true failure=none stop=close_range_access_failed collected=1
+[517] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[518] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[519] status {} -> ok=true failure=none
+[520] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[521] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[522] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[523] status {} -> ok=true failure=none
+[524] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[525] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+  [batch 21 saved  ticks 501-525]
+[526] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[527] status {} -> ok=true failure=none
+[528] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[529] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[530] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[531] status {} -> ok=true failure=none
+[532] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[533] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[534] status {} -> ok=true failure=none
+[535] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[536] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[537] status {} -> ok=true failure=none
+[538] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[539] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[540] status {} -> ok=true failure=none
+[541] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[542] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[543] status {} -> ok=true failure=none
+[544] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[545] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[546] status {} -> ok=true failure=none
+[547] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[548] status {} -> ok=true failure=none
+[549] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[550] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 22 saved  ticks 526-550]
+[551] status {} -> ok=true failure=none
+[552] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[553] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[554] status {} -> ok=true failure=none
+[555] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[556] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[557] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[558] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[559] navigate_to_block_type {"targets":["stone"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[560] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[561] status {} -> ok=true failure=none
+[562] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[563] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[564] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[565] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[566] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[567] status {} -> ok=true failure=none
+[568] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[569] navigate_to_block_type {"targets":["stone"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[570] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[571] status {} -> ok=true failure=none
+[572] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[573] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[574] status {} -> ok=true failure=none
+[575] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+  [batch 23 saved  ticks 551-575]
+[576] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[577] status {} -> ok=true failure=none
+[578] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[579] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[580] status {} -> ok=true failure=none
+[581] status {} -> ok=true failure=none
+[582] status {} -> ok=true failure=none
+[583] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[584] status {} -> ok=true failure=none
+[585] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[586] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[587] status {} -> ok=true failure=none
+[588] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[589] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[590] status {} -> ok=true failure=none
+[591] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[592] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[593] status {} -> ok=true failure=none
+[594] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[595] recover_position {} -> ok=false failure=no_progress stop=action_failed error='No meaningful movement during recovery.'
+[596] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[597] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[598] status {} -> ok=true failure=none
+[599] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[600] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 24 saved  ticks 576-600]
+[601] status {} -> ok=true failure=none
+[602] status {} -> ok=true failure=none
+[603] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[604] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[605] status {} -> ok=true failure=none
+[606] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[607] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[608] status {} -> ok=true failure=none
+[609] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[610] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[611] status {} -> ok=true failure=none
+[612] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[613] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[614] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[615] navigate_to_block_type {"targets":["stone"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[616] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[617] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[618] navigate_to_block_type {"targets":["stone"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[619] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[620] status {} -> ok=true failure=none
+[621] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[622] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[623] status {} -> ok=true failure=none
+[624] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[625] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 25 saved  ticks 601-625]
+[626] status {} -> ok=true failure=none
+[627] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[628] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[629] status {} -> ok=true failure=none
+[630] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[631] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[632] status {} -> ok=true failure=none
+[633] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[634] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[635] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[636] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[637] navigate_to_block_type {"targets":["spruce_log"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[638] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[639] status {} -> ok=true failure=none
+[640] status {} -> ok=true failure=none
+[641] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[642] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[643] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[644] status {} -> ok=true failure=none
+[645] status {} -> ok=true failure=none
+[646] approach_station {"station":"crafting_table"} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting_table visible within radius 24.'
+[647] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[648] recover_position {} -> ok=false failure=no_progress stop=action_failed error='No meaningful movement during recovery.'
+[649] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[650] navigate_to_block_type {"targets":["stone"],"radius":20} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+  [batch 26 saved  ticks 626-650]
+[651] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[652] status {} -> ok=true failure=none
+[653] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[654] status {} -> ok=true failure=none
+[655] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[656] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[657] status {} -> ok=true failure=none
+[658] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[659] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[660] status {} -> ok=true failure=none
+[661] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[662] setup_workspace {"need_crafting_table":true,"need_furnace":false,"need_chest":false,"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[663] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[664] status {} -> ok=true failure=none
+[665] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[666] navigate_to_block_type {"targets":["stone"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[667] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[668] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[669] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[670] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[671] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[672] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[673] status {} -> ok=true failure=none
+[674] status {} -> ok=true failure=none
+[675] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+  [batch 27 saved  ticks 651-675]
+[676] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[677] status {} -> ok=true failure=none
+[678] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[679] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[680] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[681] status {} -> ok=true failure=none
+[682] approach_station {"station":"crafting_table"} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting_table visible within radius 24.'
+[683] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[684] recover_position {} -> ok=false failure=no_progress stop=action_failed error='No meaningful movement during recovery.'
+[685] status {} -> ok=true failure=none
+[686] status {} -> ok=true failure=none
+[687] collect_wood {"count":16} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[688] collect_wood {"count":16} -> ok=false failure=navigation_failed stop=close_range_access_failed collected=0 error='Close-range access failed for target block'
+[689] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[690] status {} -> ok=true failure=none
+[691] collect_wood {"count":16} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[692] explore_nearby {"radius":8} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[693] status {} -> ok=true failure=none
+[694] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[695] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[696] status {} -> ok=true failure=none
+[697] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[698] setup_workspace {"need_crafting_table":true} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[699] navigate_to_block_type {"targets":["stone"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[700] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 28 saved  ticks 676-700]
+[701] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[702] navigate_to_block_type {"targets":["stone"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[703] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[704] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[705] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[706] status {} -> ok=true failure=none
+[707] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[708] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[709] status {} -> ok=true failure=none
+[710] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[711] setup_workspace {"need_crafting_table":true,"need_furnace":false,"need_chest":false,"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[712] setup_workspace {"need_crafting_table":true,"need_furnace":false,"need_chest":false,"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[713] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[714] status {} -> ok=true failure=none
+[715] setup_workspace {"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[716] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[717] status {} -> ok=true failure=none
+[718] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[719] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[720] status {} -> ok=true failure=none
+[721] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[722] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[723] status {} -> ok=true failure=none
+[724] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[725] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 29 saved  ticks 701-725]
+[726] status {} -> ok=true failure=none
+[727] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[728] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[729] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[730] status {} -> ok=true failure=none
+[731] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[732] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[733] status {} -> ok=true failure=none
+[734] collect_wood {"count":4} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[735] explore_nearby {"radius":8} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[736] status {} -> ok=true failure=none
+[737] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[738] explore_nearby {} -> ok=false failure=partial_progress stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[739] explore_nearby {} -> ok=false failure=partial_progress stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[740] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[741] status {} -> ok=true failure=none
+[742] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[743] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[744] status {} -> ok=true failure=none
+[745] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[746] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[747] status {} -> ok=true failure=none
+[748] status {} -> ok=true failure=none
+[749] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[750] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 30 saved  ticks 726-750]
+[751] status {} -> ok=true failure=none
+[752] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[753] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[754] status {} -> ok=true failure=none
+[755] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[756] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[757] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[758] navigate_to_block_type {"targets":["stone"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[759] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[760] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[761] navigate_to_block_type {"targets":["stone"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[762] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[763] status {} -> ok=true failure=none
+[764] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[765] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[766] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[767] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[768] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[769] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[770] status {} -> ok=true failure=none
+[771] status {} -> ok=true failure=none
+[772] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[773] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[774] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[775] status {} -> ok=true failure=none
+  [batch 31 saved  ticks 751-775]
+[776] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[777] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[778] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[779] status {} -> ok=true failure=none
+[780] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[781] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[782] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[783] status {} -> ok=true failure=none
+[784] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[785] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[786] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[787] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[788] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[789] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[790] status {} -> ok=true failure=none
+[791] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[792] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[793] status {} -> ok=true failure=none
+[794] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[795] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[796] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[797] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[798] status {} -> ok=true failure=none
+[799] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[800] setup_workspace {"need_crafting_table":true,"need_furnace":false,"need_chest":false,"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+  [batch 32 saved  ticks 776-800]
+[801] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[802] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[803] status {} -> ok=true failure=none
+[804] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[805] status {} -> ok=true failure=none
+[806] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[807] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[808] status {} -> ok=true failure=none
+[809] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[810] scan_for_specific_block {} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[811] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[812] status {} -> ok=true failure=none
+[813] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[814] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[815] status {} -> ok=true failure=none
+[816] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[817] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[818] navigate_to_block_type {"targets":["spruce_log"],"radius":40} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[819] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[820] status {} -> ok=true failure=none
+[821] status {} -> ok=true failure=none
+[822] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[823] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[824] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[825] status {} -> ok=true failure=none
+  [batch 33 saved  ticks 801-825]
+[826] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[827] status {} -> ok=true failure=none
+[828] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[829] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[830] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[831] status {} -> ok=true failure=none
+[832] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[833] setup_workspace {"need_crafting_table":true,"need_furnace":false,"need_chest":false,"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[834] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[835] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[836] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[837] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[838] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[839] status {} -> ok=true failure=none
+[840] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[841] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[842] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[843] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[844] navigate_to_block_type {"targets":["spruce_log"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[845] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[846] status {} -> ok=true failure=none
+[847] status {} -> ok=true failure=none
+[848] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[849] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[850] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 34 saved  ticks 826-850]
+[851] status {} -> ok=true failure=none
+[852] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[853] setup_workspace {"need_crafting_table":true,"need_furnace":false,"need_chest":false,"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[854] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[855] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[856] navigate_to_block_type {"targets":["spruce_log"],"radius":20} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[857] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[858] status {} -> ok=true failure=none
+[859] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[860] navigate_to_block_type {"targets":["spruce_log"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[861] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[862] status {} -> ok=true failure=none
+[863] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[864] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[865] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[866] status {} -> ok=true failure=none
+[867] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[868] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[869] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[870] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[871] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[872] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[873] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[874] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+[875] scan_for_specific_block {} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+  [batch 35 saved  ticks 851-875]
+[876] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[877] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[878] status {} -> ok=true failure=none
+[879] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[880] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[881] status {} -> ok=true failure=none
+[882] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[883] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[884] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[885] status {} -> ok=true failure=none
+[886] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[887] status {} -> ok=true failure=none
+[888] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[889] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[890] status {} -> ok=true failure=none
+[891] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[892] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[893] status {} -> ok=true failure=none
+[894] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[895] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[896] status {} -> ok=true failure=none
+[897] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[898] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[899] status {} -> ok=true failure=none
+[900] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+  [batch 36 saved  ticks 876-900]
+[901] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[902] status {} -> ok=true failure=none
+[903] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[904] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[905] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[906] status {} -> ok=true failure=none
+[907] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[908] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[909] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[910] status {} -> ok=true failure=none
+[911] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[912] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[913] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[914] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[915] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[916] status {} -> ok=true failure=none
+[917] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[918] recover_position {} -> ok=false failure=no_progress stop=action_failed error='No meaningful movement during recovery.'
+[919] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[920] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[921] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[922] status {} -> ok=true failure=none
+[923] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[924] status {} -> ok=true failure=none
+[925] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+  [batch 37 saved  ticks 901-925]
+[926] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[927] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[928] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[929] status {} -> ok=true failure=none
+[930] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[931] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[932] status {} -> ok=true failure=none
+[933] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[934] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[935] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[936] status {} -> ok=true failure=none
+[937] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[938] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[939] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[940] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[941] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[942] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[943] status {} -> ok=true failure=none
+[944] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[945] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[946] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[947] status {} -> ok=true failure=none
+[948] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[949] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[950] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 38 saved  ticks 926-950]
+[951] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[952] navigate_to_block_type {"targets":["spruce_log"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[953] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[954] status {} -> ok=true failure=none
+[955] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[956] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[957] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[958] status {} -> ok=true failure=none
+[959] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[960] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[961] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[962] status {} -> ok=true failure=none
+[963] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[964] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[965] status {} -> ok=true failure=none
+[966] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[967] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[968] status {} -> ok=true failure=none
+[969] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[970] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[971] navigate_to_block_type {"targets":["stone"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[972] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[973] status {} -> ok=true failure=none
+[974] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[975] navigate_to_block_type {"targets":["stone"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+  [batch 39 saved  ticks 951-975]
+[976] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[977] status {} -> ok=true failure=none
+[978] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[979] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[980] status {} -> ok=true failure=none
+[981] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[982] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[983] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[984] status {} -> ok=true failure=none
+[985] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[986] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[987] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[988] status {} -> ok=true failure=none
+[989] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[990] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[991] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[992] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[993] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[994] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[995] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[996] look_around {} -> ok=true failure=none
+[997] setup_workspace {"need_crafting_table":true,"need_furnace":false,"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[998] navigate_to_block_type {"targets":["spruce_log"],"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[999] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1000] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 40 saved  ticks 976-1000]
+[1001] status {} -> ok=true failure=none
+[1002] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1003] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1004] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1005] status {} -> ok=true failure=none
+[1006] status {} -> ok=true failure=none
+[1007] status {} -> ok=true failure=none
+[1008] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1009] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1010] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1011] status {} -> ok=true failure=none
+[1012] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1013] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1014] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1015] status {} -> ok=true failure=none
+[1016] navigate_to_block_type {} -> ok=false failure=invalid_args stop=missing_required_arg error="Action 'navigate_to_block_type' requires args.targets as a non-empty list of allowed resource block names."
+[1017] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1018] status {} -> ok=true failure=none
+[1019] status {} -> ok=true failure=none
+[1020] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1021] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1022] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1023] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1024] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1025] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 41 saved  ticks 1001-1025]
+[1026] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1027] status {} -> ok=true failure=none
+[1028] setup_workspace {"need_crafting_table":true,"need_furnace":true,"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1029] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1030] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1031] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1032] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1033] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1034] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1035] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1036] status {} -> ok=true failure=none
+[1037] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1038] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1039] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1040] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1041] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1042] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1043] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1044] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1045] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1046] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[1047] recover_position {} -> ok=false failure=no_progress stop=action_failed error='No meaningful movement during recovery.'
+[1048] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1049] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1050] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+  [batch 42 saved  ticks 1026-1050]
+[1051] navigate_to_block_type {"targets":["stone"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[1052] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1053] status {} -> ok=true failure=none
+[1054] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1055] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[1056] navigate_to_block_type {"targets":["stone"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[1057] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1058] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1059] navigate_to_block_type {"targets":["stone"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[1060] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1061] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1062] status {} -> ok=true failure=none
+[1063] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1064] navigate_to_block_type {"targets":["stone"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[1065] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1066] status {} -> ok=true failure=none
+[1067] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1068] navigate_to_block_type {"targets":["stone"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[1069] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1070] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1071] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1072] status {} -> ok=true failure=none
+[1073] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1074] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1075] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+  [batch 43 saved  ticks 1051-1075]
+[1076] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[1077] recover_position {} -> ok=false failure=no_progress stop=action_failed error='No meaningful movement during recovery.'
+[1078] find_safe_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[1079] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1080] navigate_to_block_type {"targets":["spruce_log"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1081] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1082] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1083] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1084] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1085] status {} -> ok=true failure=none
+[1086] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1087] navigate_to_block_type {"targets":["spruce_log"],"radius":16} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'
+[1088] explore_nearby {} -> ok=false failure=navigation_failed stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[1089] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[1090] navigate_to_block_type {"targets":["spruce_log"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='Navigation path failed: Timed out pathing to target block after 12000ms.'

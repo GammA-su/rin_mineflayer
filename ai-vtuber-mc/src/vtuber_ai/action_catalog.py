@@ -17,6 +17,18 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from vtuber_ai.requirements import (
+    Effect,
+    Requirement,
+    REQ_INVENTORY_ITEM,
+    REQ_INVENTORY_ANY,
+    REQ_STATION_USABLE,
+    REQ_TOOL_TIER,
+    REQ_DIMENSION,
+    REQ_ACCESSIBLE_BLOCK,
+    REQ_HEALTH_MIN,
+)
+
 
 @dataclass
 class ActionSpec:
@@ -41,6 +53,9 @@ class ActionSpec:
     can_fight: bool = False
     can_use_container: bool = False
     exposes_to_llm: bool = False
+    # Generic typed requirements and effects (new in v3)
+    requirements: list[Requirement] = field(default_factory=list)
+    effects: list[Effect] = field(default_factory=list)
 
 
 def _s(
@@ -62,6 +77,8 @@ def _s(
     can_fight: bool = False,
     can_use_container: bool = False,
     exposes_to_llm: bool | None = None,
+    requirements: list[Requirement] | None = None,
+    effects: list[Effect] | None = None,
 ) -> ActionSpec:
     expose = exposes_to_llm if exposes_to_llm is not None else status in {"implemented", "partial"}
     return ActionSpec(
@@ -83,6 +100,8 @@ def _s(
         can_fight=can_fight,
         can_use_container=can_use_container,
         exposes_to_llm=expose,
+        requirements=requirements or [],
+        effects=effects or [],
     )
 
 
@@ -155,9 +174,10 @@ _CATALOG_LIST: list[ActionSpec] = [
        moves_bot=True),
 
     _s("navigate_to_block_type", "core_control", "implemented", "low",
-       "Move near an accessible target block type if direct acquisition fails.",
+       "Move near a resource/world block (logs, stone, coal_ore, iron_ore, etc.). "
+       "NOT for stations — use approach_station for crafting_table, furnace, or chest.",
        "verify_position_changed", "stateful_retry",
-       args_schema={"targets": "allowed block names list", "radius": "8-96 optional"},
+       args_schema={"targets": "allowed resource block names list (no stations)", "radius": "8-96 optional"},
        preconditions=["target_block_in_radius"],
        moves_bot=True),
 
@@ -214,10 +234,10 @@ _CATALOG_LIST: list[ActionSpec] = [
        args_schema={"radius": "8-64 optional (default 16)"}),
 
     _s("scan_for_specific_block", "sensing", "implemented", "low",
-       "Find the nearest occurrence of each requested block within radius. "
-       "Accepts ACQUIRE_ALLOWED_TARGETS plus structure indicator blocks. Read-only.",
+       "Scan for specific named blocks within radius; targets is required (non-empty list of block names). "
+       "Returns nearest occurrence of each. Read-only.",
        "verify_action_result_ok", "idempotent",
-       args_schema={"targets": "list of block names", "radius": "8-96 optional (default 32)"}),
+       args_schema={"targets": "required non-empty list of block names to scan for", "radius": "8-96 optional (default 32)"}),
 
     _s("scan_for_liquids", "sensing", "implemented", "low",
        "Detect nearby water and lava clusters with distance and danger flags. "
@@ -236,6 +256,17 @@ _CATALOG_LIST: list[ActionSpec] = [
        "Detect nearby crafting_table, furnace, and chest within radius 8 and report workspace safety/open-space score. "
        "Use this before deciding whether to reuse a known workspace or place a missing station.",
        "verify_action_result_ok", "idempotent"),
+
+    _s("debug_collect_drops", "sensing", "implemented", "low",
+       "Attempt to collect item drops already on the ground near the bot's current position. "
+       "Does not mine or path to resources. Useful for manually testing drop pickup logic. "
+       "Returns full drop-collection diagnostics (nearestDropDistance, dropCollectionMethod, closeDropPickupAttempted, etc.).",
+       "verify_action_result_ok", "idempotent",
+       args_schema={
+           "radius": "2-32 optional (default 8)",
+           "targetItems": "string[] optional — item names to collect (default: coal, raw_iron, cobblestone, stone)",
+       },
+       moves_bot=True),
 
     # -----------------------------------------------------------------------
     # MOVEMENT / POSITIONING
@@ -261,6 +292,15 @@ _CATALOG_LIST: list[ActionSpec] = [
            "radius": "8-64 optional",
        },
        moves_bot=True, can_place=True),
+
+    _s("approach_station", "movement", "implemented", "low",
+       "Move close enough to use a station: crafting_table, furnace, or chest. "
+       "Use this for stations — NOT navigate_to_block_type which is for resource blocks.",
+       "verify_action_result_ok", "safe_retry",
+       args_schema={"station": "crafting_table|furnace|chest required", "radius": "2-6 default 3"},
+       preconditions=["station_visible"],
+       requires_world_state=["station_visible"],
+       moves_bot=True),
 
     _s("return_to_position", "movement", "implemented", "low",
        "Pathfind to explicit xyz coordinates in the current dimension. "
@@ -386,8 +426,11 @@ _CATALOG_LIST: list[ActionSpec] = [
 
     _s("place_furnace", "placement", "implemented", "low",
        "Place a furnace from inventory on a safe adjacent block. "
+       "Returns station_already_available if a furnace is already nearby. "
+       "If no furnace in inventory returns missing_placeable_item. "
        "If placement fails due to cramped area, choose find_safe_workspace or return_to_surface before retrying.",
        "verify_block_placed", "idempotent",
+       args_schema={"radius": "1-8 optional (default 4)", "allowPrepareArea": "bool optional (default true)"},
        preconditions=["has_furnace_in_inventory"],
        consumes=["furnace"],
        can_place=True),
@@ -449,7 +492,7 @@ _CATALOG_LIST: list[ActionSpec] = [
     # CRAFTING
     # -----------------------------------------------------------------------
     _s("craft_item", "crafting", "implemented", "low",
-       "Allowlisted generic craft for furnace, torch, chest, shield, bucket, and iron tools/armor only.",
+       "craft_item(item) only for generic supported utility/iron items. Prefer specific craft_* actions when listed.",
        "verify_inventory_added", "stateful_retry",
        args_schema={"item": "furnace|torch|chest|shield|bucket|iron_pickaxe|iron_sword|iron_helmet|iron_chestplate|iron_leggings|iron_boots|iron_armor", "count": "1-64 optional; forced to 1 for tools/armor/bucket/shield"},
        requires_world_state=["crafting_table_nearby_if_2x2_recipe"]),
@@ -484,7 +527,15 @@ _CATALOG_LIST: list[ActionSpec] = [
        preconditions=["has_nearby_crafting_table", "has_3_planks", "has_2_sticks"],
        requires_world_state=["crafting_table_nearby"],
        consumes=["planks", "stick"],
-       produces=["wooden_pickaxe"]),
+       produces=["wooden_pickaxe"],
+       requirements=[
+           Requirement(kind=REQ_STATION_USABLE, station="crafting_table"),
+           Requirement(kind=REQ_INVENTORY_ANY, items=[
+               "oak_planks","birch_planks","spruce_planks","jungle_planks",
+               "acacia_planks","dark_oak_planks","mangrove_planks","cherry_planks",
+           ], count=3),
+           Requirement(kind=REQ_INVENTORY_ITEM, item="stick", count=2),
+       ]),
 
     _s("craft_stone_pickaxe", "crafting", "implemented", "low",
        "Craft a stone pickaxe at a nearby crafting table.",
@@ -492,7 +543,12 @@ _CATALOG_LIST: list[ActionSpec] = [
        preconditions=["has_nearby_crafting_table", "has_3_cobblestone", "has_2_sticks"],
        requires_world_state=["crafting_table_nearby"],
        consumes=["cobblestone", "stick"],
-       produces=["stone_pickaxe"]),
+       produces=["stone_pickaxe"],
+       requirements=[
+           Requirement(kind=REQ_STATION_USABLE, station="crafting_table"),
+           Requirement(kind=REQ_INVENTORY_ITEM, item="cobblestone", count=3),
+           Requirement(kind=REQ_INVENTORY_ITEM, item="stick", count=2),
+       ]),
 
     _s("craft_furnace", "crafting", "implemented", "low",
        "Craft a furnace from 8 cobblestone at a crafting table.",
@@ -508,7 +564,11 @@ _CATALOG_LIST: list[ActionSpec] = [
        args_schema={"count": "1-64 optional"},
        preconditions=["has_coal", "has_sticks"],
        consumes=["coal", "stick"],
-       produces=["torch"]),
+       produces=["torch"],
+       requirements=[
+           Requirement(kind=REQ_INVENTORY_ANY, items=["coal", "charcoal"], count=1),
+           Requirement(kind=REQ_INVENTORY_ITEM, item="stick", count=1),
+       ]),
 
     _s("craft_chest", "crafting", "implemented", "low",
        "Craft a chest from 8 planks at a crafting table.",
@@ -656,15 +716,27 @@ _CATALOG_LIST: list[ActionSpec] = [
        args_schema={"count": "1-16"},
        preconditions=["has_pickaxe", "health_gte_10"],
        produces=["cobblestone"],
-       moves_bot=True, can_dig=True),
+       moves_bot=True, can_dig=True,
+       requirements=[
+           Requirement(kind=REQ_TOOL_TIER, tier="wood", tool_type="pickaxe"),
+           Requirement(kind=REQ_HEALTH_MIN, value=10.0),
+       ]),
 
     _s("mine_coal", "resource", "implemented", "medium",
-       "Mine coal ore. Requires a pickaxe.",
+       "Mine coal ore. Requires a pickaxe. Handles buried coal via bounded safe staircase excavation.",
        "verify_inventory_added", "stateful_retry",
-       args_schema={"count": "1-32 optional"},
+       args_schema={
+           "count": "1-32 optional",
+           "radius": "8-96 optional (default 32)",
+           "allowExcavate": "boolean optional (default true) — allow digging toward buried coal",
+           "accessMode": "exposed|surface_first|safe_staircase optional (default safe_staircase)",
+       },
        preconditions=["has_pickaxe"],
        produces=["coal"],
-       moves_bot=True, can_dig=True),
+       moves_bot=True, can_dig=True,
+       requirements=[
+           Requirement(kind=REQ_TOOL_TIER, tier="wood", tool_type="pickaxe"),
+       ]),
 
     _s("mine_iron_ore", "resource", "implemented", "medium",
        "Mine iron ore. Requires a stone pickaxe or better.",
@@ -672,7 +744,10 @@ _CATALOG_LIST: list[ActionSpec] = [
        args_schema={"count": "1-32 optional"},
        preconditions=["has_stone_pickaxe_or_better"],
        produces=["raw_iron"],
-       moves_bot=True, can_dig=True),
+       moves_bot=True, can_dig=True,
+       requirements=[
+           Requirement(kind=REQ_TOOL_TIER, tier="stone", tool_type="pickaxe"),
+       ]),
 
     _s("mine_diamond_ore", "resource", "planned", "high",
        "Mine diamond ore. Requires an iron pickaxe or better.",
@@ -744,7 +819,10 @@ _CATALOG_LIST: list[ActionSpec] = [
        args_schema={"count": "1-14 optional"},
        preconditions=["has_diamond_pickaxe"],
        produces=["obsidian"],
-       moves_bot=True, can_dig=True),
+       moves_bot=True, can_dig=True,
+       requirements=[
+           Requirement(kind=REQ_TOOL_TIER, tier="diamond", tool_type="pickaxe"),
+       ]),
 
     _s("collect_food", "resource", "planned", "medium",
        "Hunt or harvest food from passive mobs or crops.",
@@ -757,9 +835,9 @@ _CATALOG_LIST: list[ActionSpec] = [
     # FURNACE / SMELTING
     # -----------------------------------------------------------------------
     _s("smelt_item", "smelting", "partial", "low",
-       "Smelt an allowlisted input in a nearby furnace. Returns partial_success/can_retry if output is still cooking.",
+       "Smelt a smeltable input in a nearby furnace. input must be one of the allowed_values listed in the schema. Returns partial_success/can_retry if output is still cooking.",
        "verify_inventory_added", "stateful_retry",
-       args_schema={"input": "raw_iron|raw_gold|raw/cookable food", "count": "1-64 optional", "fuel": "coal|charcoal|planks/logs optional"},
+       args_schema={"input": "raw_iron|raw_gold|raw_beef|raw_chicken|raw_mutton|raw_porkchop|raw_rabbit|cod|salmon|potato", "count": "1-64 optional", "fuel": "coal|charcoal|planks/logs optional"},
        preconditions=["has_furnace_nearby", "has_fuel"],
        requires_world_state=["furnace_nearby"],
        can_use_container=True),
@@ -1058,7 +1136,11 @@ _CATALOG_LIST: list[ActionSpec] = [
        "verify_block_placed", "stateful_no_retry",
        preconditions=["has_14_obsidian"],
        consumes=["obsidian"],
-       can_place=True),
+       can_place=True,
+       requirements=[
+           Requirement(kind=REQ_DIMENSION, dimension="overworld"),
+           Requirement(kind=REQ_INVENTORY_ITEM, item="obsidian", count=14),
+       ]),
 
     _s("cast_nether_portal", "nether_portal", "partial", "high",
        "Use water-on-lava casting to form obsidian for a portal. "
@@ -1198,7 +1280,10 @@ _CATALOG_LIST: list[ActionSpec] = [
        "verify_block_placed", "stateful_no_retry",
        preconditions=["has_ender_eye", "end_portal_room_found"],
        consumes=["ender_eye"],
-       can_place=True),
+       can_place=True,
+       requirements=[
+           Requirement(kind=REQ_INVENTORY_ITEM, item="ender_eye", count=1),
+       ]),
 
     _s("enter_end", "stronghold", "implemented", "critical",
        "Navigate into an active end_portal block within 8 blocks and wait for dimension change to the_end. "
@@ -1214,7 +1299,10 @@ _CATALOG_LIST: list[ActionSpec] = [
        "Ensure the bot can safely leave the End obsidian platform. Bridges a detected gap only when bounded and avoids void movement.",
        "verify_action_result_ok", "stateful_no_retry",
        requires_world_state=["in_the_end"],
-       moves_bot=True, can_place=True),
+       moves_bot=True, can_place=True,
+       requirements=[
+           Requirement(kind=REQ_DIMENSION, dimension="the_end"),
+       ]),
 
     _s("equip_pumpkin_head", "end_fight", "implemented", "high",
        "Equip a carved pumpkin as helmet to prevent Endermen from aggro-ing.",
@@ -1473,11 +1561,12 @@ CATEGORY_ORDER = [
 ]
 
 # Short inline hints appended to compact signatures to reduce LLM alias confusion.
-# Format: "[hint text]" — keep each entry under 20 chars.
+# Format: "[hint text]".
 COMPACT_HINTS: dict[str, str] = {
     "collect_obsidian": "aka mine_obsidian",
     "collect_flint": "aka mine_flint",
     "collect_wood": "aka mine_logs",
+    "craft_item": "only generic utility/iron; prefer specific craft_*",
     "mine_stone": "gets cobblestone",
     "mine_iron_ore": "gets raw_iron",
 }

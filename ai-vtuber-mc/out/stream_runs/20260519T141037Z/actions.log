@@ -1,0 +1,27 @@
+Stream loop starting — output: out/stream_runs/20260519T141037Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+Press Ctrl+C to stop.
+
+[1] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[2] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[3] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[4] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[5] smelt_item {"input":"raw_iron","count":1} -> ok=true failure=none
+[6] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[7] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[8] smelt_item {"input":"raw_iron","count":1} -> ok=true failure=none
+[9] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[10] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[11] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[12] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[13] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[14] smelt_item {"input":"raw_iron","count":1} -> ok=true failure=none
+[15] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need raw_iron.'
+[16] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 45000ms.'
+[17] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 45000ms.'
+[18] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 45000ms.'
+  [batch 1 saved  ticks 1-18 (partial)]
+
+Stopped. 18 ticks total. Output: out/stream_runs/20260519T141037Z

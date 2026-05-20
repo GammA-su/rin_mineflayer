@@ -1,0 +1,12 @@
+Stream loop starting — output: out/stream_runs/20260519T194552Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+  personality: http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[2] mine_coal {"count":16,"radius":8} -> ok=false failure=target_not_found stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+  [batch 1 saved  ticks 1-2 (partial)]
+
+Stopped. 2 ticks total. Output: out/stream_runs/20260519T194552Z

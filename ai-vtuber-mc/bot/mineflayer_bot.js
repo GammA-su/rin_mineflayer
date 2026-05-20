@@ -10,6 +10,28 @@ const toolPlugin = require('mineflayer-tool').plugin
 
 const BRIDGE_PORT = numberEnv('BRIDGE_PORT', 3001)
 const MC_VERSION = optionalEnv('MC_VERSION')
+const MC_AUTO_RECONNECT = booleanEnv('MC_AUTO_RECONNECT', true)
+const MC_RECONNECT_DELAY_MS = numberEnv('MC_RECONNECT_DELAY_MS', 5000)
+const ACTION_TIMEOUT_MS = numberEnv('ACTION_TIMEOUT_MS', 45000)
+const RESOURCE_ACTION_TIMEOUT_MS = numberEnv('RESOURCE_ACTION_TIMEOUT_MS', 60000)
+const NAVIGATION_TIMEOUT_MS = numberEnv('NAVIGATION_TIMEOUT_MS', 15000)
+const MAX_BLOCK_CANDIDATES = numberEnv('MAX_BLOCK_CANDIDATES', 512)
+const MAX_RESOURCE_CANDIDATES_EVALUATED = numberEnv('MAX_RESOURCE_CANDIDATES_EVALUATED', 512)
+const RESOURCE_DEBUG_FULL_SCAN = booleanEnv('RESOURCE_DEBUG_FULL_SCAN', false)
+const MAX_SCAN_RADIUS = numberEnv('MAX_SCAN_RADIUS', 32)
+const MAX_EXCAVATION_STEPS = numberEnv('MAX_EXCAVATION_STEPS', 24)
+const RESOURCE_CLOSE_RANGE_BLOCKS = numberEnv('RESOURCE_CLOSE_RANGE_BLOCKS', 6)
+const CLOSE_RANGE_PATH_TIMEOUT_MS = numberEnv('CLOSE_RANGE_PATHFINDING_TIMEOUT_MS', numberEnv('CLOSE_RANGE_PATH_TIMEOUT_MS', 10000))
+const ACQUIRE_TARGET_CACHE_TTL_MS = numberEnv('ACQUIRE_TARGET_CACHE_TTL_MS', 30000)
+const DROP_COLLECTION_TIMEOUT_MS = numberEnv('DROP_COLLECTION_TIMEOUT_MS', 20000)
+const DROP_COLLECTION_RADIUS = numberEnv('DROP_COLLECTION_RADIUS', 10)
+const DROP_DIRECT_WALK_RADIUS = numberEnv('DROP_DIRECT_WALK_RADIUS', 5)
+const CLOSE_DROP_PICKUP_RADIUS = numberEnv('CLOSE_DROP_PICKUP_RADIUS', 2.5)
+const CLOSE_DROP_PICKUP_TIMEOUT_MS = numberEnv('CLOSE_DROP_PICKUP_TIMEOUT_MS', 8000)
+const DROP_LOCAL_PATH_TIMEOUT_MS = numberEnv('DROP_LOCAL_PATH_TIMEOUT_MS', 5000)
+const DROP_LOCAL_EXCAVATION_STEP_LIMIT = numberEnv('DROP_LOCAL_EXCAVATION_STEP_LIMIT', 3)
+const LOCAL_EXCAVATION_STEP_LIMIT = numberEnv('LOCAL_EXCAVATION_STEP_LIMIT', 6)
+const DROP_COLLECTABILITY_WINDOW = numberEnv('DROP_COLLECTABILITY_WINDOW', 8)
 const MOODS = new Set(['neutral', 'happy', 'surprised', 'scared', 'focused', 'confused'])
 const WOOD_BLOCK_NAMES = new Set([
   'oak_log',
@@ -53,12 +75,14 @@ const ACQUIRE_BLOCKS_DEFAULT_RADIUS = 48
 const ACQUIRE_BLOCKS_MIN_RADIUS = 8
 const ACQUIRE_BLOCKS_MAX_RADIUS = 96
 const ACQUIRE_BLOCKS_TIMEOUT_MS = 60000
-const ACQUIRE_PATH_TIMEOUT_MS = 15000
+const PATHFINDING_TIMEOUT_MS = numberEnv('PATHFINDING_TIMEOUT_MS', 15000)
+const RESOURCE_PATHFINDING_TIMEOUT_MS = numberEnv('RESOURCE_PATHFINDING_TIMEOUT_MS', 12000)
+const ACQUIRE_PATH_TIMEOUT_MS = RESOURCE_PATHFINDING_TIMEOUT_MS
 const ACQUIRE_DIG_TIMEOUT_MS = 8000
-const ACQUIRE_MAX_EXCAVATED_BLOCKS = 8
-const ACQUIRE_MAX_STEPS = 8
+const ACQUIRE_MAX_EXCAVATED_BLOCKS = 64
+const ACQUIRE_MAX_STEPS = 24
 const ACQUIRE_MAX_ATTEMPTS = 64
-const ACQUIRE_ACCESS_MODES = new Set(['surface_first', 'safe_staircase'])
+const ACQUIRE_ACCESS_MODES = new Set(['exposed', 'surface_first', 'safe_staircase'])
 const PICKAXE_ITEM_NAMES = new Set([
   'wooden_pickaxe',
   'stone_pickaxe',
@@ -209,6 +233,18 @@ const WORKSPACE_PATH_TIMEOUT_MS = 20000
 const WORKSPACE_DEFAULT_RADIUS  = 16
 const WORKSPACE_MAX_RADIUS      = 64
 const WORKSPACE_PURPOSES        = new Set(['crafting', 'smelting', 'storage', 'general'])
+const STATION_USE_RADIUS        = 6
+const STATION_SCAN_RADIUS       = 24
+const STATION_APPROACH_RADIUS   = 3
+const STATION_BLOCK_TYPES       = new Set(['crafting_table', 'furnace', 'chest'])
+const STATION_NUISANCE_BLOCK_NAMES = new Set([
+  'short_grass', 'grass', 'tall_grass', 'fern', 'large_fern',
+  'dead_bush', 'moss_carpet', 'vine', 'lily_pad', 'seagrass', 'kelp', 'kelp_plant',
+  'oak_leaves', 'spruce_leaves', 'birch_leaves', 'jungle_leaves',
+  'acacia_leaves', 'dark_oak_leaves', 'mangrove_leaves', 'cherry_leaves',
+  'azalea_leaves', 'flowering_azalea_leaves',
+])
+const STATION_NUISANCE_MAX_DIG  = 3
 const PILLAR_MAX_HEIGHT         = 16
 const BRIDGE_MAX_LENGTH         = 32
 const STAIRCASE_MAX_STEPS       = 32
@@ -338,6 +374,23 @@ const SOFT_EXPOSURE_BLOCK_NAMES = new Set([
   'rooted_dirt',
   'snow',
   'snow_block'
+])
+// Blocks that are safe to tunnel through as access paths (not soft, but not protected or dangerous).
+const HARD_EXCAVATE_BLOCK_NAMES = new Set([
+  'stone', 'granite', 'diorite', 'andesite', 'tuff', 'calcite',
+  'deepslate', 'cobbled_deepslate', 'smooth_basalt', 'basalt',
+  'netherrack', 'blackstone', 'gravel', 'sand', 'sandstone',
+])
+const DROP_LOCAL_EXCAVATION_BLOCK_NAMES = new Set([
+  'stone',
+  'cobblestone',
+  'dirt',
+  'gravel',
+  'moss_block',
+  'andesite',
+  'diorite',
+  'granite',
+  'deepslate'
 ])
 const NEVER_MINE_BLOCK_NAMES = new Set([
   'crafting_table',
@@ -480,6 +533,7 @@ const ACTIONS = new Set([
   'equip_best_weapon',
   'find_safe_workspace',
   'setup_workspace',
+  'approach_station',
   'dig_staircase',
   'return_to_surface',
   'pillar_up',
@@ -499,6 +553,8 @@ const ACTIONS = new Set([
   'scan_for_passive_mobs',
   'scan_for_chests',
   'scan_for_specific_block',
+  'debug_find_blocks',
+  'debug_collect_drops',
   'scan_for_liquids',
   'scan_for_structures',
   'scan_workspace',
@@ -645,7 +701,7 @@ function actionCategory(name) {
     'deflect_ghast_fireball', 'kite_mob', 'throw_ender_pearl'
   ].includes(name)) return 'combat'
   if ([
-    'find_safe_workspace', 'setup_workspace', 'dig_staircase', 'pillar_up', 'bridge_gap',
+    'find_safe_workspace', 'setup_workspace', 'approach_station', 'dig_staircase', 'pillar_up', 'bridge_gap',
     'place_block_in_direction', 'mlg_water_bucket', 'enter_boat', 'exit_boat',
     'set_sneak', 'set_sprint'
   ].includes(name)) return 'movement'
@@ -752,7 +808,7 @@ function createActionArgSchemas() {
     'craft_iron_pickaxe', 'craft_iron_sword', 'craft_iron_armor',
     'craft_diamond_pickaxe', 'craft_diamond_sword', 'craft_diamond_armor',
     'craft_blaze_powder', 'craft_wooden_pickaxe', 'craft_stone_pickaxe',
-    'place_crafting_table', 'place_furnace', 'place_chest', 'place_bed',
+    'place_crafting_table', 'place_chest', 'place_bed',
     'place_boat', 'place_torch', 'equip_best_armor', 'equip_best_weapon',
     'eat_food', 'flee', 'recover_position', 'check_inventory',
     'check_time_of_day', 'check_light_level', 'check_biome',
@@ -775,6 +831,13 @@ function createActionArgSchemas() {
     'dragon_phase_perch', 'fight_dragon_phase', 'return_to_overworld_via_end_portal'
   ]
   for (const action of noArgActions) defineNoArgSchema(schemas, action)
+
+  defineSchema(schemas, 'place_furnace', {
+    allowedKeys: ['radius', 'allowPrepareArea'],
+    defaults: { radius: 4, allowPrepareArea: true },
+    clamp: { radius: { min: 1, max: 8, integer: true } },
+    booleans: ['allowPrepareArea'],
+  })
 
   defineSchema(schemas, 'look_around', {
     allowedKeys: ['radius'],
@@ -801,7 +864,20 @@ function createActionArgSchemas() {
 
   defineCountSchema(schemas, 'collect_wood', COLLECT_WOOD_DEFAULT_COUNT, 1, COLLECT_WOOD_MAX_COUNT)
   defineCountSchema(schemas, 'mine_stone', MINE_STONE_DEFAULT_COUNT, 1, MINE_STONE_MAX_COUNT)
-  defineCountSchema(schemas, 'mine_coal', MINE_COAL_DEFAULT_COUNT, 1, ORE_MINE_MAX_COUNT)
+  defineSchema(schemas, 'mine_coal', {
+    allowedKeys: ['count', 'radius', 'allowExcavate', 'accessMode'],
+    defaults: {
+      count: MINE_COAL_DEFAULT_COUNT,
+      radius: ACQUIRE_BLOCKS_DEFAULT_RADIUS,
+      allowExcavate: true,
+      accessMode: 'safe_staircase'
+    },
+    clamp: {
+      count: { min: 1, max: ORE_MINE_MAX_COUNT, integer: true },
+      radius: { min: ACQUIRE_BLOCKS_MIN_RADIUS, max: ACQUIRE_BLOCKS_MAX_RADIUS, integer: true }
+    },
+    enums: { accessMode: Array.from(ACQUIRE_ACCESS_MODES) }
+  })
   defineCountSchema(schemas, 'mine_iron_ore', MINE_IRON_DEFAULT_COUNT, 1, ORE_MINE_MAX_COUNT)
   defineCountSchema(schemas, 'collect_obsidian', 1, 1, 14)
   defineCountSchema(schemas, 'craft_planks', 4, 1, CRAFT_MAX_COUNT)
@@ -825,6 +901,13 @@ function createActionArgSchemas() {
     defaults: { need_crafting_table: true, need_furnace: false, need_chest: false, radius: WORKSPACE_DEFAULT_RADIUS },
     clamp: { radius: { min: 8, max: WORKSPACE_MAX_RADIUS, integer: true } },
     booleans: ['need_crafting_table', 'need_furnace', 'need_chest']
+  })
+  defineSchema(schemas, 'approach_station', {
+    allowedKeys: ['station', 'radius'],
+    defaults: { radius: STATION_APPROACH_RADIUS },
+    required: ['station'],
+    clamp: { radius: { min: 2, max: STATION_USE_RADIUS, integer: true } },
+    enums: { station: Array.from(STATION_BLOCK_TYPES) }
   })
   defineRadiusSchema(schemas, 'scan_for_hostiles', 16, 8, 64)
   defineRadiusSchema(schemas, 'scan_for_passive_mobs', 16, 8, 64)
@@ -859,6 +942,18 @@ function createActionArgSchemas() {
     required: ['targets'],
     clamp: { radius: { min: 8, max: 96, integer: true } },
     targets: { field: 'targets', nonEmpty: true, maxItems: 6 }
+  })
+  defineSchema(schemas, 'debug_find_blocks', {
+    allowedKeys: ['targets', 'radius'],
+    defaults: { radius: ACQUIRE_BLOCKS_DEFAULT_RADIUS },
+    required: ['targets'],
+    clamp: { radius: { min: 8, max: MAX_SCAN_RADIUS, integer: true } },
+    targets: { field: 'targets', nonEmpty: true, maxItems: 8 }
+  })
+  defineSchema(schemas, 'debug_collect_drops', {
+    allowedKeys: ['radius', 'targetItems'],
+    defaults: { radius: 8, targetItems: ['coal', 'raw_iron', 'cobblestone', 'stone'] },
+    clamp: { radius: { min: 2, max: 32, integer: true } }
   })
 
   defineSchema(schemas, 'craft_item', {
@@ -1072,38 +1167,189 @@ if (MC_VERSION) {
   botOptions.version = MC_VERSION
 }
 
-const bot = mineflayer.createBot(botOptions)
-bot.loadPlugin(pathfinder)
-bot.loadPlugin(toolPlugin)
-bot.loadPlugin(collectBlock)
+let bot = null
+let reconnectTimer = null
+let reconnectAttempts = 0
+let isConnecting = false
+let shuttingDown = false
+let lastKickReason = null
+let lastDisconnectReason = null
+let lastError = null
+let lastActionStartedAt = null
+let currentActionName = null
+let actionRunning = false
+let lastPathGoal = null
+let lastPathCancelReason = null
+const _lastAcquireTargetByAction = new Map()
 
-bot.on('login', () => {
-  console.log(`Mineflayer logged in as ${bot.username}`)
-})
-
-bot.on('spawn', () => {
-  const now = Date.now()
-  if (lastDeath && now - lastDeath.ts <= RESPAWN_RECENT_SECONDS * 1000) {
-    lastRespawnAt = now
+function connectBot() {
+  if (shuttingDown || isConnecting || (bot && bot.player)) {
+    return
   }
-  defaultMovements = new Movements(bot)
-  bot.pathfinder.setMovements(defaultMovements)
-  bot.collectBlock.movements = defaultMovements
-  console.log('Mineflayer bot spawned')
-  bot.chat('AI VTuber online!')
-})
 
-bot.on('kicked', (reason) => {
-  console.log('Mineflayer bot kicked:', reason)
-})
+  isConnecting = true
+  try {
+    const instance = mineflayer.createBot(botOptions)
+    bot = instance
+    attachBotPlugins(instance)
+    attachBotEventHandlers(instance)
+  } catch (error) {
+    isConnecting = false
+    bot = null
+    lastError = formatErrorForStatus(error)
+    console.error('[Mineflayer] failed to create bot:', error)
+    scheduleReconnect('createBot_error')
+  }
+}
 
-bot.on('error', (error) => {
-  console.log('Mineflayer error:', error)
-})
+function attachBotPlugins(instance) {
+  instance.loadPlugin(pathfinder)
+  instance.loadPlugin(toolPlugin)
+  instance.loadPlugin(collectBlock)
+}
 
-bot.on('end', () => {
-  console.log('Mineflayer bot disconnected')
-})
+function attachBotEventHandlers(instance) {
+  instance.on('login', () => {
+    if (bot !== instance) return
+    reconnectAttempts = 0
+    isConnecting = false
+    console.log(`Mineflayer logged in as ${instance.username}`)
+  })
+
+  instance.on('spawn', () => {
+    if (bot !== instance) return
+    const now = Date.now()
+    if (lastDeath && now - lastDeath.ts <= RESPAWN_RECENT_SECONDS * 1000) {
+      lastRespawnAt = now
+    }
+    defaultMovements = new Movements(instance)
+    instance.pathfinder.setMovements(defaultMovements)
+    instance.collectBlock.movements = defaultMovements
+    console.log('Mineflayer bot spawned')
+    try {
+      instance.chat('AI VTuber online!')
+    } catch (error) {
+      lastError = formatErrorForStatus(error)
+    }
+  })
+
+  instance.on('kicked', (reason) => {
+    if (bot !== instance) return
+    lastKickReason = safeReason(reason)
+    console.log('Mineflayer bot kicked:', reason)
+    scheduleReconnect('kicked')
+  })
+
+  instance.on('error', (error) => {
+    if (bot !== instance) return
+    lastError = formatErrorForStatus(error)
+    console.log('Mineflayer error:', error)
+  })
+
+  instance.on('end', (reason) => {
+    if (bot !== instance) return
+    if (bot === instance) {
+      bot = null
+    }
+    isConnecting = false
+    lastDisconnectReason = safeReason(reason) || 'end'
+    console.log('Mineflayer bot disconnected', reason || '')
+    safeStopMovement(instance)
+    scheduleReconnect('end')
+  })
+
+  instance.on('entityHurt', (entity) => {
+    if (bot !== instance) return
+    if (entity === instance.entity) {
+      lastDeathCause = inferRecentDamageCause()
+    }
+  })
+
+  instance.on('message', (message) => {
+    if (bot !== instance) return
+    const text = message ? message.toString() : ''
+    if (!text || !instance.username || !text.includes(instance.username)) return
+    const lowered = text.toLowerCase()
+    if (
+      lowered.includes('died') ||
+      lowered.includes('slain') ||
+      lowered.includes('shot') ||
+      lowered.includes('fell') ||
+      lowered.includes('burned') ||
+      lowered.includes('lava') ||
+      lowered.includes('blew up') ||
+      lowered.includes('void')
+    ) {
+      lastDeathCause = text
+    }
+  })
+
+  instance.on('death', () => {
+    if (bot !== instance) return
+    if (!instance.entity) return
+    const pos = instance.entity.position
+    const dimension = (instance.game && instance.game.dimension) ? String(instance.game.dimension) : 'overworld'
+    const inventory = inventoryJson()
+    const cause = lastDeathCause || inferRecentDamageCause()
+    lastDeath = {
+      x: Math.floor(pos.x),
+      y: Math.floor(pos.y),
+      z: Math.floor(pos.z),
+      dimension,
+      ts: Date.now(),
+      cause,
+      inventory,
+      recovery_attempts: 0,
+      recovery_failures: 0,
+      abandoned: false
+    }
+    deathRecoveryFailures = 0
+    deathRecoveryAbandonedAt = null
+    waypointStore.set('death_location', { label: 'death_location', kind: 'death_location', ...lastDeath })
+    console.log(`[Death] at x=${lastDeath.x} y=${lastDeath.y} z=${lastDeath.z} dim=${dimension} cause=${cause || 'unknown'}`)
+  })
+}
+
+function scheduleReconnect(reason) {
+  if (shuttingDown || !MC_AUTO_RECONNECT || reconnectTimer) {
+    return
+  }
+
+  reconnectAttempts += 1
+  console.log(`[Mineflayer] reconnect scheduled in ${MC_RECONNECT_DELAY_MS}ms reason=${reason} attempt=${reconnectAttempts}`)
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null
+    connectBot()
+  }, MC_RECONNECT_DELAY_MS)
+}
+
+function safeReason(reason) {
+  if (reason === undefined || reason === null) return null
+  if (typeof reason === 'string') return reason
+  try {
+    return JSON.stringify(reason)
+  } catch (_error) {
+    return String(reason)
+  }
+}
+
+function formatErrorForStatus(error) {
+  if (!error) return null
+  return {
+    name: error.name || 'Error',
+    message: error.message || String(error),
+    code: error.code || null
+  }
+}
+
+function safeStopMovement(instance) {
+  try {
+    if (instance && instance.pathfinder) instance.pathfinder.setGoal(null)
+  } catch (_error) {}
+  try {
+    if (instance && typeof instance.clearControlStates === 'function') instance.clearControlStates()
+  } catch (_error) {}
+}
 
 // In-memory waypoint store (label → waypoint object). Python persists these in SQLite.
 const waypointStore = new Map()
@@ -1113,54 +1359,7 @@ let lastRespawnAt = null
 let lastDeathCause = null
 let deathRecoveryFailures = 0
 let deathRecoveryAbandonedAt = null
-
-bot.on('entityHurt', (entity) => {
-  if (entity === bot.entity) {
-    lastDeathCause = inferRecentDamageCause()
-  }
-})
-
-bot.on('message', (message) => {
-  const text = message ? message.toString() : ''
-  if (!text || !bot.username || !text.includes(bot.username)) return
-  const lowered = text.toLowerCase()
-  if (
-    lowered.includes('died') ||
-    lowered.includes('slain') ||
-    lowered.includes('shot') ||
-    lowered.includes('fell') ||
-    lowered.includes('burned') ||
-    lowered.includes('lava') ||
-    lowered.includes('blew up') ||
-    lowered.includes('void')
-  ) {
-    lastDeathCause = text
-  }
-})
-
-bot.on('death', () => {
-  if (!bot.entity) return
-  const pos = bot.entity.position
-  const dimension = (bot.game && bot.game.dimension) ? String(bot.game.dimension) : 'overworld'
-  const inventory = inventoryJson()
-  const cause = lastDeathCause || inferRecentDamageCause()
-  lastDeath = {
-    x: Math.floor(pos.x),
-    y: Math.floor(pos.y),
-    z: Math.floor(pos.z),
-    dimension,
-    ts: Date.now(),
-    cause,
-    inventory,
-    recovery_attempts: 0,
-    recovery_failures: 0,
-    abandoned: false
-  }
-  deathRecoveryFailures = 0
-  deathRecoveryAbandonedAt = null
-  waypointStore.set('death_location', { label: 'death_location', kind: 'death_location', ...lastDeath })
-  console.log(`[Death] at x=${lastDeath.x} y=${lastDeath.y} z=${lastDeath.z} dim=${dimension} cause=${cause || 'unknown'}`)
-})
+connectBot()
 
 const app = express()
 app.use(bodyParser.json({ limit: '10kb' }))
@@ -1213,6 +1412,32 @@ app.listen(BRIDGE_PORT, () => {
   console.log(`Mineflayer bridge listening on port ${BRIDGE_PORT}`)
 })
 
+setInterval(() => {
+  console.log(`[Mineflayer] heartbeat connected=${Boolean(bot && bot.player)} entityReady=${Boolean(bot && bot.entity)} currentAction=${currentActionName || 'none'} elapsedMs=${lastActionStartedAt ? Date.now() - lastActionStartedAt : 0}`)
+}, 5000)
+
+process.on('uncaughtException', (error) => {
+  lastError = formatErrorForStatus(error)
+  console.error('[Mineflayer] uncaughtException:', error)
+})
+
+process.on('unhandledRejection', (reason) => {
+  lastError = formatErrorForStatus(reason instanceof Error ? reason : new Error(String(reason)))
+  console.error('[Mineflayer] unhandledRejection:', reason)
+})
+
+process.on('SIGINT', () => {
+  shuttingDown = true
+  safeStopMovement(bot)
+  process.exit(0)
+})
+
+process.on('SIGTERM', () => {
+  shuttingDown = true
+  safeStopMovement(bot)
+  process.exit(0)
+})
+
 function numberEnv(name, fallback) {
   const raw = process.env[name]
   if (!raw) {
@@ -1221,6 +1446,15 @@ function numberEnv(name, fallback) {
 
   const parsed = Number(raw)
   return Number.isFinite(parsed) ? parsed : fallback
+}
+
+function booleanEnv(name, fallback) {
+  const raw = process.env[name]
+  if (raw === undefined || raw === null || String(raw).trim() === '') {
+    return fallback
+  }
+
+  return !['0', 'false', 'no', 'off'].includes(String(raw).trim().toLowerCase())
 }
 
 function optionalEnv(name) {
@@ -1240,6 +1474,43 @@ function actionName(request) {
   return request.action
 }
 
+function isBotConnected() {
+  return Boolean(bot && bot.player && bot.entity)
+}
+
+function disconnectedActionResult(action) {
+  return {
+    ok: false,
+    action,
+    failure_type: 'bot_disconnected',
+    result: {
+      failure_type: 'bot_disconnected',
+      stop_reason: reconnectTimer ? 'reconnecting' : 'disconnected',
+      repeatable_now: true,
+      reconnectAttempts,
+      lastKickReason,
+      lastDisconnectReason,
+      lastError,
+      diagnostics: bridgeDiagnostics()
+    },
+    error: 'Bot is disconnected/reconnecting'
+  }
+}
+
+function bridgeDiagnostics() {
+  return {
+    lastKickReason,
+    lastDisconnectReason,
+    lastError,
+    reconnectAttempts,
+    lastActionStartedAt,
+    currentActionName,
+    currentActionElapsedMs: lastActionStartedAt ? Date.now() - lastActionStartedAt : null,
+    lastPathGoal,
+    lastPathCancelReason
+  }
+}
+
 function ok(action, result = {}) {
   return { ok: true, action, result, error: null }
 }
@@ -1253,16 +1524,42 @@ function fail(action, error, result = {}) {
   enriched.needed = enriched.needed || neededForFailure(enriched.failure_type, enriched.stop_reason)
   enriched.position = enriched.position || currentPositionJson()
   enriched.diagnostics = enriched.diagnostics || {}
+  if (enriched.failure_type === 'navigation_cancelled') {
+    if (enriched.repeatable_now === undefined) enriched.repeatable_now = true
+    if (!enriched.failed_because) enriched.failed_because = [{ kind: 'path_goal_changed', action, recoverable: true }]
+  }
   return { ok: false, action, result: enriched, error }
+}
+
+function actionTimeoutFailure(action, timeoutMs) {
+  return fail(action, `Timed out ${action} after ${timeoutMs}ms.`, {
+    failure_type: 'action_timeout',
+    stop_reason: 'action_timeout',
+    repeatable_now: true,
+    can_retry: true,
+    failed_because: [{ kind: 'action_timeout', action, timeout_ms: timeoutMs }],
+    diagnostics: {
+      timeout_ms: timeoutMs,
+      currentActionName,
+      currentActionElapsedMs: lastActionStartedAt ? Date.now() - lastActionStartedAt : null
+    }
+  })
+}
+
+function isGoalChangedError(error) {
+  const text = String(error || '').toLowerCase()
+  return text.includes('goal was changed')
 }
 
 function inferFailureType(error) {
   const text = String(error || '').toLowerCase()
+  if (text.includes('goal was changed')) return 'navigation_cancelled'
   if (text.includes('unsupported action')) return 'unsupported_action'
   if (text.includes('unsupported action') || text.includes('unknown args') || text.includes('requires args') || text.includes('must be')) {
     return 'invalid_args'
   }
-  if (text.includes('path') && (text.includes('timed out') || text.includes('timeout'))) return 'path_timeout'
+  if (text.includes('path') && (text.includes('timed out') || text.includes('timeout'))) return 'navigation_failed'
+  if (text.includes('action_timeout')) return 'action_timeout'
   if (text.includes('timed out') || text.includes('timeout')) return 'path_timeout'
   if (text.includes('health too low') || text.includes('too dangerous') || text.includes('unsafe')) return 'danger_detected'
   if (text.includes('no safe') && text.includes('placement')) return 'no_safe_workspace'
@@ -1280,6 +1577,7 @@ function inferFailureType(error) {
 
 function inferStopReason(error, failureType) {
   const text = String(error || '').toLowerCase()
+  if (failureType === 'navigation_cancelled') return 'path_goal_changed'
   if (failureType === 'no_safe_workspace') return 'area_cramped'
   if (failureType === 'missing_station' && text.includes('crafting table')) return 'no_crafting_table_nearby'
   if (failureType === 'missing_station' && text.includes('furnace')) return 'no_furnace_nearby'
@@ -1288,7 +1586,8 @@ function inferStopReason(error, failureType) {
   if (failureType === 'missing_materials') return 'missing_required_item'
   if (failureType === 'missing_tool') return 'missing_required_tool'
   if (failureType === 'danger_detected') return 'unsafe_placement_area'
-  if (failureType === 'path_timeout') return 'path_timeout'
+  if (failureType === 'path_timeout' || failureType === 'navigation_failed') return 'path_timeout'
+  if (failureType === 'action_timeout') return 'action_timeout'
   if (failureType === 'target_unreachable') return 'targets_found_but_not_accessible'
   if (failureType === 'unsupported_action') return 'unsupported_action'
   if (failureType === 'invalid_args') return 'invalid_args'
@@ -1308,7 +1607,8 @@ function suggestedActionForFailure(failureType, stopReason) {
     return firstInventoryItemByNames(['furnace']) ? 'find_safe_workspace' : 'craft_furnace'
   }
   if (failureType === 'danger_detected') return 'avoid_hazard'
-  if (failureType === 'path_timeout' || failureType === 'target_unreachable') return 'navigate_to_block_type'
+  if (failureType === 'path_timeout' || failureType === 'navigation_failed' || failureType === 'target_unreachable') return 'navigate_to_block_type'
+  if (failureType === 'action_timeout') return 'status'
   if (failureType === 'missing_tool' || failureType === 'missing_materials') return 'status'
   return null
 }
@@ -1332,10 +1632,38 @@ function neededForFailure(failureType, stopReason) {
 }
 
 function currentPositionJson() {
-  return bot.entity ? positionJson(bot.entity.position) : null
+  return bot && bot.entity ? positionJson(bot.entity.position) : null
 }
 
 function getStatus() {
+  if (!bot) {
+    return {
+      ok: false,
+      connected: false,
+      username: botOptions.username || null,
+      entityReady: false,
+      position: null,
+      dimension: null,
+      time: null,
+      health: null,
+      food: null,
+      onGround: null,
+      inWater: null,
+      inLava: null,
+      inventory: [],
+      nearbyPlayers: [],
+      nearbyEntities: [],
+      nearbyBlockCounts: {},
+      nearbyBlocks: { crafting_table: null, furnace: null, chest: null },
+      stationFacts: null,
+      ...bridgeDiagnostics(),
+      lastDeath: lastDeath || null,
+      last_death: lastDeath || null,
+      respawned_recently: false,
+      death_recovery: deathRecoveryState()
+    }
+  }
+
   return {
     ok: true,
     connected: Boolean(bot.player),
@@ -1354,6 +1682,9 @@ function getStatus() {
     nearbyEntities: nearbyEntitiesJson(16),
     nearbyBlockCounts: nearbyBlockCountsJson(12, 32),
     nearbyBlocks: nearbyBlocksJson(),
+    stationFacts: stationFactsJson(),
+    ...flatStationFactsJson(),
+    ...bridgeDiagnostics(),
     lastDeath: lastDeath || null,
     last_death: lastDeath || null,
     respawned_recently: respawnedRecently(),
@@ -1362,7 +1693,7 @@ function getStatus() {
 }
 
 function inventoryJson() {
-  if (!bot.inventory || !Array.isArray(bot.inventory.slots)) {
+  if (!bot || !bot.inventory || !Array.isArray(bot.inventory.slots)) {
     return []
   }
 
@@ -1385,7 +1716,7 @@ function positionJson(position) {
 }
 
 function timeJson() {
-  if (!bot.time) {
+  if (!bot || !bot.time) {
     return null
   }
 
@@ -1405,7 +1736,7 @@ function blockJson(block) {
   return {
     name: block.name,
     position: positionJson(block.position),
-    distance: bot.entity ? bot.entity.position.distanceTo(block.position) : null
+    distance: bot && bot.entity ? bot.entity.position.distanceTo(block.position) : null
   }
 }
 
@@ -1421,20 +1752,55 @@ function entityJson(entity) {
     username: entity.username || null,
     hostile: isHostileEntity(entity),
     position: entity.position ? positionJson(entity.position) : null,
-    distance: bot.entity && entity.position ? bot.entity.position.distanceTo(entity.position) : null
+    distance: bot && bot.entity && entity.position ? bot.entity.position.distanceTo(entity.position) : null
   }
 }
 
 function nearbyBlocksJson() {
   return {
-    crafting_table: blockJson(findNearbyCraftingTable(8)),
-    furnace: blockJson(findNearbyFurnace(8)),
-    chest: blockJson(findNearbyChest(8))
+    crafting_table: blockJson(findNearbyCraftingTable(STATION_SCAN_RADIUS)),
+    furnace: blockJson(findNearbyFurnace(STATION_SCAN_RADIUS)),
+    chest: blockJson(findNearbyChest(STATION_SCAN_RADIUS))
+  }
+}
+
+function stationFactsJson() {
+  const craftingTable = findNearbyCraftingTable(STATION_SCAN_RADIUS)
+  const furnace = findNearbyFurnace(STATION_SCAN_RADIUS)
+  const chest = findNearbyChest(STATION_SCAN_RADIUS)
+  return {
+    usable_radius: STATION_USE_RADIUS,
+    crafting_table: stationFact(craftingTable),
+    furnace: stationFact(furnace),
+    chest: stationFact(chest)
+  }
+}
+
+function flatStationFactsJson() {
+  const facts = stationFactsJson()
+  return {
+    has_nearby_crafting_table_usable: facts.crafting_table.usable,
+    nearest_crafting_table_distance: facts.crafting_table.distance,
+    nearest_crafting_table_position: facts.crafting_table.position,
+    has_visible_crafting_table: facts.crafting_table.visible,
+    has_nearby_furnace_usable: facts.furnace.usable,
+    nearest_furnace_distance: facts.furnace.distance,
+    nearest_furnace_position: facts.furnace.position,
+  }
+}
+
+function stationFact(block) {
+  const json = blockJson(block)
+  return {
+    visible: Boolean(json),
+    usable: Boolean(json && typeof json.distance === 'number' && json.distance <= STATION_USE_RADIUS),
+    distance: json ? json.distance : null,
+    position: json ? json.position : null
   }
 }
 
 function nearbyPlayersJson(radius) {
-  if (!bot.entity) {
+  if (!bot || !bot.entity) {
     return []
   }
 
@@ -1450,7 +1816,7 @@ function nearbyPlayersJson(radius) {
 }
 
 function nearbyEntitiesJson(radius) {
-  if (!bot.entity || !bot.entities) {
+  if (!bot || !bot.entity || !bot.entities) {
     return []
   }
 
@@ -1471,7 +1837,7 @@ function nearbyEntitiesJson(radius) {
 }
 
 function nearbyBlockCountsJson(radius, limit) {
-  if (!bot.entity) {
+  if (!bot || !bot.entity) {
     return {}
   }
 
@@ -1512,8 +1878,84 @@ async function executeAction(request) {
     })
   }
 
-  const result = await executeNormalizedAction(validation.action, validation.args)
+  if (!isBotConnected()) {
+    return disconnectedActionResult(validation.action)
+  }
+
+  if (actionRunning) {
+    return fail(validation.action, 'Bot is busy with another action.', {
+      failure_type: 'body_busy',
+      stop_reason: 'body_busy',
+      repeatable_now: false,
+      can_retry: true,
+      failed_because: [{ kind: 'body_busy', action: currentActionName, recoverable: true }]
+    })
+  }
+
+  const result = await withActionTimeout(
+    validation.action,
+    () => executeNormalizedAction(validation.action, validation.args),
+    timeoutForAction(validation.action)
+  )
   return attachArgDiagnostics(result, validation)
+}
+
+async function withActionTimeout(action, fn, timeoutMs) {
+  const previousActionName = currentActionName
+  const previousActionStartedAt = lastActionStartedAt
+  currentActionName = action
+  lastActionStartedAt = Date.now()
+  actionRunning = true
+
+  stopMovement()
+  await yieldToEventLoop()
+
+  let timedOut = false
+  let timeoutId = null
+  const timeout = new Promise((resolve) => {
+    timeoutId = setTimeout(() => {
+      timedOut = true
+      stopMovement()
+      resolve(actionTimeoutFailure(action, timeoutMs))
+    }, timeoutMs)
+  })
+
+  try {
+    return await Promise.race([Promise.resolve().then(fn), timeout])
+  } catch (error) {
+    if (isGoalChangedError(error)) {
+      lastPathCancelReason = 'path_goal_changed'
+      return fail(action, errorMessage(error), {
+        failure_type: 'navigation_cancelled',
+        stop_reason: 'path_goal_changed',
+        repeatable_now: true,
+        failed_because: [{ kind: 'path_goal_changed', action, recoverable: true }]
+      })
+    }
+    stopMovement()
+    return fail(action, errorMessage(error), {
+      failure_type: isPathTimeoutError(error) ? 'navigation_failed' : undefined,
+      stop_reason: isPathTimeoutError(error) ? 'path_timeout' : undefined,
+      repeatable_now: true
+    })
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
+    stopMovement()
+    await delay(150)
+    actionRunning = false
+    currentActionName = previousActionName
+    lastActionStartedAt = previousActionStartedAt
+  }
+}
+
+function timeoutForAction(action) {
+  if (['navigate_to_block_type', 'explore_nearby', 'return_to_workspace', 'return_to_known_position'].includes(action)) {
+    return NAVIGATION_TIMEOUT_MS
+  }
+  if (['collect_wood', 'acquire_blocks', 'mine_stone', 'mine_coal', 'mine_iron_ore'].includes(action)) {
+    return RESOURCE_ACTION_TIMEOUT_MS
+  }
+  return ACTION_TIMEOUT_MS
 }
 
 async function executeNormalizedAction(action, args) {
@@ -1625,7 +2067,7 @@ async function executeNormalizedAction(action, args) {
       return await placeChest()
 
     case 'place_furnace':
-      return await placeFurnace()
+      return await placeFurnace(args)
 
     case 'place_torch':
       return await placeTorch()
@@ -1637,7 +2079,7 @@ async function executeNormalizedAction(action, args) {
       return await mineStone(args.count)
 
     case 'mine_coal':
-      return await mineCoal(args.count)
+      return await mineCoal(args)
 
     case 'mine_iron_ore':
       return await mineIronOre(args.count)
@@ -1671,6 +2113,9 @@ async function executeNormalizedAction(action, args) {
 
     case 'setup_workspace':
       return await setupWorkspace(args)
+
+    case 'approach_station':
+      return await approachStation(args.station, args.radius)
 
     case 'dig_staircase':
       return await digStaircase(args.direction, args.max_steps)
@@ -1728,6 +2173,12 @@ async function executeNormalizedAction(action, args) {
 
     case 'scan_for_specific_block':
       return scanForSpecificBlock(args.targets, args.radius)
+
+    case 'debug_find_blocks':
+      return await debugFindBlocks(args.targets, args.radius)
+
+    case 'debug_collect_drops':
+      return await debugCollectDrops(args.targetItems, args.radius)
 
     case 'scan_for_liquids':
       return scanForLiquids(args.radius)
@@ -2098,6 +2549,8 @@ function validateStringRules(action, args, schema) {
 function validateBooleanRules(action, args, schema) {
   for (const key of schema.booleans || []) {
     if (!hasOwn(args, key) || args[key] === undefined) continue
+    if (args[key] === 'true')  { args[key] = true;  continue }
+    if (args[key] === 'false') { args[key] = false; continue }
     if (typeof args[key] !== 'boolean') return `${action} args.${key} must be a boolean when provided.`
   }
   return null
@@ -2206,7 +2659,7 @@ function actionHasOnlyArgs(action, args) {
     place_bed: [],
     place_boat: [],
     place_chest: [],
-    place_furnace: [],
+    place_furnace: ['radius', 'allowPrepareArea'],
     place_torch: [],
     craft_wooden_pickaxe: [],
     mine_stone: ['count'],
@@ -2222,6 +2675,7 @@ function actionHasOnlyArgs(action, args) {
     equip_best_weapon: [],
     find_safe_workspace: ['radius', 'purpose'],
     setup_workspace: ['need_crafting_table', 'need_furnace', 'need_chest', 'radius'],
+    approach_station: ['station', 'radius'],
     dig_staircase: ['direction', 'max_steps'],
     return_to_surface: [],
     pillar_up: ['height', 'block'],
@@ -2599,7 +3053,7 @@ async function lookAround(requestedRadius) {
 
 async function exploreNearby(requestedRadius) {
   const radius = requestedRadius === undefined ? EXPLORE_DEFAULT_RADIUS : requestedRadius
-  const target = findSafeExplorePosition(radius)
+  const target = await findSafeExplorePosition(radius)
   if (!target) {
     return fail('explore_nearby', `No safe nearby exploration target found within radius ${radius}.`)
   }
@@ -3476,7 +3930,7 @@ async function craftBed() {
     return fail('craft_bed', 'Need at least 3 planks of any type.')
   }
 
-  let table = findNearbyCraftingTable(6)
+  let table = findNearbyCraftingTable(STATION_USE_RADIUS)
   if (!table) {
     return noCraftingTableFail('craft_bed')
   }
@@ -4152,7 +4606,7 @@ async function craftFlintAndSteel() {
   let table  = null
 
   if (!recipe) {
-    table  = findNearbyCraftingTable(6)
+    table  = findNearbyCraftingTable(STATION_USE_RADIUS)
     if (!table) return noCraftingTableFail('craft_flint_and_steel')
     recipe = bot.recipesFor(itemInfo.id, null, 1, table)?.[0]
     if (!recipe) return fail('craft_flint_and_steel', 'No recipe found for flint_and_steel.')
@@ -5861,7 +6315,6 @@ async function setupWorkspace(args) {
   const needFurnace       = args.need_furnace === true
   const needChest         = args.need_chest === true
   const radius = Math.min(WORKSPACE_MAX_RADIUS, Math.max(8, args.radius || WORKSPACE_DEFAULT_RADIUS))
-  const STATION_SCAN_RADIUS = 8
 
   // --- Step 1: determine workspace position ---
   let workspacePos = bot.entity.position.floored()
@@ -5910,8 +6363,8 @@ async function setupWorkspace(args) {
   const missing = []
 
   async function tryPlaceStation(needed, itemName, findFn, placeFn, label) {
-    if (!needed) return Boolean(findFn(STATION_SCAN_RADIUS))
-    if (findFn(STATION_SCAN_RADIUS)) return true          // already present
+    if (!needed) return Boolean(findFn(STATION_USE_RADIUS))
+    if (findFn(STATION_USE_RADIUS)) return true          // already present and usable
     if (!firstInventoryItemByNames([itemName])) { missing.push(label); return false }
     const r = await placeFn()
     if (r.ok) { placed.push(label); return true }
@@ -5943,14 +6396,115 @@ async function setupWorkspace(args) {
 
   return ok('setup_workspace', {
     workspace_position: positionJson(workspacePos),
-    has_crafting_table: needCraftingTable ? hasCraftingTable : Boolean(findNearbyCraftingTable(STATION_SCAN_RADIUS)),
-    has_furnace:        needFurnace       ? hasFurnace       : Boolean(findNearbyFurnace(STATION_SCAN_RADIUS)),
-    has_chest:          needChest         ? hasChest         : Boolean(findNearbyChest(STATION_SCAN_RADIUS)),
+    has_crafting_table: needCraftingTable ? hasCraftingTable : Boolean(findNearbyCraftingTable(STATION_USE_RADIUS)),
+    has_furnace:        needFurnace       ? hasFurnace       : Boolean(findNearbyFurnace(STATION_USE_RADIUS)),
+    has_chest:          needChest         ? hasChest         : Boolean(findNearbyChest(STATION_USE_RADIUS)),
     placed,
     missing,
     safe,
     suggested_next_action: suggestedNextAction,
   })
+}
+
+async function approachStation(station, requestedRadius) {
+  if (!bot.entity) return fail('approach_station', 'Bot not ready.')
+  const stationName = STATION_BLOCK_TYPES.has(station) ? station : 'crafting_table'
+  const radius = Math.max(2, Math.min(STATION_USE_RADIUS, requestedRadius || STATION_APPROACH_RADIUS))
+  const stationBlock = findNearestStationBlock(stationName, STATION_SCAN_RADIUS)
+
+  if (!stationBlock) {
+    return fail('approach_station', `No ${stationName} visible within radius ${STATION_SCAN_RADIUS}.`, {
+      failure_type: 'missing_station',
+      stop_reason: `no_${stationName}_nearby`,
+      station_needed: stationName,
+      possible_next_actions: ['setup_workspace', 'place_crafting_table', 'return_to_workspace', 'look_around'],
+      can_retry: true,
+    })
+  }
+
+  const startDistance = bot.entity.position.distanceTo(stationBlock.position)
+  let pathError = null
+  try {
+    await gotoPositionNearWithTimeout(stationBlock.position, radius, WORKSPACE_PATH_TIMEOUT_MS)
+  } catch (err) {
+    pathError = err
+  }
+
+  const finalDistance = bot.entity.position.distanceTo(stationBlock.position)
+  const usableRadius = usableRadiusForStation(stationName)
+  const reached = finalDistance <= radius
+  const usableForStation = finalDistance <= usableRadius
+  const distanceImproved = finalDistance < startDistance
+  const baseResult = {
+    station: stationName,
+    station_needed: stationName,
+    station_position: positionJson(stationBlock.position),
+    start_distance: startDistance,
+    final_distance: finalDistance,
+    distance_improved: distanceImproved,
+    target_radius: radius,
+    usable_radius: usableRadius,
+    usable_for_station: usableForStation,
+  }
+
+  if (reached) {
+    return ok('approach_station', {
+      ...baseResult,
+      reached: true,
+      usable: true,
+    })
+  }
+
+  if (distanceImproved || usableForStation) {
+    return {
+      ok: false,
+      action: 'approach_station',
+      result: {
+        ...baseResult,
+        reached: false,
+        partial_success: true,
+        failure_type: 'station_not_reached',
+        stop_reason: 'still_outside_requested_radius',
+        possible_next_actions: possibleNextActionsForStation(stationName, usableForStation),
+        can_retry: true,
+      },
+      error: 'Approached station but did not reach requested radius.',
+    }
+  }
+
+  return fail('approach_station', `Could not approach ${stationName}: ${pathError ? errorMessage(pathError) : 'station did not get closer'}`, {
+    ...baseResult,
+    reached: false,
+    partial_success: false,
+    failure_type: 'station_not_reached',
+    stop_reason: pathError ? 'path_timeout' : 'still_outside_requested_radius',
+    station_needed: stationName,
+    possible_next_actions: ['approach_station', 'setup_workspace', 'look_around'],
+    can_retry: true,
+  })
+}
+
+function usableRadiusForStation(stationName) {
+  if (stationName === 'crafting_table') return STATION_USE_RADIUS
+  if (stationName === 'furnace') return STATION_USE_RADIUS
+  if (stationName === 'chest') return STATION_USE_RADIUS
+  return STATION_USE_RADIUS
+}
+
+function possibleNextActionsForStation(stationName, usableForStation) {
+  if (stationName === 'crafting_table') {
+    const actions = ['approach_station', 'craft_stone_pickaxe', 'craft_wooden_pickaxe', 'craft_furnace', 'look_around']
+    return usableForStation ? actions : ['approach_station', 'craft_stone_pickaxe', 'look_around']
+  }
+  if (stationName === 'furnace') {
+    return usableForStation
+      ? ['approach_station', 'smelt_iron', 'smelt_item', 'look_around']
+      : ['approach_station', 'look_around']
+  }
+  if (stationName === 'chest') {
+    return ['approach_station', 'look_around']
+  }
+  return ['approach_station', 'look_around']
 }
 
 // dig_staircase — carve a 1×2 angled corridor safely.
@@ -6307,6 +6861,7 @@ async function recoverPosition() {
     })
   }
 
+  const positionBefore = bot.entity.position.clone()
   const safeSpot = nearestSafeStandPosition(bot.entity.position.floored(), 3)
   if (safeSpot && safeSpot.distanceTo(bot.entity.position.floored()) > 0.1) {
     try {
@@ -6317,9 +6872,21 @@ async function recoverPosition() {
     } catch (_) {}
   }
 
+  const positionAfter = bot.entity.position
+  const distanceMoved = positionBefore.distanceTo(positionAfter)
+  if (distanceMoved < 0.5) {
+    return fail('recover_position', 'No meaningful movement during recovery.', {
+      failure_type: 'no_progress',
+      position_before: positionJson(positionBefore),
+      position_after: positionJson(positionAfter),
+      distance_moved: distanceMoved,
+    })
+  }
+
   return ok('recover_position', {
-    action_taken: 'cleared_controls',
-    position: positionJson(bot.entity.position)
+    action_taken: 'moved_to_safe_position',
+    position: positionJson(positionAfter),
+    distance_moved: distanceMoved,
   })
 }
 
@@ -6742,7 +7309,7 @@ function playerItems(window) {
 
 async function openChest() {
   if (!bot.entity) return fail('open_chest', 'Bot not ready.')
-  const block = findNearbyChest(6)
+  const block = findNearbyChest(STATION_USE_RADIUS)
   if (!block) return fail('open_chest', 'No chest found within 6 blocks.')
 
   let win
@@ -6759,7 +7326,7 @@ async function lootChest(priority) {
   const p = LOOT_PRIORITIES.has(priority) ? priority : 'general'
   const wantSet = LOOT_TAKE_SETS[p]
 
-  const block = findNearbyChest(6)
+  const block = findNearbyChest(STATION_USE_RADIUS)
   if (!block) return fail('loot_chest', 'No chest found within 6 blocks.')
 
   let win
@@ -6935,11 +7502,9 @@ async function returnToPosition(x, y, z, dimension, radius) {
 
   const goal = new goals.GoalNear(target.x, target.y, target.z, tol)
   try {
-    await Promise.race([
-      bot.pathfinder.goto(goal),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Timed out.')), WORKSPACE_PATH_TIMEOUT_MS)),
-    ])
+    await withTimeout(bot.pathfinder.goto(goal), WORKSPACE_PATH_TIMEOUT_MS, 'pathing to return position')
   } catch (err) {
+    stopMovement()
     const distNow = bot.entity ? Math.round(bot.entity.position.distanceTo(target) * 10) / 10 : null
     if (distNow !== null && distNow <= tol * 3) {
       return ok('return_to_position', {
@@ -6950,7 +7515,9 @@ async function returnToPosition(x, y, z, dimension, radius) {
       })
     }
     return fail('return_to_position', `Could not reach position: ${errorMessage(err)}`, {
-      failure_type: 'path_timeout',
+      failure_type: isPathTimeoutError(err) ? 'navigation_failed' : 'target_unreachable',
+      stop_reason: isPathTimeoutError(err) ? 'path_timeout' : 'navigation_failed',
+      repeatable_now: true,
       can_retry: true,
       suggested_next_action: 'recover_position',
       distance_on_fail: distNow,
@@ -7033,13 +7600,28 @@ function markDeathRecoveryAttempt() {
   lastDeath.recovery_failures = deathRecoveryFailures
 }
 
+function isDroppedItemEntity(entity) {
+  if (!entity || !entity.position) return false
+  const name = String(entity.name || entity.displayName || entity.type || '').toLowerCase()
+  const objType = String(entity.objectType || '').toLowerCase()
+  // Exclude XP orbs and other non-item entities
+  if (name.includes('experience') || name.includes('xp_orb') || name.includes('orb')) return false
+  if (entity.type === 'experience_orb' || objType === 'experience_orb') return false
+  // Match dropped item entities across mineflayer/minecraft versions
+  return (
+    name === 'item' ||
+    objType === 'item' ||
+    entity.type === 'item' ||
+    (name.includes('item') && !name.includes('frame') && !name.includes('display'))
+  )
+}
+
 function droppedItemEntitiesNear(position, radius) {
   if (!bot.entity || !bot.entities || !position) return []
   return Object.values(bot.entities)
     .filter((entity) => {
       if (!entity || entity === bot.entity || !entity.position) return false
-      const name = String(entity.name || entity.displayName || entity.type || '').toLowerCase()
-      return (name === 'item' || name.includes('item')) && entity.position.distanceTo(position) <= radius
+      return isDroppedItemEntity(entity) && entity.position.distanceTo(position) <= radius
     })
     .sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
 }
@@ -7245,7 +7827,7 @@ async function navigateToBlockType(args) {
     return fail('navigate_to_block_type', 'No allowed navigation targets were provided.')
   }
 
-  const candidate = findSurfaceNavigationCandidate(targetSet, radius, diagnostics)
+  const candidate = await findSurfaceNavigationCandidate(targetSet, radius, diagnostics)
   if (!candidate) {
     return {
       ok: false,
@@ -7264,18 +7846,16 @@ async function navigateToBlockType(args) {
   } catch (error) {
     diagnostics.rejectedUnreachable += 1
     stopMovement()
-    return {
-      ok: false,
-      action: 'navigate_to_block_type',
-      result: {
-        targets,
-        radius,
-        target: blockJson(candidate.block),
-        standPosition: positionJson(candidate.standPosition),
-        ...navigationDiagnostics(diagnostics)
-      },
-      error: `Navigation path failed: ${errorMessage(error)}`
-    }
+    return fail('navigate_to_block_type', `Navigation path failed: ${errorMessage(error)}`, {
+      failure_type: isPathTimeoutError(error) ? 'navigation_failed' : 'target_unreachable',
+      stop_reason: isPathTimeoutError(error) ? 'path_timeout' : 'navigation_failed',
+      repeatable_now: true,
+      targets,
+      radius,
+      target: blockJson(candidate.block),
+      standPosition: positionJson(candidate.standPosition),
+      ...navigationDiagnostics(diagnostics)
+    })
   }
 
   return ok('navigate_to_block_type', {
@@ -7301,8 +7881,13 @@ function normalizeAcquireBlockArgs(args) {
 function navigationDiagnostics(diagnostics) {
   return {
     targetCandidatesFound: diagnostics.targetCandidatesFound,
+    targetCandidatesFoundRaw: diagnostics.targetCandidatesFoundRaw || diagnostics.targetCandidatesFound,
     exposedCandidatesFound: diagnostics.exposedCandidatesFound,
     accessCandidatesFound: diagnostics.accessCandidatesFound,
+    candidates_seen: diagnostics.candidates_seen || diagnostics.targetCandidatesFound,
+    candidates_evaluated: diagnostics.candidates_evaluated || 0,
+    candidatesEvaluated: diagnostics.candidatesEvaluated || 0,
+    scan_limited: Boolean(diagnostics.scan_limited),
     rejectedDangerous: diagnostics.rejectedDangerous,
     rejectedProtected: diagnostics.rejectedProtected,
     rejectedUnsupported: diagnostics.rejectedUnsupported,
@@ -7312,39 +7897,230 @@ function navigationDiagnostics(diagnostics) {
 }
 
 async function acquireBlocksForAction(actionName, options) {
+  const sharedDiagnostics = emptyAcquireResult(options, 'failed')
+  const startPosition = bot.entity ? positionJson(bot.entity.position) : null
+  const startInventoryCounts = inventoryCounts()
+  const targets = (options.targets || []).filter((t) => ACQUIRE_ALLOWED_TARGETS.has(t))
+
   try {
-    return await withTimeout(acquireBlocksCore(actionName, options), ACQUIRE_BLOCKS_TIMEOUT_MS, actionName)
+    return await withTimeout(acquireBlocksCore(actionName, options, sharedDiagnostics), ACQUIRE_BLOCKS_TIMEOUT_MS, actionName)
   } catch (error) {
-    const result = emptyAcquireResult(options, 'failed')
-    result.can_retry = true
-    result.suggested_next_action = 'acquire_blocks'
-    result.stop_reason = 'action_timeout'
-    result.inventory = inventoryJson()
+    stopMovement()
+
+    const endPosition = bot.entity ? positionJson(bot.entity.position) : null
+    const endInventoryCounts = inventoryCounts()
+    const timeoutMs = ACQUIRE_BLOCKS_TIMEOUT_MS
+
+    // Compute distance moved
+    let distanceMoved = 0
+    if (startPosition && endPosition) {
+      const dx = endPosition.x - startPosition.x
+      const dy = endPosition.y - startPosition.y
+      const dz = endPosition.z - startPosition.z
+      distanceMoved = Math.sqrt(dx * dx + dy * dy + dz * dz)
+    }
+
+    // Compute inventory delta (targets only)
+    const inventoryDeltaAtTimeout = {}
+    for (const target of targets) {
+      const before = startInventoryCounts[target] || 0
+      const after = endInventoryCounts[target] || 0
+      if (after !== before) inventoryDeltaAtTimeout[target] = after - before
+    }
+    const hasInventoryGain = Object.values(inventoryDeltaAtTimeout).some((v) => v > 0)
+
+    // Update nearest target distance end
+    if (sharedDiagnostics.nearestTargetDistance !== null) {
+      sharedDiagnostics.nearestTargetDistanceEnd = sharedDiagnostics.nearestTargetDistance
+    }
+
+    // Classify progress signals
+    const progressSignals = []
+    if (sharedDiagnostics.excavatedBlocks > 0) progressSignals.push(`excavated_blocks:${sharedDiagnostics.excavatedBlocks}`)
+    if (sharedDiagnostics.minedTargetBlocks > 0) progressSignals.push(`mined_target_blocks:${sharedDiagnostics.minedTargetBlocks}`)
+    if (distanceMoved >= 1.0) progressSignals.push(`distance_moved:${Math.round(distanceMoved * 10) / 10}`)
+    if (hasInventoryGain) progressSignals.push('inventory_gain')
+
+    const isPartialProgress = progressSignals.length > 0
+
+    sharedDiagnostics.failure_type = isPartialProgress ? 'partial_progress_timeout' : 'action_timeout'
+    sharedDiagnostics.repeatable_now = true
+    sharedDiagnostics.can_retry = true
+    sharedDiagnostics.suggested_next_action = 'acquire_blocks'
+    sharedDiagnostics.stop_reason = sharedDiagnostics.failure_type
+    sharedDiagnostics.inventory = inventoryJson()
+    updateResourceInventoryDiagnostics(sharedDiagnostics, targets, startInventoryCounts, options.count)
+    sharedDiagnostics.partial_success = sharedDiagnostics.collected > 0 || isPartialProgress
+
+    if (isPartialProgress) {
+      sharedDiagnostics.failed_because = [{
+        kind: 'partial_progress_timeout',
+        action: actionName,
+        timeout_ms: timeoutMs,
+        progress_signals: progressSignals,
+        excavated_blocks: sharedDiagnostics.excavatedBlocks,
+        mined_target_blocks: sharedDiagnostics.minedTargetBlocks,
+        distance_moved: Math.round(distanceMoved * 10) / 10,
+        inventory_delta: inventoryDeltaAtTimeout,
+        last_substep: sharedDiagnostics.currentSubstep,
+        nearestRawTargetDistance: sharedDiagnostics.nearestRawTargetDistance,
+        selectedTargetDistance: sharedDiagnostics.selectedTargetDistance,
+        last_target_position: sharedDiagnostics.last_target_position,
+        continuation_relevant: true
+      }]
+    } else {
+      sharedDiagnostics.failed_because = [{
+        kind: 'action_timeout',
+        action: actionName,
+        timeout_ms: timeoutMs,
+        last_substep: sharedDiagnostics.currentSubstep,
+        nearestRawTargetDistance: sharedDiagnostics.nearestRawTargetDistance,
+        nearestRawTargetPosition: sharedDiagnostics.nearestRawTargetPosition,
+        selectedTargetDistance: sharedDiagnostics.selectedTargetDistance,
+        selectedTargetPosition: sharedDiagnostics.selectedTargetPosition
+      }]
+    }
+
+    const successResponse = resourceSuccessFromInventory(actionName, sharedDiagnostics, 'action_timeout_inventory_delta')
+    if (successResponse) return successResponse
 
     return {
       ok: false,
       action: actionName,
-      result,
+      result: sharedDiagnostics,
       error: `Block acquisition failed: ${errorMessage(error)}`
     }
   }
 }
 
-async function acquireBlocksCore(actionName, options) {
+function buildProgressSignals(diagnostics, startInventorySnapshot, startPositionSnapshot, targets) {
+  const signals = {}
+  let hasProgress = false
+
+  if (diagnostics.excavatedBlocks > 0) {
+    signals.excavatedBlocks = diagnostics.excavatedBlocks
+    hasProgress = true
+  }
+  if (diagnostics.minedTargetBlocks > 0) {
+    signals.minedTargetBlocks = diagnostics.minedTargetBlocks
+    hasProgress = true
+  }
+
+  // Inventory delta for target items only
+  const endInventory = inventoryCounts()
+  const inventoryDelta = {}
+  for (const target of targets) {
+    const before = startInventorySnapshot[target] || 0
+    const after = endInventory[target] || 0
+    if (after !== before) inventoryDelta[target] = after - before
+  }
+  // Also track non-target deltas (dirt, stone excavated, etc.)
+  for (const [item, afterVal] of Object.entries(endInventory)) {
+    const beforeVal = startInventorySnapshot[item] || 0
+    if (afterVal !== beforeVal && !(item in inventoryDelta)) {
+      inventoryDelta[item] = afterVal - beforeVal
+    }
+  }
+  for (const [item, before] of Object.entries(startInventorySnapshot)) {
+    const after = endInventory[item] || 0
+    if (after !== before && !(item in inventoryDelta)) {
+      inventoryDelta[item] = after - before
+    }
+  }
+  if (Object.keys(inventoryDelta).length > 0) {
+    signals.inventory_delta = inventoryDelta
+    hasProgress = true
+  }
+
+  if (
+    diagnostics.nearestTargetDistance !== null &&
+    diagnostics.nearestTargetDistanceEnd !== null &&
+    diagnostics.nearestTargetDistanceEnd < diagnostics.nearestTargetDistance
+  ) {
+    signals.nearestTargetDistance = diagnostics.nearestTargetDistance
+    signals.nearestTargetDistanceEnd = diagnostics.nearestTargetDistanceEnd
+    hasProgress = true
+  }
+
+  if (diagnostics.accessCandidatesFound > 0 && diagnostics.pathAttempts > 0) {
+    signals.accessCandidatesFound = diagnostics.accessCandidatesFound
+    signals.pathAttempts = diagnostics.pathAttempts
+    hasProgress = true
+  }
+
+  // Distance moved from start
+  if (startPositionSnapshot && bot.entity) {
+    const cur = bot.entity.position
+    const dx = cur.x - startPositionSnapshot.x
+    const dy = cur.y - startPositionSnapshot.y
+    const dz = cur.z - startPositionSnapshot.z
+    const distMoved = Math.sqrt(dx * dx + dy * dy + dz * dz)
+    if (distMoved >= 1.0) {
+      signals.distance_moved = Math.round(distMoved * 10) / 10
+      hasProgress = true
+    }
+  }
+
+  if (diagnostics.nearestTargetDistance !== null && diagnostics.nearestTargetDistanceEnd !== null) {
+    const delta = diagnostics.nearestTargetDistanceEnd - diagnostics.nearestTargetDistance
+    signals.distance_to_target_delta = Math.round(delta * 10) / 10
+  }
+
+  return { hasProgress, signals }
+}
+
+async function acquireBlocksCore(actionName, options, externalDiagnostics) {
   const targets = options.targets.filter((target) => ACQUIRE_ALLOWED_TARGETS.has(target))
   const targetSet = new Set(targets)
   const requested = Math.max(1, Math.min(options.count, ACQUIRE_BLOCKS_MAX_COUNT))
-  const radius = Math.max(ACQUIRE_BLOCKS_MIN_RADIUS, Math.min(options.radius, ACQUIRE_BLOCKS_MAX_RADIUS))
+  const radius = Math.max(ACQUIRE_BLOCKS_MIN_RADIUS, Math.min(options.radius, ACQUIRE_BLOCKS_MAX_RADIUS, MAX_SCAN_RADIUS))
   const allowExcavate = options.allowExcavate === true
   const accessMode = ACQUIRE_ACCESS_MODES.has(options.accessMode) ? options.accessMode : 'surface_first'
-  const diagnostics = emptyAcquireResult({ targets, count: requested }, 'failed')
+  const diagnostics = externalDiagnostics || emptyAcquireResult({ targets, count: requested }, 'failed')
+  // Sync requested/targets in case externalDiagnostics was created with defaults
+  diagnostics.requested = requested
+  diagnostics.targets = targets
+  diagnostics.radius = radius
   const startingCount = inventoryCountForTargets(targets)
+  const startInventorySnapshot = inventoryCounts()
+  diagnostics.inventoryBefore = startInventorySnapshot
+  const startPositionSnapshot = bot.entity ? positionJson(bot.entity.position) : null
   const targetInventoryCount = startingCount + requested
   const targetLabel = targets.length === 1 ? targets[0] : 'target block'
   const ignoredPositions = new Set()
   let attempts = 0
   let staircaseSteps = 0
   let lastError = null
+  let pathTimeoutCount = 0  // consecutive path timeouts with no progress; reset on successful mine
+
+  // Reuse last known target if still valid (avoids full rescan on continuation)
+  let cachedCandidate = null
+  const cachedEntry = _lastAcquireTargetByAction.get(actionName)
+  if (cachedEntry && Date.now() - cachedEntry.timestamp < ACQUIRE_TARGET_CACHE_TTL_MS) {
+    const freshBlock = bot.blockAt(cachedEntry.blockPosition)
+    if (freshBlock && isTargetBlock(freshBlock, targetSet) && !ignoredPositions.has(positionKey(freshBlock.position))) {
+      diagnostics.lastTargetStillExists = true
+      const cacheDist = bot.entity ? Math.round(bot.entity.position.distanceTo(freshBlock.position) * 10) / 10 : null
+      diagnostics.distanceToLastTarget = cacheDist
+      // Seed nearestTargetDistance from cache so close-range check can fire before a full scan
+      if (cacheDist !== null && diagnostics.nearestTargetDistance === null) {
+        diagnostics.nearestTargetDistance = cacheDist
+        diagnostics.nearestTargetPosition = positionJson(freshBlock.position)
+        diagnostics.nearestRawTargetDistance = cacheDist
+        diagnostics.nearestRawTargetPosition = positionJson(freshBlock.position)
+      }
+      const faceInfo = findExposedFace(freshBlock)
+      const standPosition = faceInfo ? findSafeStandNearFace(freshBlock, faceInfo) : null
+      // Cached block may be close-range-accessible even without an exposed face
+      cachedCandidate = {
+        block: freshBlock,
+        faceInfo: faceInfo || null,
+        standPosition: standPosition || null,
+        fromCache: true
+      }
+      diagnostics.reusedLastTarget = true
+    }
+  }
 
   if (targets.length === 0) {
     diagnostics.stop_reason = 'no_targets_found'
@@ -7370,23 +8146,374 @@ async function acquireBlocksCore(actionName, options) {
     }
   }
 
+  const floorDrops = bot.entity ? droppedItemEntitiesNear(bot.entity.position, Math.min(radius, DROP_COLLECTION_RADIUS)) : []
+  if (floorDrops.length > 0) {
+    diagnostics.currentSubstep = 'collect_floor_drop_before_mining'
+    diagnostics.floorDropCollectionAttempted = true
+    const floorDropResult = await collectNearbyDrops({
+      aroundPosition: bot.entity.position,
+      targets,
+      radius: Math.min(radius, DROP_COLLECTION_RADIUS),
+      timeoutMs: Math.min(4000, DROP_COLLECTION_TIMEOUT_MS)
+    }, diagnostics)
+    diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+    diagnostics.inventory = inventoryJson()
+    if (floorDropResult.collected > 0 || diagnostics.collected >= requested) {
+      diagnostics.currentSubstep = 'floor_drop_collected'
+      return ok(actionName, diagnostics)
+    }
+  }
+
   while (inventoryCountForTargets(targets) < targetInventoryCount && attempts < ACQUIRE_MAX_ATTEMPTS) {
     if (typeof bot.health === 'number' && bot.health <= MINE_STONE_MIN_HEALTH) {
       lastError = `Health too low for block acquisition: ${bot.health}.`
       break
     }
 
-    const candidate = findSurfaceAcquisitionCandidate(targetSet, radius, ignoredPositions, diagnostics)
+    await yieldToEventLoop()
+
+    // Scan for candidates first — this sets nearestTargetDistance in diagnostics.
+    // For cache hits, nearestTargetDistance is already seeded so we skip the expensive scan.
+    let candidate
+    if (cachedCandidate) {
+      candidate = cachedCandidate.standPosition ? cachedCandidate : null
+      cachedCandidate = null
+    } else {
+      diagnostics.currentSubstep = 'scan'
+      candidate = await findSurfaceAcquisitionCandidate(targetSet, radius, ignoredPositions, diagnostics)
+    }
+
+    // After the scan, nearestTargetDistance is now reliably set.
+    // If the nearest raw target is within close range, intercept before using any far candidate.
+    const nearestRawDist = diagnostics.nearestTargetDistance
+    const isCloseRange = nearestRawDist !== null && nearestRawDist <= RESOURCE_CLOSE_RANGE_BLOCKS
+
+    if (isCloseRange && diagnostics.nearestTargetPosition) {
+      const np = diagnostics.nearestTargetPosition
+      const nearBlock = bot.blockAt(new Vec3(np.x, np.y, np.z))
+      if (nearBlock && isTargetBlock(nearBlock, targetSet) && !ignoredPositions.has(positionKey(nearBlock.position))) {
+        attempts++
+        ignoredPositions.add(positionKey(nearBlock.position))
+
+        diagnostics.selectedTargetMode = 'close_raw_target'
+        diagnostics.selectedTargetDistance = nearestRawDist
+        diagnostics.selectedTargetPosition = positionJson(nearBlock.position)
+        diagnostics.selectedCloseRangeTargetPosition = positionJson(nearBlock.position)
+        diagnostics.last_target_position = positionJson(nearBlock.position)
+        // Record the access candidate distance separately even though we're not using it
+        if (candidate && bot.entity) {
+          diagnostics.selectedAccessTargetDistance = Math.round(bot.entity.position.distanceTo(candidate.block.position) * 10) / 10
+        }
+
+        _lastAcquireTargetByAction.set(actionName, {
+          blockPosition: nearBlock.position.clone(),
+          timestamp: Date.now()
+        })
+
+        diagnostics.currentSubstep = 'close_range_access'
+        const localExcavationBeforeFallback = diagnostics.localExcavationSteps
+        const fallbackResult = await closeRangeAccessFallback(nearBlock, targetSet, diagnostics)
+
+        if (fallbackResult.ok && fallbackResult.mined) {
+          diagnostics.minedTargetBlocks += 1
+          diagnostics.currentSubstep = 'collect_drop'
+          const dropResult = await collectNearbyDrops(
+            { aroundPosition: nearBlock.position, targets, radius: 6 },
+            diagnostics
+          )
+          diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+          diagnostics.inventory = inventoryJson()
+          if (dropResult.collected > 0) {
+            diagnostics.currentSubstep = 'close_range_done'
+            if (diagnostics.collected >= requested) return ok(actionName, diagnostics)
+            continue
+          }
+          return buildDropCollectionFailure(dropResult.reason, actionName, targetLabel, nearestRawDist, diagnostics)
+        }
+
+        if (fallbackResult.ok && fallbackResult.moved) {
+          let minedAfterMove = false
+          try {
+            const freshNear = bot.blockAt(nearBlock.position)
+            if (freshNear && isTargetBlock(freshNear, targetSet)) {
+              diagnostics.digAttempts += 1
+              diagnostics.currentSubstep = 'dig_target'
+              await mineBlockSafe(freshNear, targetSet)
+              diagnostics.minedTargetBlocks += 1
+              minedAfterMove = true
+            }
+          } catch (error) {
+            lastError = errorMessage(error)
+            stopMovement()
+          }
+          if (minedAfterMove) {
+            diagnostics.currentSubstep = 'collect_drop'
+            const dropResult = await collectNearbyDrops(
+              { aroundPosition: nearBlock.position, targets, radius: 6 },
+              diagnostics
+            )
+            diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+            diagnostics.inventory = inventoryJson()
+            if (dropResult.collected > 0) {
+              diagnostics.currentSubstep = 'close_range_done'
+              if (diagnostics.collected >= requested) return ok(actionName, diagnostics)
+              continue
+            }
+            return buildDropCollectionFailure(dropResult.reason, actionName, targetLabel, nearestRawDist, diagnostics)
+          }
+          continue
+        }
+
+        const closeRangeExcavatedThisAttempt = diagnostics.localExcavationSteps > localExcavationBeforeFallback
+        if (closeRangeExcavatedThisAttempt && diagnostics.localExcavationSteps < LOCAL_EXCAVATION_STEP_LIMIT) {
+          ignoredPositions.delete(positionKey(nearBlock.position))
+          diagnostics.currentSubstep = 'close_range_access_retry_after_excavation'
+          diagnostics.closeRangeFailureReason = 'local_excavation_opened_access_retrying_target'
+          await yieldToEventLoop()
+          continue
+        }
+
+        // Close-range fallback failed: check for progress
+        const crSignals = buildProgressSignals(diagnostics, startInventorySnapshot, startPositionSnapshot, targets)
+        if (crSignals.hasProgress && closeRangeExcavatedThisAttempt) {
+          // Made progress (excavation, movement) → return partial; don't try the far candidate
+          diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+          diagnostics.inventory = inventoryJson()
+          diagnostics.can_retry = true
+          diagnostics.repeatable_now = true
+          diagnostics.failure_type = 'partial_progress_timeout'
+          diagnostics.stop_reason = 'close_range_access_timeout'
+          diagnostics.partial_success = true
+          diagnostics.continuation_relevant = true
+          diagnostics.progress_made = true
+          diagnostics.failed_because = [{
+            kind: 'close_range_access_timeout',
+            action: actionName,
+            stop_reason: 'close_range_access_timeout',
+            progress_signals: crSignals.signals,
+            continuation_relevant: true,
+            nearestRawTargetDistance: nearestRawDist,
+            selectedTargetDistance: nearestRawDist,
+            selectedAccessTargetDistance: diagnostics.selectedAccessTargetDistance,
+            localFallbackAttempted: true,
+            localExcavationSteps: diagnostics.localExcavationSteps,
+            closeRangeFailureReason: diagnostics.closeRangeFailureReason || 'local_access_exhausted'
+          }]
+          return {
+            ok: false,
+            action: actionName,
+            result: diagnostics,
+            error: `Close-range access partial progress for ${targetLabel}`
+          }
+        }
+
+        // Zero progress from close-range: fall through to pathfind to the access candidate.
+        // nearBlock is now in ignoredPositions so it won't be retried as a close-range target.
+        diagnostics.selectedTargetMode = 'access_candidate'
+      }
+    }
+
+    // Normal access candidate path (also runs after zero-progress close-range fallback)
     if (candidate) {
       attempts++
+
+      const selectedDist = bot.entity ? Math.round(bot.entity.position.distanceTo(candidate.block.position) * 10) / 10 : null
+      diagnostics.last_target_position = positionJson(candidate.block.position)
+      diagnostics.last_stand_position = positionJson(candidate.standPosition)
+      diagnostics.selectedTargetDistance = selectedDist
+      diagnostics.selectedTargetPosition = positionJson(candidate.block.position)
+      if (!diagnostics.selectedTargetMode) diagnostics.selectedTargetMode = 'access_candidate'
+      diagnostics.selectedAccessTargetDistance = selectedDist
+      diagnostics.selectedAccessTargetPosition = positionJson(candidate.block.position)
+
+      // Safety: if the scan found a close raw target that step 2 missed (e.g. cached candidate
+      // path skipped the scan, or the block was at the threshold boundary), redirect before
+      // the expensive pathfind. Uses the already-computed nearestRawTargetDistance — no re-scan.
+      // The far candidate is NOT added to ignoredPositions so the next iteration can still use it.
+      if (
+        diagnostics.closeRangeFallbackAttempted === 0 &&
+        bot.entity &&
+        diagnostics.nearestRawTargetDistance !== null &&
+        diagnostics.nearestRawTargetDistance <= RESOURCE_CLOSE_RANGE_BLOCKS
+      ) {
+        const np = diagnostics.nearestRawTargetPosition
+        const closeBlock = np ? bot.blockAt(new Vec3(np.x, np.y, np.z)) : null
+        if (closeBlock && isTargetBlock(closeBlock, targetSet) && !ignoredPositions.has(positionKey(closeBlock.position))) {
+          // Next iteration fires close-range via step 2; candidate stays available
+          continue
+        }
+      }
+
+      // Commit: add candidate to ignoredPositions so it won't be re-selected
       ignoredPositions.add(positionKey(candidate.block.position))
+
+      // Cache the selected target for next invocation
+      _lastAcquireTargetByAction.set(actionName, {
+        blockPosition: candidate.block.position.clone(),
+        timestamp: Date.now()
+      })
+
+      if (selectedDist !== null && selectedDist <= RESOURCE_CLOSE_RANGE_BLOCKS) {
+        diagnostics.currentSubstep = 'close_range_access_for_selected_candidate'
+        const localExcavationBeforeFallback = diagnostics.localExcavationSteps
+        const fallbackResult = await closeRangeAccessFallback(candidate.block, targetSet, diagnostics)
+
+        if (fallbackResult.ok && fallbackResult.mined) {
+          diagnostics.minedTargetBlocks += 1
+          diagnostics.currentSubstep = 'collect_drop'
+          const dropResult = await collectNearbyDrops(
+            { aroundPosition: candidate.block.position, targets, radius: 6 },
+            diagnostics
+          )
+          diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+          diagnostics.inventory = inventoryJson()
+          if (dropResult.collected > 0) {
+            diagnostics.currentSubstep = 'close_range_done'
+            if (diagnostics.collected >= requested) return ok(actionName, diagnostics)
+            continue
+          }
+          return buildDropCollectionFailure(dropResult.reason, actionName, targetLabel, selectedDist, diagnostics)
+        }
+
+        if (fallbackResult.ok && fallbackResult.moved) {
+          let minedAfterMove = false
+          try {
+            const freshNear = bot.blockAt(candidate.block.position)
+            if (freshNear && isTargetBlock(freshNear, targetSet)) {
+              diagnostics.digAttempts += 1
+              diagnostics.currentSubstep = 'dig_target_after_close_selected_local_move'
+              await mineBlockSafe(freshNear, targetSet)
+              diagnostics.minedTargetBlocks += 1
+              minedAfterMove = true
+            }
+          } catch (digError) {
+            lastError = errorMessage(digError)
+            stopMovement()
+          }
+
+          if (minedAfterMove) {
+            diagnostics.currentSubstep = 'collect_drop'
+            const dropResult = await collectNearbyDrops(
+              { aroundPosition: candidate.block.position, targets, radius: 6 },
+              diagnostics
+            )
+            diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+            diagnostics.inventory = inventoryJson()
+            if (dropResult.collected > 0) {
+              diagnostics.currentSubstep = 'close_range_done'
+              if (diagnostics.collected >= requested) return ok(actionName, diagnostics)
+              continue
+            }
+            return buildDropCollectionFailure(dropResult.reason, actionName, targetLabel, selectedDist, diagnostics)
+          }
+        }
+
+        const closeRangeExcavatedThisAttempt = diagnostics.localExcavationSteps > localExcavationBeforeFallback
+        if (closeRangeExcavatedThisAttempt && diagnostics.localExcavationSteps < LOCAL_EXCAVATION_STEP_LIMIT) {
+          ignoredPositions.delete(positionKey(candidate.block.position))
+          diagnostics.currentSubstep = 'close_range_access_retry_after_selected_excavation'
+          diagnostics.closeRangeFailureReason = 'local_excavation_opened_access_retrying_target'
+          await yieldToEventLoop()
+          continue
+        }
+
+        const crSignals = buildProgressSignals(diagnostics, startInventorySnapshot, startPositionSnapshot, targets)
+        if (crSignals.hasProgress && closeRangeExcavatedThisAttempt) {
+          diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+          diagnostics.inventory = inventoryJson()
+          diagnostics.can_retry = true
+          diagnostics.repeatable_now = true
+          diagnostics.failure_type = 'partial_progress_timeout'
+          diagnostics.stop_reason = 'close_range_access_timeout'
+          diagnostics.partial_success = true
+          diagnostics.continuation_relevant = true
+          diagnostics.progress_made = true
+          diagnostics.failed_because = [{
+            kind: 'close_range_access_timeout',
+            action: actionName,
+            stop_reason: 'close_range_access_timeout',
+            progress_signals: crSignals.signals,
+            continuation_relevant: true,
+            nearestRawTargetDistance: diagnostics.nearestRawTargetDistance,
+            nearestRawTargetPosition: diagnostics.nearestRawTargetPosition,
+            selectedTargetDistance: selectedDist,
+            selectedTargetPosition: diagnostics.selectedTargetPosition,
+            selectedAccessTargetDistance: diagnostics.selectedAccessTargetDistance,
+            selectedAccessTargetPosition: diagnostics.selectedAccessTargetPosition,
+            localFallbackAttempted: true,
+            localExcavationSteps: diagnostics.localExcavationSteps,
+            closeRangeFailureReason: diagnostics.closeRangeFailureReason || 'local_access_exhausted'
+          }]
+          return {
+            ok: diagnostics.collected > 0,
+            action: actionName,
+            result: diagnostics,
+            error: diagnostics.collected > 0 ? null : `Close-range access partial progress for ${targetLabel}`
+          }
+        }
+
+        diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+        diagnostics.inventory = inventoryJson()
+        diagnostics.can_retry = true
+        diagnostics.repeatable_now = true
+        diagnostics.failure_type = 'target_unreachable'
+        diagnostics.stop_reason = 'close_range_access_failed'
+        diagnostics.partial_success = diagnostics.collected > 0
+        diagnostics.failed_because = [{
+          kind: 'close_range_access_failed',
+          action: actionName,
+          stop_reason: 'close_range_access_failed',
+          selectedTargetDistance: selectedDist,
+          selectedTargetPosition: diagnostics.selectedTargetPosition,
+          selectedAccessTargetDistance: diagnostics.selectedAccessTargetDistance,
+          selectedAccessTargetPosition: diagnostics.selectedAccessTargetPosition,
+          nearestRawTargetDistance: diagnostics.nearestRawTargetDistance,
+          nearestRawTargetPosition: diagnostics.nearestRawTargetPosition,
+          localFallbackAttempted: true,
+          localExcavationSteps: diagnostics.localExcavationSteps,
+          closeRangeFailureReason: diagnostics.closeRangeFailureReason || 'local_access_failed'
+        }]
+        return {
+          ok: diagnostics.collected > 0,
+          action: actionName,
+          result: diagnostics,
+          error: diagnostics.collected > 0 ? null : `Close-range access failed for ${targetLabel}`
+        }
+      }
+
+      // Skip pathfinding for ore whose stand position is significantly below the bot —
+      // that means it's in an underground cave not yet connected to the bot's location.
+      // Immediately pivot to staircase excavation instead of burning the full path timeout.
+      const botY = bot.entity ? bot.entity.position.y : candidate.standPosition.y
+      const standBelowThreshold = candidate.standPosition.y < botY - 8
+      if (
+        standBelowThreshold &&
+        allowExcavate &&
+        accessMode === 'safe_staircase' &&
+        diagnostics.excavatedBlocks < ACQUIRE_MAX_EXCAVATED_BLOCKS &&
+        staircaseSteps < Math.min(ACQUIRE_MAX_STEPS, MAX_EXCAVATION_STEPS)
+      ) {
+        ignoredPositions.delete(positionKey(candidate.block.position))
+        diagnostics.currentSubstep = 'staircase_preempt_deep_candidate'
+        diagnostics.strategy = 'safe_staircase'
+        const staircaseTarget = await findNearestExcavationTarget(targetSet, radius, ignoredPositions, diagnostics)
+        if (staircaseTarget) {
+          const moved = await safeStaircaseStep(staircaseTarget, targetSet, diagnostics)
+          if (moved) {
+            attempts++
+            staircaseSteps++
+            continue
+          }
+        }
+        // Staircase couldn't advance — fall through to normal pathfinding attempt
+      }
 
       try {
         diagnostics.strategy = bot.entity.position.distanceTo(candidate.standPosition) <= 2.5
           ? 'immediate_surface'
           : 'moved_to_surface'
-        diagnostics.last_target_position = positionJson(candidate.block.position)
-        diagnostics.last_stand_position = positionJson(candidate.standPosition)
+        diagnostics.pathAttempts += 1
+        diagnostics.currentSubstep = 'path_to_access'
         await approachTarget(candidate.block, candidate.standPosition)
       } catch (error) {
         lastError = errorMessage(error)
@@ -7395,9 +8522,204 @@ async function acquireBlocksCore(actionName, options) {
         diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
         diagnostics.inventory = inventoryJson()
         diagnostics.can_retry = true
-        diagnostics.suggested_next_action = 'navigate_to_block_type'
-        diagnostics.stop_reason = 'path_timeout_before_target'
-        diagnostics.partial_success = diagnostics.collected > 0
+        diagnostics.repeatable_now = true
+
+        const isPlanTimeout = isPlanningTimeoutError(error)
+        const isPathTimeout = isPathTimeoutError(error)
+        const errMsg = errorMessage(error)
+
+        if (isPlanTimeout || isPathTimeout) diagnostics.pathPlannerError = errMsg
+
+        const rawStopReason = isPlanTimeout
+          ? 'path_planning_timeout'
+          : isPathTimeout ? 'path_timeout_before_target' : 'navigation_failed'
+        const rawFailureType = (isPathTimeout || isPlanTimeout) ? 'navigation_failed' : 'target_unreachable'
+
+        if (
+          (isPathTimeout || isPlanTimeout) &&
+          selectedDist !== null &&
+          selectedDist <= RESOURCE_CLOSE_RANGE_BLOCKS
+        ) {
+          diagnostics.currentSubstep = 'close_range_access_after_path_timeout'
+          const localExcavationBeforeFallback = diagnostics.localExcavationSteps
+          const fallbackResult = await closeRangeAccessFallback(candidate.block, targetSet, diagnostics)
+
+          if (fallbackResult.ok && fallbackResult.mined) {
+            diagnostics.minedTargetBlocks += 1
+            diagnostics.currentSubstep = 'collect_drop'
+            const dropResult = await collectNearbyDrops(
+              { aroundPosition: candidate.block.position, targets, radius: 6 },
+              diagnostics
+            )
+            diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+            diagnostics.inventory = inventoryJson()
+            if (dropResult.collected > 0) {
+              diagnostics.currentSubstep = 'close_range_done_after_path_timeout'
+              if (diagnostics.collected >= requested) return ok(actionName, diagnostics)
+              continue
+            }
+            return buildDropCollectionFailure(dropResult.reason, actionName, targetLabel, nearestRawDist, diagnostics)
+          }
+
+          if (fallbackResult.ok && fallbackResult.moved) {
+            let minedAfterMove = false
+            try {
+              const freshNear = bot.blockAt(candidate.block.position)
+              if (freshNear && isTargetBlock(freshNear, targetSet)) {
+                diagnostics.digAttempts += 1
+                diagnostics.currentSubstep = 'dig_target_after_local_path_timeout_recovery'
+                await mineBlockSafe(freshNear, targetSet)
+                diagnostics.minedTargetBlocks += 1
+                minedAfterMove = true
+              }
+            } catch (digError) {
+              lastError = errorMessage(digError)
+              stopMovement()
+            }
+
+            if (minedAfterMove) {
+              diagnostics.currentSubstep = 'collect_drop'
+              const dropResult = await collectNearbyDrops(
+                { aroundPosition: candidate.block.position, targets, radius: 6 },
+                diagnostics
+              )
+              diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+              diagnostics.inventory = inventoryJson()
+              if (dropResult.collected > 0) {
+                diagnostics.currentSubstep = 'close_range_done_after_path_timeout'
+                if (diagnostics.collected >= requested) return ok(actionName, diagnostics)
+                continue
+              }
+              return buildDropCollectionFailure(dropResult.reason, actionName, targetLabel, nearestRawDist, diagnostics)
+            }
+          }
+
+          const closeRangeExcavatedThisAttempt = diagnostics.localExcavationSteps > localExcavationBeforeFallback
+          if (closeRangeExcavatedThisAttempt && diagnostics.localExcavationSteps < LOCAL_EXCAVATION_STEP_LIMIT) {
+            ignoredPositions.delete(positionKey(candidate.block.position))
+            diagnostics.currentSubstep = 'close_range_access_retry_after_path_timeout_excavation'
+            diagnostics.closeRangeFailureReason = 'local_excavation_opened_access_retrying_target'
+            await yieldToEventLoop()
+            continue
+          }
+        }
+
+        if (isPathTimeout || isPlanTimeout) {
+          const progressSignals = buildProgressSignals(diagnostics, startInventorySnapshot, startPositionSnapshot, targets)
+          // In path-timeout context, movement alone is NOT meaningful progress — the bot
+          // walked toward an unreachable block. Only inventory change counts.
+          const hadItemProgress = diagnostics.collected > 0
+
+          if (hadItemProgress) {
+            // Genuinely collected something earlier this action, then got stuck pathfinding.
+            diagnostics.failure_type = 'partial_progress_timeout'
+            diagnostics.stop_reason = rawStopReason
+            diagnostics.partial_success = true
+            diagnostics.suggested_next_action = actionName
+            diagnostics.continuation_relevant = true
+            diagnostics.progress_made = true
+            diagnostics.failed_because = [{
+              kind: isPlanTimeout ? 'path_planning_timeout' : 'partial_progress_timeout',
+              action: actionName,
+              stop_reason: rawStopReason,
+              progress_signals: progressSignals.signals,
+              continuation_relevant: true,
+              nearestRawTargetDistance: diagnostics.nearestRawTargetDistance,
+              nearestRawTargetPosition: diagnostics.nearestRawTargetPosition,
+              selectedTargetDistance: selectedDist,
+              selectedTargetPosition: diagnostics.selectedTargetPosition,
+              selectedAccessTargetDistance: diagnostics.selectedAccessTargetDistance,
+              selectedAccessTargetPosition: diagnostics.selectedAccessTargetPosition,
+              accessCandidatesFound: diagnostics.accessCandidatesFound,
+              pathAttempts: diagnostics.pathAttempts,
+              resourcePathfindingTimeoutMs: RESOURCE_PATHFINDING_TIMEOUT_MS,
+              pathPlannerError: errMsg,
+              recoverable: true
+            }]
+          } else if (
+            allowExcavate &&
+            accessMode === 'safe_staircase' &&
+            diagnostics.excavatedBlocks < ACQUIRE_MAX_EXCAVATED_BLOCKS &&
+            staircaseSteps < Math.min(ACQUIRE_MAX_STEPS, MAX_EXCAVATION_STEPS)
+          ) {
+            // Path failed to an underground ore (cave not connected from here). Pivot
+            // immediately to staircase excavation — dig one step toward the ore instead
+            // of burning more time trying to walk to it.
+            // Un-ignore the block so staircase can pick it as the excavation target.
+            ignoredPositions.delete(positionKey(candidate.block.position))
+            diagnostics.currentSubstep = 'staircase_pivot_after_path_timeout'
+            const staircaseTarget = await findNearestExcavationTarget(targetSet, radius, ignoredPositions, diagnostics)
+            if (staircaseTarget) {
+              const moved = await safeStaircaseStep(staircaseTarget, targetSet, diagnostics)
+              if (moved) {
+                attempts++
+                staircaseSteps++
+                diagnostics.strategy = 'safe_staircase'
+                continue
+              }
+            }
+            // Staircase pivot also failed — give up with a clear reason
+            diagnostics.failure_type = 'target_unreachable'
+            diagnostics.stop_reason = 'targets_found_but_not_accessible'
+            diagnostics.suggested_next_action = 'navigate_to_block_type'
+            diagnostics.can_retry = true
+            diagnostics.failed_because = [{
+              kind: 'path_timeout_staircase_also_failed',
+              action: actionName,
+              currentSubstep: 'staircase_pivot_after_path_timeout',
+              selectedTargetPosition: diagnostics.selectedTargetPosition,
+              selectedTargetDistance: selectedDist,
+              resourcePathfindingTimeoutMs: RESOURCE_PATHFINDING_TIMEOUT_MS,
+              pathPlannerError: errMsg,
+            }]
+          } else if (pathTimeoutCount < 3) {
+            // Non-excavate mode — skip this candidate and try the next one.
+            // The block is already in ignoredPositions so the next scan picks a different target.
+            pathTimeoutCount++
+            await yieldToEventLoop()
+            continue
+          } else {
+            // No progress and we have already skipped 3 unreachable candidates — give up.
+            diagnostics.failure_type = rawFailureType
+            diagnostics.stop_reason = rawStopReason
+            diagnostics.partial_success = diagnostics.collected > 0
+            diagnostics.suggested_next_action = isPlanTimeout ? null : 'navigate_to_block_type'
+            diagnostics.failed_because = [{
+              kind: 'path_planning_timeout',
+              action: actionName,
+              currentSubstep: 'path_to_access',
+              selectedTargetPosition: diagnostics.selectedTargetPosition,
+              selectedTargetDistance: selectedDist,
+              selectedAccessTargetPosition: diagnostics.selectedAccessTargetPosition,
+              selectedAccessTargetDistance: diagnostics.selectedAccessTargetDistance,
+              nearestRawTargetPosition: diagnostics.nearestRawTargetPosition,
+              nearestRawTargetDistance: diagnostics.nearestRawTargetDistance,
+              accessCandidatesFound: diagnostics.accessCandidatesFound,
+              closeRangeFallbackAttempted: diagnostics.closeRangeFallbackAttempted,
+              pathAttempts: diagnostics.pathAttempts,
+              resourcePathfindingTimeoutMs: RESOURCE_PATHFINDING_TIMEOUT_MS,
+              pathPlannerError: errMsg,
+              recoverable: true
+            }]
+          }
+        } else {
+          diagnostics.failure_type = rawFailureType
+          diagnostics.stop_reason = rawStopReason
+          diagnostics.partial_success = diagnostics.collected > 0
+          diagnostics.suggested_next_action = 'navigate_to_block_type'
+          diagnostics.failed_because = [{
+            kind: 'navigation_failed',
+            action: actionName,
+            currentSubstep: 'path_to_access',
+            selectedTargetPosition: diagnostics.selectedTargetPosition,
+            selectedTargetDistance: selectedDist,
+            selectedAccessTargetPosition: diagnostics.selectedAccessTargetPosition,
+            selectedAccessTargetDistance: diagnostics.selectedAccessTargetDistance,
+            nearestRawTargetPosition: diagnostics.nearestRawTargetPosition,
+            nearestRawTargetDistance: diagnostics.nearestRawTargetDistance,
+            error: errMsg
+          }]
+        }
 
         return {
           ok: diagnostics.collected > 0,
@@ -7408,7 +8730,11 @@ async function acquireBlocksCore(actionName, options) {
       }
 
       try {
+        diagnostics.digAttempts += 1
+        diagnostics.currentSubstep = 'dig_target'
         await mineBlockSafe(candidate.block, targetSet)
+        diagnostics.minedTargetBlocks += 1
+        pathTimeoutCount = 0
         await delay(250)
       } catch (error) {
         lastError = errorMessage(error)
@@ -7422,9 +8748,10 @@ async function acquireBlocksCore(actionName, options) {
       allowExcavate &&
       accessMode === 'safe_staircase' &&
       diagnostics.excavatedBlocks < ACQUIRE_MAX_EXCAVATED_BLOCKS &&
-      staircaseSteps < ACQUIRE_MAX_STEPS
+      staircaseSteps < Math.min(ACQUIRE_MAX_STEPS, MAX_EXCAVATION_STEPS)
     ) {
-      const target = findNearestExcavationTarget(targetSet, radius, ignoredPositions, diagnostics)
+      diagnostics.currentSubstep = 'excavate_staircase'
+      const target = await findNearestExcavationTarget(targetSet, radius, ignoredPositions, diagnostics)
       if (!target) {
         lastError = stopReasonMessage(targetLabel, diagnostics)
         diagnostics.stop_reason = stopReasonForNoCandidate(diagnostics)
@@ -7434,6 +8761,10 @@ async function acquireBlocksCore(actionName, options) {
       }
 
       diagnostics.last_target_position = positionJson(target.position)
+      // Track nearest distance end as we approach during excavation
+      if (bot.entity) {
+        diagnostics.nearestTargetDistanceEnd = Math.round(bot.entity.position.distanceTo(target.position) * 10) / 10
+      }
       const moved = await safeStaircaseStep(target, targetSet, diagnostics)
       if (!moved) {
         ignoredPositions.add(positionKey(target.position))
@@ -7457,8 +8788,7 @@ async function acquireBlocksCore(actionName, options) {
     break
   }
 
-  diagnostics.collected = Math.max(0, inventoryCountForTargets(targets) - startingCount)
-  diagnostics.inventory = inventoryJson()
+  updateResourceInventoryDiagnostics(diagnostics, targets, startInventorySnapshot, requested)
 
   if (diagnostics.collected <= 0) {
     diagnostics.strategy = diagnostics.strategy === 'failed' ? 'failed' : diagnostics.strategy
@@ -7475,16 +8805,26 @@ async function acquireBlocksCore(actionName, options) {
     }
   }
 
-  if (diagnostics.collected < requested) {
-    diagnostics.partial_success = true
-    diagnostics.can_retry = true
-    diagnostics.suggested_next_action = 'acquire_blocks'
-    diagnostics.stop_reason = diagnostics.stop_reason || 'partial_count_not_reached'
-  } else {
+  const originalStopReason = diagnostics.stop_reason
+
+  if (diagnostics.collected >= requested) {
     diagnostics.partial_success = false
     diagnostics.can_retry = false
     diagnostics.suggested_next_action = null
-    diagnostics.stop_reason = 'completed'
+    diagnostics.stop_reason = 'collected_requested'
+  } else {
+    diagnostics.partial_success = true
+    diagnostics.can_retry = true
+    diagnostics.suggested_next_action = 'acquire_blocks'
+    const wasTimeout = originalStopReason && (
+      originalStopReason.includes('timeout') || originalStopReason.includes('path_timeout')
+    )
+    diagnostics.stop_reason = wasTimeout ? 'partial_collected_after_timeout' : 'partial_collected'
+  }
+
+  if (originalStopReason && originalStopReason !== diagnostics.stop_reason) {
+    diagnostics.original_stop_reason = originalStopReason
+    diagnostics.success_due_to_inventory_delta = true
   }
 
   return ok(actionName, diagnostics)
@@ -7494,23 +8834,110 @@ function emptyAcquireResult(options, strategy) {
   return {
     requested: options.count || ACQUIRE_BLOCKS_DEFAULT_COUNT,
     collected: 0,
+    targets: options.targets || [],
+    radius: options.radius !== undefined ? options.radius : ACQUIRE_BLOCKS_DEFAULT_RADIUS,
     partial_success: false,
     can_retry: false,
     suggested_next_action: null,
     last_target_position: null,
     last_stand_position: null,
     stop_reason: null,
-    targets: options.targets || [],
     strategy,
     targetCandidatesFound: 0,
+    targetCandidatesFoundRaw: 0,
     exposedCandidatesFound: 0,
     accessCandidatesFound: 0,
+    candidates_seen: 0,
+    candidates_evaluated: 0,
+    candidatesEvaluated: 0,
+    scan_limited: false,
     excavatedBlocks: 0,
+    minedTargetBlocks: 0,
+    currentSubstep: 'scan',
     rejectedDangerous: 0,
     rejectedProtected: 0,
     rejectedUnsupported: 0,
     rejectedNoSafeStand: 0,
+    rejectedNotExposed: 0,
     rejectedUnreachable: 0,
+    nearestTargetDistance: null,
+    nearestTargetPosition: null,
+    nearestTargetDistanceEnd: null,
+    nearestRawTargetDistance: null,
+    nearestRawTargetPosition: null,
+    selectedTargetDistance: null,
+    selectedTargetPosition: null,
+    selectedTargetMode: null,
+    selectedCloseRangeTargetPosition: null,
+    selectedAccessTargetDistance: null,
+    selectedAccessTargetPosition: null,
+    dropCollectionAttempted: false,
+    closeDropPickupAttempted: false,
+    closeDropPickupTicks: 0,
+    dropCollectionPasses: 0,
+    dropsCollectedThisAction: 0,
+    targetInventoryDelta: 0,
+    inventoryBefore: null,
+    inventoryAfter: null,
+    nearbyDropsFound: 0,
+    relevantDropsFound: 0,
+    nearestDropDistance: null,
+    dropPathAttempts: 0,
+    dropCollectionTimeoutMs: null,
+    dropCollectionMethod: null,
+    dropDirectWalkAttempted: false,
+    dropDirectWalkTicks: 0,
+    dropVerticalDelta: null,
+    dropEntityPosition: null,
+    distanceToDropStart: null,
+    distanceToDropEnd: null,
+    dropEntityDisappeared: false,
+    dropEntityStillExists: null,
+    distanceToDropMin: null,
+    dropDistanceImproved: false,
+    dropCollectionSucceeded: false,
+    localDropRecoveryAttempted: false,
+    dropSafeStandCandidatesFound: 0,
+    selectedDropStandPosition: null,
+    dropLocalPathAttempted: false,
+    dropLocalPathSucceeded: false,
+    dropLocalExcavationSteps: 0,
+    dropBlockedBy: null,
+    dropBlockedByDiggable: null,
+    dropBlockedBySafeToDig: null,
+    dropBlockedByWithinReach: null,
+    blockerReason: null,
+    blockerIntersectsMovementVolume: null,
+    dropCollectionAbandoned: false,
+    abandonedDropReason: null,
+    resource_action_still_valid: null,
+    dropLocalExcavationAttempted: false,
+    dropLocalExcavationBlocksDug: 0,
+    dropRecoveryFailureReason: null,
+    distanceToDropAfterLocalRecovery: null,
+    distanceToDropAfterExcavation: null,
+    directWalkNoMovement: false,
+    botPositionChanged: null,
+    inventoryDeltaAfterDig: null,
+    inventoryDeltaAfterDropCollection: null,
+    targetBlockStillExists: null,
+    pathfindingTimeoutMs: PATHFINDING_TIMEOUT_MS,
+    resourcePathfindingTimeoutMs: RESOURCE_PATHFINDING_TIMEOUT_MS,
+    pathAttempts: 0,
+    digAttempts: 0,
+    closeRangeFallbackAttempted: 0,
+    directDigAttempted: 0,
+    localStandAdjustmentAttempted: false,
+    localExcavationSteps: 0,
+    closeRangeFailureReason: null,
+    reusedLastTarget: false,
+    lastTargetStillExists: false,
+    distanceToLastTarget: null,
+    pathPlannerError: null,
+    dropCollectabilityScore: null,
+    expectedDropSafeStandCandidates: null,
+    expectedDropVerticalRisk: null,
+    targetRejectedForDropRisk: false,
     inventory: []
   }
 }
@@ -7569,11 +8996,101 @@ function inventoryCountForTargets(targets) {
   return total
 }
 
+function targetInventoryNames(targets) {
+  const names = new Set()
+  const targetList = targets instanceof Set ? Array.from(targets) : (Array.isArray(targets) ? targets : [])
+  for (const target of targetList) {
+    names.add(target)
+    for (const drop of (ACQUIRE_DROPS[target] || [])) {
+      names.add(drop)
+    }
+  }
+  return names
+}
+
+function inventoryDeltaBetween(beforeCounts, afterCounts) {
+  const delta = {}
+  const allKeys = new Set([
+    ...Object.keys(beforeCounts || {}),
+    ...Object.keys(afterCounts || {})
+  ])
+  for (const key of allKeys) {
+    const change = (afterCounts[key] || 0) - (beforeCounts[key] || 0)
+    if (change !== 0) delta[key] = change
+  }
+  return delta
+}
+
+function updateResourceInventoryDiagnostics(diagnostics, targets, inventoryBefore, requested) {
+  const before = inventoryBefore || diagnostics.inventoryBefore || {}
+  const after = inventoryCounts()
+  const delta = inventoryDeltaBetween(before, after)
+  const targetNames = targetInventoryNames(targets || diagnostics.targets || [])
+  let targetDelta = 0
+  for (const [item, change] of Object.entries(delta)) {
+    if (targetNames.has(item) && change > 0) {
+      targetDelta += change
+    }
+  }
+
+  diagnostics.inventoryBefore = before
+  diagnostics.inventoryAfter = after
+  diagnostics.inventory_delta = delta
+  diagnostics.targetInventoryDelta = targetDelta
+  diagnostics.collected = Math.max(0, targetDelta)
+  diagnostics.requested = requested || diagnostics.requested
+  diagnostics.inventory = inventoryJson()
+  return targetDelta
+}
+
+function resourceSuccessFromInventory(actionName, diagnostics, reason = null) {
+  const collected = updateResourceInventoryDiagnostics(
+    diagnostics,
+    diagnostics.targets,
+    diagnostics.inventoryBefore,
+    diagnostics.requested
+  )
+  if (collected <= 0) return null
+
+  const originalStopReason = diagnostics.stop_reason
+
+  diagnostics.failure_type = null
+  diagnostics.failed_because = []
+  diagnostics.error = null
+  diagnostics.dropCollectionSucceeded = diagnostics.dropCollectionAttempted ? true : diagnostics.dropCollectionSucceeded
+  diagnostics.progress_made = true
+  diagnostics.drop_collection_reason = reason || diagnostics.drop_collection_reason || null
+
+  if (collected >= diagnostics.requested) {
+    diagnostics.partial_success = false
+    diagnostics.can_retry = false
+    diagnostics.repeatable_now = false
+    diagnostics.suggested_next_action = null
+    diagnostics.stop_reason = 'collected_requested'
+  } else {
+    diagnostics.partial_success = true
+    diagnostics.can_retry = true
+    diagnostics.repeatable_now = true
+    diagnostics.suggested_next_action = actionName
+    const wasTimeout = originalStopReason && (
+      originalStopReason.includes('timeout') || originalStopReason.includes('path_timeout')
+    )
+    diagnostics.stop_reason = wasTimeout ? 'partial_collected_after_timeout' : 'partial_collected'
+  }
+
+  if (originalStopReason && originalStopReason !== diagnostics.stop_reason) {
+    diagnostics.original_stop_reason = originalStopReason
+    diagnostics.success_due_to_inventory_delta = true
+  }
+
+  return ok(actionName, diagnostics)
+}
+
 function isTargetBlock(block, targets) {
   return Boolean(block && targets.has(block.name))
 }
 
-function findTargetCandidates(targets, radius, diagnostics) {
+async function findTargetCandidates(targets, radius, diagnostics) {
   const matching = Array.from(targets)
     .map((name) => bot.registry.blocksByName[name])
     .filter((blockType) => blockType)
@@ -7584,49 +9101,92 @@ function findTargetCandidates(targets, radius, diagnostics) {
     return []
   }
 
+  // Raw find: fetch a pool larger than the evaluation cap so we can sort by distance
+  // and prefer the nearest blocks. In debug mode allow an unlimited scan.
+  const rawFetchLimit = RESOURCE_DEBUG_FULL_SCAN
+    ? 65536
+    : Math.max(MAX_RESOURCE_CANDIDATES_EVALUATED * 4, MAX_BLOCK_CANDIDATES)
+
   const positions = bot.findBlocks({
     matching,
-    maxDistance: radius,
-    count: 256
+    maxDistance: Math.min(radius, MAX_SCAN_RADIUS),
+    count: rawFetchLimit
   }) || []
 
-  diagnostics.targetCandidatesFound += positions.length
+  const rawFound = positions.length
+  diagnostics.targetCandidatesFoundRaw = (diagnostics.targetCandidatesFoundRaw || 0) + rawFound
+  diagnostics.targetCandidatesFound += rawFound
+  diagnostics.candidates_seen = (diagnostics.candidates_seen || 0) + rawFound
 
-  return positions
+  // Convert positions to blocks and sort by distance so close blocks are evaluated first.
+  const blocks = positions
     .map((position) => bot.blockAt(position))
     .filter((block) => block && isTargetBlock(block, targets))
     .sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))
+
+  // Record nearest raw target on first non-empty scan pass.
+  if (blocks.length > 0 && diagnostics.nearestTargetDistance === null) {
+    const nearest = blocks[0]
+    const nearDist = Math.round(bot.entity.position.distanceTo(nearest.position) * 10) / 10
+    const nearPos = positionJson(nearest.position)
+    diagnostics.nearestTargetDistance = nearDist
+    diagnostics.nearestTargetPosition = nearPos
+    diagnostics.nearestRawTargetDistance = nearDist
+    diagnostics.nearestRawTargetPosition = nearPos
+  }
+
+  await yieldToEventLoop()
+  return blocks
 }
 
-function findSurfaceAcquisitionCandidate(targets, radius, ignoredPositions, diagnostics) {
-  for (const block of findTargetCandidates(targets, radius, diagnostics)) {
-    if (ignoredPositions.has(positionKey(block.position))) {
-      continue
-    }
+async function findSurfaceAcquisitionCandidate(targets, radius, ignoredPositions, diagnostics) {
+  const allCandidates = await findTargetCandidates(targets, radius, diagnostics)
 
-    if (isProtectedBlock(block)) {
-      diagnostics.rejectedProtected += 1
-      continue
+  // Quick exposure pre-sort: blocks with top face open are evaluated first because
+  // they are the most likely to have a safe stand position. This lets us find a
+  // valid candidate in the first few evaluations instead of scanning the full list.
+  const likelyExposed = []
+  const buried = []
+  for (const block of allCandidates) {
+    const above = bot.blockAt(block.position.offset(0, 1, 0))
+    if (above && canReplaceBlock(above) && !isLiquidBlock(above)) {
+      likelyExposed.push(block)
+    } else {
+      buried.push(block)
     }
+  }
 
-    if (isDirectlyUnderBot(block)) {
-      diagnostics.rejectedDangerous += 1
-      continue
-    }
+  let localEval = 0
+  // Collect a window of valid candidates and score each for drop collectability.
+  // Candidates arrive in distance order; within a tie in score the closer one wins.
+  const scoredWindow = []
+  let firstWindowBlock = null
 
-    if (!canMineBlock(block)) {
-      diagnostics.rejectedUnsupported += 1
-      continue
+  for (const block of likelyExposed.concat(buried)) {
+    // Per-pass evaluation cap prevents evaluating thousands of buried blocks per iteration.
+    if (!RESOURCE_DEBUG_FULL_SCAN && localEval >= MAX_RESOURCE_CANDIDATES_EVALUATED) {
+      diagnostics.scan_limited = true
+      break
     }
+    // Stop gathering once the window is full.
+    if (scoredWindow.length >= DROP_COLLECTABILITY_WINDOW) break
 
-    if (isDangerousAdjacent(block)) {
-      diagnostics.rejectedDangerous += 1
-      continue
-    }
+    if (ignoredPositions.has(positionKey(block.position))) continue
+
+    // Cheap pre-filters before expensive face/stand checks
+    if (isProtectedBlock(block)) { diagnostics.rejectedProtected += 1; continue }
+    if (isDirectlyUnderBot(block)) { diagnostics.rejectedDangerous += 1; continue }
+    if (!canMineBlock(block)) { diagnostics.rejectedUnsupported += 1; continue }
+    if (isDangerousAdjacent(block)) { diagnostics.rejectedDangerous += 1; continue }
+
+    // Expensive: check exposed face then safe stand position
+    localEval += 1
+    diagnostics.candidatesEvaluated += 1
+    diagnostics.candidates_evaluated = diagnostics.candidatesEvaluated
 
     const faceInfo = findExposedFace(block)
     if (!faceInfo) {
-      diagnostics.rejectedUnreachable += 1
+      diagnostics.rejectedNotExposed += 1
       continue
     }
     diagnostics.exposedCandidatesFound += 1
@@ -7638,36 +9198,52 @@ function findSurfaceAcquisitionCandidate(targets, radius, ignoredPositions, diag
     }
     diagnostics.accessCandidatesFound += 1
 
-    return { block, faceInfo, standPosition }
+    const dropScore = estimateDropCollectability(block)
+    scoredWindow.push({ block, faceInfo, standPosition, dropScore })
+    if (firstWindowBlock === null) firstWindowBlock = block
   }
 
-  return null
+  if (scoredWindow.length === 0) return null
+
+  // Sort by drop collectability score descending. Array.sort is stable in V8, so
+  // equal-score entries preserve insertion order — closer candidate wins ties.
+  scoredWindow.sort((a, b) => b.dropScore.score - a.dropScore.score)
+  const best = scoredWindow[0]
+
+  diagnostics.dropCollectabilityScore = Math.round(best.dropScore.score * 100) / 100
+  diagnostics.expectedDropSafeStandCandidates = best.dropScore.safeStandCandidates
+  diagnostics.expectedDropVerticalRisk = best.dropScore.verticalRisk
+  // True when a closer candidate was deprioritised in favour of one with safer drop pickup.
+  diagnostics.targetRejectedForDropRisk = (
+    scoredWindow.length > 1 &&
+    positionKey(best.block.position) !== positionKey(firstWindowBlock.position)
+  )
+
+  return { block: best.block, faceInfo: best.faceInfo, standPosition: best.standPosition }
 }
 
-function findSurfaceNavigationCandidate(targets, radius, diagnostics) {
-  for (const block of findTargetCandidates(targets, radius, diagnostics)) {
-    if (isProtectedBlock(block)) {
-      diagnostics.rejectedProtected += 1
-      continue
+async function findSurfaceNavigationCandidate(targets, radius, diagnostics) {
+  const allCandidates = await findTargetCandidates(targets, radius, diagnostics)
+  let localEval = 0
+  for (const block of allCandidates) {
+    if (!RESOURCE_DEBUG_FULL_SCAN && localEval >= MAX_RESOURCE_CANDIDATES_EVALUATED) {
+      diagnostics.scan_limited = true
+      break
     }
 
-    if (isDirectlyUnderBot(block) || isDangerousAdjacent(block)) {
-      diagnostics.rejectedDangerous += 1
-      continue
-    }
+    if (isProtectedBlock(block)) { diagnostics.rejectedProtected += 1; continue }
+    if (isDirectlyUnderBot(block) || isDangerousAdjacent(block)) { diagnostics.rejectedDangerous += 1; continue }
+
+    localEval += 1
+    diagnostics.candidatesEvaluated += 1
+    diagnostics.candidates_evaluated = diagnostics.candidatesEvaluated
 
     const faceInfo = findExposedFace(block)
-    if (!faceInfo) {
-      diagnostics.rejectedUnreachable += 1
-      continue
-    }
+    if (!faceInfo) { diagnostics.rejectedUnreachable += 1; continue }
     diagnostics.exposedCandidatesFound += 1
 
     const standPosition = findSafeStandNearFace(block, faceInfo)
-    if (!standPosition) {
-      diagnostics.rejectedNoSafeStand += 1
-      continue
-    }
+    if (!standPosition) { diagnostics.rejectedNoSafeStand += 1; continue }
     diagnostics.accessCandidatesFound += 1
 
     return { block, faceInfo, standPosition }
@@ -7736,6 +9312,1165 @@ function isSafeStandPosition(position) {
   return true
 }
 
+function buildDropCollectionFailure(reason, actionName, targetLabel, nearestRawDist, diagnostics) {
+  diagnostics.dropEntityDisappeared = reason === 'drop_disappeared_without_inventory_delta'
+    ? true
+    : diagnostics.dropEntityDisappeared
+  const successResponse = resourceSuccessFromInventory(actionName, diagnostics, reason)
+  if (successResponse) return successResponse
+
+  if (reason === 'internal_drop_collection_bug') {
+    diagnostics.failure_type = 'internal_drop_collection_bug'
+    diagnostics.stop_reason = 'drop_close_but_no_pickup_attempt'
+    diagnostics.partial_success = true
+    diagnostics.continuation_relevant = true
+    diagnostics.failed_because = [{
+      kind: 'internal_drop_collection_bug',
+      action: actionName,
+      stop_reason: 'drop_close_but_no_pickup_attempt',
+      drop_distance: diagnostics.nearestDropDistance,
+      dropVerticalDelta: diagnostics.dropVerticalDelta,
+      minedTargetBlocks: diagnostics.minedTargetBlocks,
+      closeDropPickupAttempted: diagnostics.closeDropPickupAttempted,
+      dropDirectWalkAttempted: diagnostics.dropDirectWalkAttempted,
+      continuation_relevant: true
+    }]
+    return {
+      ok: false,
+      action: actionName,
+      result: diagnostics,
+      error: `Drop close but no pickup attempted (dist=${diagnostics.nearestDropDistance}, vertDelta=${diagnostics.dropVerticalDelta})`
+    }
+  }
+
+  const isDeepUnreachable = (
+    reason === 'drop_no_safe_stand' &&
+    typeof diagnostics.dropVerticalDelta === 'number' &&
+    diagnostics.dropVerticalDelta <= -3 &&
+    diagnostics.dropSafeStandCandidatesFound === 0
+  )
+  if (isDeepUnreachable) {
+    const dropPos = diagnostics.dropEntityPosition
+    const posKey = dropPos
+      ? `${Math.round(dropPos.x)}_${Math.round(dropPos.y)}_${Math.round(dropPos.z)}`
+      : null
+    const dcFamily = posKey
+      ? `drop_collection:${targetLabel}:${posKey}`
+      : `drop_collection:${targetLabel}`
+    diagnostics.stop_reason = 'drop_deep_unreachable'
+    diagnostics.failure_type = 'partial_progress_timeout'
+    diagnostics.partial_success = true
+    diagnostics.continuation_relevant = false
+    diagnostics.resource_action_still_valid = true
+    diagnostics.dropCollectionAbandoned = true
+    diagnostics.abandonedDropReason = 'deep_no_safe_stand'
+    diagnostics.can_retry = false
+    diagnostics.failed_because = [{
+      kind: 'drop_deep_unreachable',
+      action: actionName,
+      item: targetLabel,
+      dropVerticalDelta: diagnostics.dropVerticalDelta,
+      dropSafeStandCandidatesFound: diagnostics.dropSafeStandCandidatesFound,
+      dropEntityPosition: diagnostics.dropEntityPosition,
+      same_drop_retry_not_recommended: true,
+      continuation_relevant: false,
+      resource_action_still_valid: true,
+      drop_collection_family: dcFamily,
+      minedTargetBlocks: diagnostics.minedTargetBlocks,
+    }]
+    return {
+      ok: false,
+      action: actionName,
+      result: diagnostics,
+      error: `Mined ${targetLabel} but drop fell deep and unreachable (vertDelta=${diagnostics.dropVerticalDelta}, noSafeStand): abandoning this drop`
+    }
+  }
+
+  const isHardFail = (
+    reason === 'drop_unreachable' ||
+    reason === 'drop_disappeared_without_inventory_delta' ||
+    reason === 'drop_direct_walk_no_progress' ||
+    reason === 'drop_no_safe_stand'
+  )
+  const isPartialProgress = reason === 'drop_collection_partial_progress' || reason === 'drop_local_excavation_progress'
+
+  const stopReason = isHardFail ? (reason === 'drop_direct_walk_no_progress' ? 'drop_direct_walk_no_progress' : reason)
+    : isPartialProgress ? reason
+    : 'mined_target_but_drop_not_collected'
+  const failedKind = isHardFail ? 'drop_collection_failed' : 'mined_target_but_drop_not_collected'
+
+  diagnostics.can_retry = true
+  diagnostics.repeatable_now = true
+  diagnostics.failure_type = 'partial_progress_timeout'
+  diagnostics.stop_reason = stopReason
+  diagnostics.partial_success = true
+  diagnostics.continuation_relevant = true
+  diagnostics.progress_made = true
+  diagnostics.failed_because = [{
+    kind: failedKind,
+    action: actionName,
+    stop_reason: stopReason,
+    drop_collection_reason: reason,
+    minedTargetBlocks: diagnostics.minedTargetBlocks,
+    nearbyDropsFound: diagnostics.nearbyDropsFound,
+    relevantDropsFound: diagnostics.relevantDropsFound,
+    nearestDropDistance: diagnostics.nearestDropDistance,
+    dropEntityPosition: diagnostics.dropEntityPosition,
+    distanceToDropStart: diagnostics.distanceToDropStart,
+    distanceToDropMin: diagnostics.distanceToDropMin,
+    distanceToDropEnd: diagnostics.distanceToDropEnd,
+    dropDistanceImproved: diagnostics.dropDistanceImproved,
+    dropEntityStillExists: diagnostics.dropEntityStillExists,
+    dropCollectionMethod: diagnostics.dropCollectionMethod,
+    dropDirectWalkAttempted: diagnostics.dropDirectWalkAttempted,
+    dropDirectWalkTicks: diagnostics.dropDirectWalkTicks,
+    dropPathAttempts: diagnostics.dropPathAttempts,
+    dropVerticalDelta: diagnostics.dropVerticalDelta,
+    localDropRecoveryAttempted: diagnostics.localDropRecoveryAttempted,
+    dropSafeStandCandidatesFound: diagnostics.dropSafeStandCandidatesFound,
+    selectedDropStandPosition: diagnostics.selectedDropStandPosition,
+    dropLocalPathAttempted: diagnostics.dropLocalPathAttempted,
+    dropLocalPathSucceeded: diagnostics.dropLocalPathSucceeded,
+    dropLocalExcavationSteps: diagnostics.dropLocalExcavationSteps,
+    dropBlockedBy: diagnostics.dropBlockedBy,
+    dropBlockedByDiggable: diagnostics.dropBlockedByDiggable,
+    dropBlockedBySafeToDig: diagnostics.dropBlockedBySafeToDig,
+    dropBlockedByWithinReach: diagnostics.dropBlockedByWithinReach,
+    blockerReason: diagnostics.blockerReason,
+    blockerIntersectsMovementVolume: diagnostics.blockerIntersectsMovementVolume,
+    dropLocalExcavationAttempted: diagnostics.dropLocalExcavationAttempted,
+    dropLocalExcavationBlocksDug: diagnostics.dropLocalExcavationBlocksDug,
+    dropRecoveryFailureReason: diagnostics.dropRecoveryFailureReason,
+    distanceToDropAfterLocalRecovery: diagnostics.distanceToDropAfterLocalRecovery,
+    distanceToDropAfterExcavation: diagnostics.distanceToDropAfterExcavation,
+    directWalkNoMovement: diagnostics.directWalkNoMovement,
+    botPositionChanged: diagnostics.botPositionChanged,
+    inventoryDeltaAfterDropCollection: diagnostics.inventoryDeltaAfterDropCollection,
+    closeDropPickupAttempted: diagnostics.closeDropPickupAttempted,
+    closeDropPickupTicks: diagnostics.closeDropPickupTicks,
+    dropCollectionPasses: diagnostics.dropCollectionPasses,
+    dropsCollectedThisAction: diagnostics.dropsCollectedThisAction,
+    targetInventoryDelta: diagnostics.targetInventoryDelta,
+    inventoryBefore: diagnostics.inventoryBefore,
+    inventoryAfter: diagnostics.inventoryAfter,
+    bot_position: currentPositionJson(),
+    nearestRawTargetDistance: nearestRawDist,
+    selectedTargetDistance: nearestRawDist,
+    continuation_relevant: true
+  }]
+  return {
+    ok: false,
+    action: actionName,
+    result: diagnostics,
+    error: `Mined ${targetLabel} but drop collection failed: ${reason}`
+  }
+}
+
+function isWalkDirectionSafe(toward) {
+  if (!bot.entity) return false
+  const from = bot.entity.position
+  const dx = toward.x - from.x
+  const dz = toward.z - from.z
+  const len = Math.sqrt(dx * dx + dz * dz)
+  if (len < 0.01) return true
+  const nx = dx / len
+  const nz = dz / len
+  const aheadXZ = from.offset(nx * 1.3, 0, nz * 1.3).floored()
+  const feetBlock = bot.blockAt(aheadXZ)
+  const headBlock = bot.blockAt(aheadXZ.offset(0, 1, 0))
+  if ((feetBlock && isLiquidBlock(feetBlock)) || (headBlock && isLiquidBlock(headBlock))) return false
+  // Don't walk off a cliff (>3 block drop and not moving toward a lower drop)
+  const floorAhead = bot.blockAt(aheadXZ.offset(0, -1, 0))
+  if (floorAhead && canReplaceBlock(floorAhead)) {
+    let drop = 0
+    for (let dy = -1; dy >= -5; dy--) {
+      const b = bot.blockAt(aheadXZ.offset(0, dy, 0))
+      if (b && isSolidBlock(b)) break
+      drop++
+    }
+    if (drop >= 4) return false
+  }
+  return true
+}
+
+function clearDropWalkControls() {
+  try {
+    bot.setControlState('forward', false)
+    bot.setControlState('back', false)
+    bot.setControlState('left', false)
+    bot.setControlState('right', false)
+    bot.setControlState('jump', false)
+    bot.setControlState('sprint', false)
+  } catch (_) {}
+}
+
+function updateDropDistanceDiagnostics(dropEntity, distance, diagnostics) {
+  const rounded = Math.round(distance * 10) / 10
+  diagnostics.nearestDropDistance = rounded
+  diagnostics.distanceToDropEnd = rounded
+  if (diagnostics.distanceToDropStart === null) {
+    diagnostics.distanceToDropStart = rounded
+  }
+  if (diagnostics.distanceToDropMin === null || rounded < diagnostics.distanceToDropMin) {
+    diagnostics.distanceToDropMin = rounded
+  }
+  diagnostics.dropDistanceImproved = (
+    diagnostics.distanceToDropStart !== null &&
+    diagnostics.distanceToDropMin !== null &&
+    diagnostics.distanceToDropMin < diagnostics.distanceToDropStart - 0.05
+  )
+  if (dropEntity && dropEntity.position) {
+    diagnostics.dropEntityPosition = positionJson(dropEntity.position)
+    if (bot.entity) {
+      diagnostics.dropVerticalDelta = Math.round((dropEntity.position.y - bot.entity.position.y) * 10) / 10
+    }
+  }
+}
+
+function nearestRelevantDrop(radius, aroundPosition) {
+  const scanPos = aroundPosition || (bot.entity ? bot.entity.position : null)
+  return droppedItemEntitiesNear(scanPos, radius)[0] || null
+}
+
+async function directWalkToDrop(_dropEntity, targets, startingCount, deadline, diagnostics, aroundPosition, radius) {
+  diagnostics.dropDirectWalkAttempted = true
+  diagnostics.dropCollectionMethod = 'direct_walk'
+
+  let lastImprovedAt = Date.now()
+  let closeTicks = 0
+  const startPosition = bot.entity ? bot.entity.position.clone() : null
+
+  try {
+    while (Date.now() < deadline) {
+      const delta = inventoryCountForTargets(targets) - startingCount
+      if (delta > 0) {
+        diagnostics.inventoryDeltaAfterDropCollection = delta
+        diagnostics.dropEntityStillExists = Boolean(nearestRelevantDrop(radius, aroundPosition))
+        clearDropWalkControls()
+        return { collected: delta, reason: 'success' }
+      }
+
+      if (!bot.entity) {
+        clearDropWalkControls()
+        return { collected: 0, reason: 'bot_not_ready' }
+      }
+
+      const entity = nearestRelevantDrop(radius, aroundPosition)
+      if (!entity || !entity.position) {
+        clearDropWalkControls()
+        diagnostics.dropEntityDisappeared = true
+        diagnostics.dropEntityStillExists = false
+        const afterDelta = inventoryCountForTargets(targets) - startingCount
+        diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, afterDelta)
+        if (afterDelta > 0) return { collected: afterDelta, reason: 'success' }
+        if (diagnostics.dropDistanceImproved) {
+          return { collected: 0, reason: 'drop_collection_partial_progress' }
+        }
+        return { collected: 0, reason: 'drop_disappeared_without_inventory_delta' }
+      }
+
+      const dropPos = entity.position
+      const botPos = bot.entity.position
+      const dist3d = botPos.distanceTo(dropPos)
+      const vertDelta = dropPos.y - botPos.y
+      diagnostics.botPositionChanged = Boolean(startPosition && botPos.distanceTo(startPosition) > 0.35)
+      diagnostics.directWalkNoMovement = diagnostics.botPositionChanged === false
+
+      diagnostics.dropEntityStillExists = true
+      const previousMin = diagnostics.distanceToDropMin
+      updateDropDistanceDiagnostics(entity, dist3d, diagnostics)
+
+      if (previousMin === null || diagnostics.distanceToDropMin < previousMin - 0.05) {
+        lastImprovedAt = Date.now()
+      }
+
+      if (dist3d < 1.2) {
+        closeTicks += 1
+        clearDropWalkControls()
+        await delay(120)
+        diagnostics.dropDirectWalkTicks++
+        if (closeTicks >= 4) {
+          const closeDelta = inventoryCountForTargets(targets) - startingCount
+          diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, closeDelta)
+          if (closeDelta > 0) return { collected: closeDelta, reason: 'success' }
+        }
+        continue
+      }
+      closeTicks = 0
+
+      try {
+        await bot.lookAt(new Vec3(dropPos.x, dropPos.y + 0.2, dropPos.z), true)
+      } catch (_) {}
+
+      const stuckMs = Date.now() - lastImprovedAt
+      const shouldJump = stuckMs > 800 || Boolean(bot.entity.isCollidedHorizontally) || vertDelta > 0.5
+      if (isWalkDirectionSafe(dropPos)) {
+        bot.setControlState('forward', true)
+        bot.setControlState('sprint', true)
+      } else {
+        bot.setControlState('forward', false)
+        bot.setControlState('sprint', false)
+      }
+      bot.setControlState('jump', shouldJump)
+
+      await delay(100)
+      diagnostics.dropDirectWalkTicks++
+
+      if (Date.now() - lastImprovedAt > 2000) {
+        diagnostics.directWalkNoMovement = !diagnostics.botPositionChanged
+        return { collected: 0, reason: 'drop_direct_walk_no_progress' }
+      }
+    }
+  } finally {
+    clearDropWalkControls()
+  }
+
+  const finalDelta = inventoryCountForTargets(targets) - startingCount
+  diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, finalDelta)
+  const lastDrop = nearestRelevantDrop(radius, aroundPosition)
+  diagnostics.dropEntityStillExists = Boolean(lastDrop)
+  if (bot.entity && lastDrop && lastDrop.position) {
+    updateDropDistanceDiagnostics(lastDrop, bot.entity.position.distanceTo(lastDrop.position), diagnostics)
+  }
+  if (finalDelta > 0) return { collected: finalDelta, reason: 'success' }
+  if (diagnostics.dropDistanceImproved) return { collected: 0, reason: 'drop_collection_partial_progress' }
+  return { collected: 0, reason: 'drop_direct_walk_no_progress' }
+}
+
+function estimateDropCollectability(block) {
+  // Estimate how reliably the drop from mining this block can be collected.
+  // Returns { score [0.0–1.0], verticalRisk (blocks fallen), safeStandCandidates }.
+  // Called during target selection to prefer blocks whose drops are reachable.
+  if (!bot.entity) return { score: 1.0, verticalRisk: 0, safeStandCandidates: 2 }
+
+  const bx = block.position.x
+  const bz = block.position.z
+
+  // Trace downward to find where the drop will land.
+  // The item spawns at block level; gravity pulls it down until a solid floor.
+  let dropLandY = block.position.y
+  for (let fall = 0; fall < 10; fall++) {
+    const floorBlock = bot.blockAt(new Vec3(bx, dropLandY - 1, bz))
+    if (!floorBlock) break // unloaded chunk — stop, treat as safe
+    if (isDropHazardBlock(floorBlock)) {
+      return { score: 0.0, verticalRisk: fall + 1, safeStandCandidates: 0 }
+    }
+    if (isSolidBlock(floorBlock)) break
+    dropLandY -= 1
+  }
+
+  const verticalRisk = block.position.y - dropLandY
+  const dropLandPos = new Vec3(bx, dropLandY, bz)
+
+  // Check for hazard blocks in a 3×3 column around the landing spot.
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dz = -1; dz <= 1; dz++) {
+      if (isDropHazardBlock(bot.blockAt(dropLandPos.offset(dx, 0, dz)))) {
+        return { score: 0.0, verticalRisk, safeStandCandidates: 0 }
+      }
+    }
+  }
+
+  // Count safe stand positions around the landing spot.
+  // Check the 9 nearest XZ cells at the landing level and one block above.
+  // No botY constraint — we are predicting the future bot position near the drop.
+  let safeStandCandidates = 0
+  for (const [dx, dz] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+    if (
+      isSafeStandPosition(dropLandPos.offset(dx, 0, dz)) ||
+      isSafeStandPosition(dropLandPos.offset(dx, 1, dz))
+    ) {
+      safeStandCandidates += 1
+    }
+  }
+
+  // Score: 1.0 for a flat, open landing; penalise fall depth and missing stands.
+  let score = 1.0
+  if (verticalRisk >= 3) score -= 0.6
+  else if (verticalRisk === 2) score -= 0.25
+  else if (verticalRisk === 1) score -= 0.1
+  if (safeStandCandidates === 0) score -= 0.4
+  else if (safeStandCandidates <= 1) score -= 0.1
+
+  return { score: Math.max(0.0, score), verticalRisk, safeStandCandidates }
+}
+
+function isDropHazardBlock(block) {
+  if (!block) return false
+  const name = block.name || ''
+  return (
+    isLiquidBlock(block) ||
+    name.includes('fire') ||
+    name.includes('lava') ||
+    name.includes('cactus') ||
+    name.includes('magma')
+  )
+}
+
+function isDropSafeStandPosition(position) {
+  if (!bot.entity || !isSafeStandPosition(position)) return false
+  const body = bot.blockAt(position)
+  const head = bot.blockAt(position.offset(0, 1, 0))
+  const floor = bot.blockAt(position.offset(0, -1, 0))
+  if (isDropHazardBlock(body) || isDropHazardBlock(head) || isDropHazardBlock(floor)) return false
+
+  for (const offset of [
+    new Vec3(1, 0, 0),
+    new Vec3(-1, 0, 0),
+    new Vec3(0, 0, 1),
+    new Vec3(0, 0, -1),
+    new Vec3(1, 0, 1),
+    new Vec3(1, 0, -1),
+    new Vec3(-1, 0, 1),
+    new Vec3(-1, 0, -1)
+  ]) {
+    const nearBody = bot.blockAt(position.plus(offset))
+    const nearFloor = bot.blockAt(position.plus(offset).offset(0, -1, 0))
+    if (isDropHazardBlock(nearBody) || isDropHazardBlock(nearFloor)) return false
+  }
+  return true
+}
+
+function findDropSafeStandCandidates(dropPosition, diagnostics) {
+  if (!bot.entity || !dropPosition) return []
+  const base = dropPosition.floored()
+  const botY = Math.floor(bot.entity.position.y)
+  const candidates = []
+  const seen = new Set()
+
+  for (const dy of [1, 0, -1]) {
+    for (let r = 1; r <= 2; r++) {
+      for (let dx = -r; dx <= r; dx++) {
+        for (let dz = -r; dz <= r; dz++) {
+          if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue
+          const candidate = new Vec3(base.x + dx, base.y + dy, base.z + dz)
+          const verticalDelta = candidate.y - botY
+          if (verticalDelta < -2 || verticalDelta > 1) continue
+          const key = positionKey(candidate)
+          if (seen.has(key)) continue
+          seen.add(key)
+          if (!isDropSafeStandPosition(candidate)) continue
+          candidates.push(candidate)
+        }
+      }
+    }
+  }
+
+  diagnostics.dropSafeStandCandidatesFound = candidates.length
+  return candidates.sort((a, b) => {
+    const aPreferredY = Math.min(Math.abs(a.y - base.y), Math.abs(a.y - (base.y + 1)))
+    const bPreferredY = Math.min(Math.abs(b.y - base.y), Math.abs(b.y - (base.y + 1)))
+    if (aPreferredY !== bPreferredY) return aPreferredY - bPreferredY
+    const aDropDist = a.distanceTo(dropPosition)
+    const bDropDist = b.distanceTo(dropPosition)
+    if (Math.abs(aDropDist - bDropDist) > 0.1) return aDropDist - bDropDist
+    return bot.entity.position.distanceTo(a) - bot.entity.position.distanceTo(b)
+  })
+}
+
+function findDropBlockingBlock(dropPosition, diagnostics) {
+  if (!bot.entity || !dropPosition) return null
+  const from = bot.entity.position
+  const to = dropPosition
+  const dx = to.x - from.x
+  const dz = to.z - from.z
+  const horizontal = Math.sqrt(dx * dx + dz * dz)
+  if (horizontal < 0.5) return null
+
+  // Movement volume: bot feet block (footY) and head clearance (headY = footY + 1).
+  // Blocks above headY are above the player's head and do not block horizontal movement.
+  const footY = Math.floor(from.y)
+  const headY = footY + 1
+  const dropFloorY = Math.floor(to.y)
+  const bodyMaxY = Math.max(footY, dropFloorY)
+
+  const steps = Math.min(6, Math.max(2, Math.ceil(horizontal * 2)))
+  const checked = new Set()
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps
+    const x = Math.floor(from.x + dx * t)
+    const z = Math.floor(from.z + dz * t)
+    for (const y of [footY, headY, dropFloorY, dropFloorY + 1]) {
+      const pos = new Vec3(x, y, z)
+      const key = positionKey(pos)
+      if (checked.has(key)) continue
+      checked.add(key)
+      const block = bot.blockAt(pos)
+      if (!block || canReplaceBlock(block)) continue
+
+      const intersects = y <= headY
+      const blockerReason = !intersects ? 'above_route_ignored'
+        : y <= bodyMaxY ? 'body_space'
+        : 'head_space'
+      diagnostics.blockerIntersectsMovementVolume = intersects
+      diagnostics.blockerReason = blockerReason
+
+      if (!intersects) continue
+
+      diagnostics.dropBlockedBy = { name: block.name, position: positionJson(block.position) }
+      return block
+    }
+  }
+  return null
+}
+
+function isBlockSupportingBot(block) {
+  if (!block || !bot.entity) return false
+  const support = bot.entity.position.floored().offset(0, -1, 0)
+  return block.position.x === support.x && block.position.y === support.y && block.position.z === support.z
+}
+
+function canMineDropLocalBlock(block) {
+  if (!block || !DROP_LOCAL_EXCAVATION_BLOCK_NAMES.has(block.name)) return false
+  if (block.name === 'deepslate') return hasPickaxeAtLeast('stone_pickaxe')
+  if (['stone', 'cobblestone', 'andesite', 'diorite', 'granite'].includes(block.name)) return hasPickaxe()
+  return true
+}
+
+function dropBlockerSafety(block, diagnostics) {
+  const allowed = Boolean(block && DROP_LOCAL_EXCAVATION_BLOCK_NAMES.has(block.name))
+  const diggable = Boolean(block && allowed && canMineDropLocalBlock(block))
+  const safeToDig = Boolean(
+    block &&
+    diggable &&
+    !isLiquidBlock(block) &&
+    !isDirectlyUnderBot(block) &&
+    !isBlockSupportingBot(block) &&
+    !isDangerousAdjacent(block) &&
+    !isProtectedBlock(block)
+  )
+  const withinReach = Boolean(block && bot.canDigBlock && bot.canDigBlock(block))
+  diagnostics.dropBlockedByDiggable = diggable
+  diagnostics.dropBlockedBySafeToDig = safeToDig
+  diagnostics.dropBlockedByWithinReach = withinReach
+  return { allowed, diggable, safeToDig, withinReach }
+}
+
+async function excavateDropBlocker(block, targets, startingCount, deadline, diagnostics, aroundPosition, radius) {
+  if (!block) return false
+  diagnostics.dropLocalExcavationAttempted = true
+  diagnostics.currentSubstep = 'drop_local_excavation'
+
+  if (diagnostics.dropLocalExcavationSteps >= DROP_LOCAL_EXCAVATION_STEP_LIMIT) {
+    diagnostics.dropRecoveryFailureReason = 'drop_local_excavation_limit_reached'
+    return false
+  }
+
+  let safety = dropBlockerSafety(block, diagnostics)
+  if (!safety.safeToDig) {
+    diagnostics.dropRecoveryFailureReason = safety.diggable
+      ? 'drop_blocker_not_safe_to_dig'
+      : 'drop_blocker_not_diggable'
+    return false
+  }
+
+  try {
+    await equipBestToolForBlock(block)
+  } catch (_) {}
+
+  safety = dropBlockerSafety(block, diagnostics)
+  if (!safety.withinReach) {
+    const before = bot.entity ? bot.entity.position.clone() : null
+    await cautiousMoveTowardPosition(block.position, Math.min(deadline, Date.now() + 1800), diagnostics)
+    const moved = Boolean(before && bot.entity && bot.entity.position.distanceTo(before) > 0.25)
+    const freshAfterMove = bot.blockAt(block.position)
+    if (!freshAfterMove || canReplaceBlock(freshAfterMove)) {
+      diagnostics.dropBlockedByWithinReach = true
+      return true
+    }
+    block = freshAfterMove
+    safety = dropBlockerSafety(block, diagnostics)
+    if (!safety.withinReach && !moved) {
+      diagnostics.dropRecoveryFailureReason = 'drop_blocker_not_reachable'
+      return false
+    }
+  }
+
+  safety = dropBlockerSafety(block, diagnostics)
+  if (!safety.safeToDig) {
+    diagnostics.dropRecoveryFailureReason = 'drop_blocker_became_unsafe'
+    return false
+  }
+
+  try {
+    await equipBestToolForBlock(block)
+    await bot.lookAt(block.position.offset(0.5, 0.5, 0.5), true)
+    await digBlockWithTimeout(block, 3000)
+    diagnostics.dropLocalExcavationSteps += 1
+    diagnostics.dropLocalExcavationBlocksDug += 1
+    await delay(250)
+
+    const delta = inventoryCountForTargets(targets) - startingCount
+    diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, delta)
+    const nearby = droppedItemEntitiesNear(aroundPosition || (bot.entity ? bot.entity.position : null), radius)
+    diagnostics.nearbyDropsFound = nearby.length
+    diagnostics.relevantDropsFound = nearby.length
+    const nearest = nearby[0] || null
+    if (nearest && bot.entity) {
+      updateDropDistanceDiagnostics(nearest, bot.entity.position.distanceTo(nearest.position), diagnostics)
+      diagnostics.distanceToDropAfterExcavation = diagnostics.distanceToDropEnd
+    }
+    return true
+  } catch (error) {
+    stopMovement()
+    diagnostics.dropRecoveryFailureReason = `drop_blocker_dig_failed:${errorMessage(error)}`
+    return false
+  }
+}
+
+async function cautiousMoveTowardPosition(position, deadline, diagnostics) {
+  if (!bot.entity || !position) return false
+  const start = bot.entity.position.clone()
+  const end = Math.min(Date.now() + 1500, deadline)
+  try {
+    while (Date.now() < end && bot.entity && bot.entity.position.distanceTo(position) > 1.5) {
+      try {
+        await bot.lookAt(position.offset(0.5, 0.2, 0.5), true)
+      } catch (_) {}
+      bot.setControlState('forward', true)
+      bot.setControlState('sprint', true)
+      bot.setControlState('jump', Boolean(bot.entity.isCollidedHorizontally))
+      await delay(100)
+    }
+  } finally {
+    clearDropWalkControls()
+  }
+  const moved = Boolean(bot.entity && bot.entity.position.distanceTo(start) > 0.35)
+  diagnostics.botPositionChanged = diagnostics.botPositionChanged || moved
+  return moved
+}
+
+async function localDropRecovery(targets, startingCount, deadline, diagnostics, aroundPosition, radius) {
+  diagnostics.localDropRecoveryAttempted = true
+  diagnostics.currentSubstep = 'local_drop_recovery'
+
+  let drop = nearestRelevantDrop(radius, aroundPosition)
+  if (!drop || !drop.position) {
+    diagnostics.dropEntityStillExists = false
+    diagnostics.dropRecoveryFailureReason = 'drop_missing_before_local_recovery'
+    const delta = inventoryCountForTargets(targets) - startingCount
+    diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, delta)
+    return delta > 0 ? { collected: delta, reason: 'success' } : { collected: 0, reason: 'drop_disappeared_without_inventory_delta' }
+  }
+
+  diagnostics.dropEntityStillExists = true
+  updateDropDistanceDiagnostics(drop, bot.entity.position.distanceTo(drop.position), diagnostics)
+
+  const blockingBlock = findDropBlockingBlock(drop.position, diagnostics)
+  let blockerDug = false
+  if (blockingBlock) {
+    blockerDug = await excavateDropBlocker(blockingBlock, targets, startingCount, deadline, diagnostics, aroundPosition, radius)
+    const excavationDelta = inventoryCountForTargets(targets) - startingCount
+    if (excavationDelta > 0) {
+      return { collected: excavationDelta, reason: 'success' }
+    }
+
+    drop = nearestRelevantDrop(radius, aroundPosition)
+    if (!drop || !drop.position) {
+      diagnostics.dropEntityStillExists = false
+      diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, excavationDelta)
+      return excavationDelta > 0
+        ? { collected: excavationDelta, reason: 'success' }
+        : { collected: 0, reason: 'drop_disappeared_without_inventory_delta' }
+    }
+
+    if (blockerDug && Date.now() < deadline - 500) {
+      const walkResult = await directWalkToDrop(drop, targets, startingCount, deadline, diagnostics, aroundPosition, radius)
+      const walkDelta = inventoryCountForTargets(targets) - startingCount
+      if (walkResult.reason === 'success' || walkDelta > 0) {
+        return { collected: Math.max(walkResult.collected || 0, walkDelta), reason: 'success' }
+      }
+      diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, walkDelta)
+    }
+  }
+
+  drop = nearestRelevantDrop(radius, aroundPosition)
+  if (!drop || !drop.position) {
+    const delta = inventoryCountForTargets(targets) - startingCount
+    diagnostics.dropEntityStillExists = false
+    diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, delta)
+    return delta > 0 ? { collected: delta, reason: 'success' } : { collected: 0, reason: 'drop_disappeared_without_inventory_delta' }
+  }
+
+  const standCandidates = findDropSafeStandCandidates(drop.position, diagnostics)
+  if (standCandidates.length <= 0) {
+    diagnostics.dropRecoveryFailureReason = 'no_safe_stand_near_drop'
+    diagnostics.distanceToDropAfterLocalRecovery = diagnostics.distanceToDropEnd
+    return { collected: 0, reason: 'drop_no_safe_stand' }
+  }
+
+  const standPosition = standCandidates[0]
+  diagnostics.selectedDropStandPosition = positionJson(standPosition)
+
+  diagnostics.dropLocalPathAttempted = true
+  try {
+    await withTimeout(
+      bot.pathfinder.goto(new goals.GoalNear(standPosition.x, standPosition.y, standPosition.z, 1)),
+      Math.min(DROP_LOCAL_PATH_TIMEOUT_MS, Math.max(500, deadline - Date.now())),
+      'local drop recovery path'
+    )
+    diagnostics.dropLocalPathSucceeded = true
+  } catch (error) {
+    stopMovement()
+    diagnostics.dropLocalPathSucceeded = false
+    diagnostics.dropRecoveryFailureReason = `local_path_failed:${errorMessage(error)}`
+    await cautiousMoveTowardPosition(standPosition, deadline, diagnostics)
+  }
+
+  await delay(250)
+  const delta = inventoryCountForTargets(targets) - startingCount
+  diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, delta)
+  if (delta > 0) return { collected: delta, reason: 'success' }
+
+  const finalDrop = nearestRelevantDrop(radius, aroundPosition)
+  diagnostics.dropEntityStillExists = Boolean(finalDrop)
+  if (!finalDrop || !finalDrop.position) {
+    diagnostics.dropEntityDisappeared = true
+    return { collected: 0, reason: 'drop_disappeared_without_inventory_delta' }
+  }
+
+  const finalDistance = bot.entity.position.distanceTo(finalDrop.position)
+  updateDropDistanceDiagnostics(finalDrop, finalDistance, diagnostics)
+  diagnostics.distanceToDropAfterLocalRecovery = diagnostics.distanceToDropEnd
+
+  if (diagnostics.dropDistanceImproved) {
+    if (diagnostics.dropLocalExcavationBlocksDug > 0) {
+      diagnostics.dropRecoveryFailureReason = 'drop_local_excavation_progress'
+      return { collected: 0, reason: 'drop_local_excavation_progress' }
+    }
+    return { collected: 0, reason: 'drop_collection_partial_progress' }
+  }
+  if (diagnostics.dropLocalExcavationBlocksDug > 0) {
+    diagnostics.dropRecoveryFailureReason = 'drop_local_excavation_progress'
+    return { collected: 0, reason: 'drop_local_excavation_progress' }
+  }
+  if (!diagnostics.dropRecoveryFailureReason) {
+    diagnostics.dropRecoveryFailureReason = 'local_recovery_no_progress'
+  }
+  return { collected: 0, reason: 'drop_direct_walk_no_progress' }
+}
+
+async function closeDropPickup(dropEntity, targets, startingCount, pickupDeadline, diagnostics, aroundPosition, radius) {
+  diagnostics.closeDropPickupAttempted = true
+  diagnostics.dropCollectionMethod = diagnostics.dropCollectionMethod || 'close_pickup'
+
+  const startPos = bot.entity ? bot.entity.position.clone() : null
+
+  try {
+    while (Date.now() < pickupDeadline) {
+      const delta = inventoryCountForTargets(targets) - startingCount
+      if (delta > 0) {
+        clearDropWalkControls()
+        diagnostics.inventoryDeltaAfterDropCollection = delta
+        return { collected: delta, reason: 'success' }
+      }
+
+      if (!bot.entity) {
+        clearDropWalkControls()
+        return { collected: 0, reason: 'bot_not_ready' }
+      }
+
+      const entity = nearestRelevantDrop(radius, aroundPosition)
+      if (!entity || !entity.position) {
+        clearDropWalkControls()
+        const afterDelta = inventoryCountForTargets(targets) - startingCount
+        diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, afterDelta)
+        diagnostics.dropEntityStillExists = false
+        if (afterDelta > 0) return { collected: afterDelta, reason: 'success' }
+        return { collected: 0, reason: 'drop_disappeared_without_inventory_delta' }
+      }
+
+      const dropPos = entity.position
+      const botPos = bot.entity.position
+      const dist3d = botPos.distanceTo(dropPos)
+      const vertDelta = dropPos.y - botPos.y
+
+      diagnostics.dropEntityStillExists = true
+      updateDropDistanceDiagnostics(entity, dist3d, diagnostics)
+      diagnostics.closeDropPickupTicks += 1
+      diagnostics.botPositionChanged = Boolean(startPos && botPos.distanceTo(startPos) > 0.2)
+
+      try { await bot.lookAt(new Vec3(dropPos.x, dropPos.y + 0.2, dropPos.z), true) } catch (_) {}
+
+      const stuckHoriz = Boolean(bot.entity.isCollidedHorizontally)
+
+      if (dist3d < 1.0 && Math.abs(vertDelta) < 0.5) {
+        // Very close, same level — micro nudge in all directions until auto-pickup
+        bot.setControlState('forward', true)
+        await delay(80)
+        clearDropWalkControls()
+        await delay(80)
+      } else if (vertDelta < -0.3) {
+        // Drop is below — walk toward it without sneaking so the bot can step off the ledge
+        if (isWalkDirectionSafe(dropPos)) {
+          bot.setControlState('forward', true)
+          bot.setControlState('sprint', false)
+          bot.setControlState('jump', stuckHoriz)
+          await delay(150)
+          clearDropWalkControls()
+          await delay(80)
+        } else {
+          // Horizontal direction is not safe; try a brief nudge toward drop anyway
+          bot.setControlState('forward', true)
+          bot.setControlState('sprint', false)
+          await delay(120)
+          clearDropWalkControls()
+          await delay(100)
+        }
+      } else {
+        // Normal — walk toward drop, jump over obstacles
+        const shouldJump = stuckHoriz || vertDelta > 0.3
+        if (isWalkDirectionSafe(dropPos)) {
+          bot.setControlState('forward', true)
+          bot.setControlState('sprint', false)
+          bot.setControlState('jump', shouldJump)
+          await delay(130)
+          clearDropWalkControls()
+          await delay(80)
+        } else {
+          bot.setControlState('forward', true)
+          bot.setControlState('sprint', false)
+          bot.setControlState('jump', true)
+          await delay(130)
+          clearDropWalkControls()
+          await delay(80)
+        }
+      }
+    }
+  } finally {
+    clearDropWalkControls()
+  }
+
+  const finalDelta = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+  diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, finalDelta)
+  diagnostics.botPositionChanged = Boolean(startPos && bot.entity && bot.entity.position.distanceTo(startPos) > 0.2)
+
+  if (finalDelta > 0) return { collected: finalDelta, reason: 'success' }
+  if (diagnostics.botPositionChanged || diagnostics.dropDistanceImproved) {
+    return { collected: 0, reason: 'drop_collection_partial_progress' }
+  }
+  return { collected: 0, reason: 'drop_close_pickup_no_progress' }
+}
+
+async function collectNearbyDrops({ aroundPosition, targets, radius = DROP_COLLECTION_RADIUS, timeoutMs = DROP_COLLECTION_TIMEOUT_MS }, diagnostics) {
+  diagnostics.dropCollectionAttempted = true
+  diagnostics.dropCollectionTimeoutMs = timeoutMs
+  diagnostics.targetBlockStillExists = Boolean(
+    aroundPosition && (() => { const b = bot.blockAt(aroundPosition); return b && b.name !== 'air' })()
+  )
+
+  const startingCount = inventoryCountForTargets(targets)
+  const deadline = Date.now() + timeoutMs
+
+  const succeed = (delta) => {
+    diagnostics.dropCollectionSucceeded = true
+    diagnostics.dropsCollectedThisAction = (diagnostics.dropsCollectedThisAction || 0) + delta
+    diagnostics.targetInventoryDelta = (diagnostics.targetInventoryDelta || 0) + delta
+    diagnostics.dropEntityStillExists = Boolean(nearestRelevantDrop(radius, aroundPosition || (bot.entity ? bot.entity.position : null)))
+    diagnostics.stop_reason = diagnostics.dropLocalExcavationBlocksDug > 0
+      ? 'collected_drop_after_local_excavation'
+      : 'collected_drop'
+    diagnostics.collected = delta
+    diagnostics.inventoryDeltaAfterDig = delta
+    diagnostics.inventoryDeltaAfterDropCollection = delta
+    if (bot.entity && diagnostics.dropEntityPosition) {
+      const ep = diagnostics.dropEntityPosition
+      try {
+        diagnostics.distanceToDropEnd = Math.round(
+          bot.entity.position.distanceTo(new Vec3(ep.x, ep.y, ep.z)) * 10
+        ) / 10
+      } catch (_) {}
+    }
+    return { collected: delta, reason: 'success' }
+  }
+
+  // Wait for drop entity to spawn after mining
+  await delay(750)
+
+  while (Date.now() < deadline) {
+    const currentCount = inventoryCountForTargets(targets)
+    const delta = currentCount - startingCount
+    if (delta > 0) return succeed(delta)
+
+    diagnostics.dropCollectionPasses += 1
+
+    if (!bot.entity) return { collected: 0, reason: 'bot_not_ready' }
+
+    const scanPos = aroundPosition || bot.entity.position
+    const nearby = droppedItemEntitiesNear(scanPos, radius)
+    diagnostics.nearbyDropsFound = nearby.length
+    diagnostics.relevantDropsFound = nearby.length
+
+    if (nearby.length === 0) {
+      diagnostics.dropEntityStillExists = false
+      const remaining = deadline - Date.now()
+      if (remaining > 200) { await delay(Math.min(300, remaining - 100)); continue }
+      break
+    }
+
+    const nearest = nearby[0]
+    const nearestDist = bot.entity.position.distanceTo(nearest.position)
+    diagnostics.dropEntityStillExists = true
+    updateDropDistanceDiagnostics(nearest, nearestDist, diagnostics)
+
+    // Record drop position and start distance on first sighting
+    diagnostics.dropEntityPosition = positionJson(nearest.position)
+    diagnostics.dropVerticalDelta = Math.round((nearest.position.y - bot.entity.position.y) * 10) / 10
+
+    // Very close drop: use dedicated close pickup routine on the first encounter.
+    // Handles vertical deltas (drop 1 block below), micro-nudges, and step-downs.
+    // Only runs once; on failure the outer loop falls through to directWalkToDrop.
+    if (nearestDist <= CLOSE_DROP_PICKUP_RADIUS && !diagnostics.closeDropPickupAttempted) {
+      const pickupDeadline = Math.min(deadline, Date.now() + CLOSE_DROP_PICKUP_TIMEOUT_MS)
+      const pickupResult = await closeDropPickup(nearest, targets, startingCount, pickupDeadline, diagnostics, aroundPosition, radius)
+      const pickupDelta = inventoryCountForTargets(targets) - startingCount
+      if (pickupResult.reason === 'success' || pickupDelta > 0) return succeed(Math.max(pickupResult.collected || 0, pickupDelta))
+      if (pickupResult.reason === 'drop_disappeared_without_inventory_delta') {
+        diagnostics.inventoryDeltaAfterDig = 0
+        diagnostics.inventoryDeltaAfterDropCollection = 0
+        return pickupResult
+      }
+      if (pickupResult.reason === 'drop_collection_partial_progress') {
+        if (deadline - Date.now() >= 1000) continue
+        diagnostics.inventoryDeltaAfterDig = 0
+        return pickupResult
+      }
+      // drop_close_pickup_no_progress: fall through to directWalkToDrop below
+    }
+
+    const entityId = nearest.id
+
+    if (nearestDist <= DROP_DIRECT_WALK_RADIUS) {
+      // Close enough: skip pathfinder, walk directly
+      diagnostics.dropCollectionMethod = diagnostics.dropCollectionMethod || 'direct_walk'
+      const result = await directWalkToDrop(nearest, targets, startingCount, deadline, diagnostics, aroundPosition, radius)
+      const afterDelta = inventoryCountForTargets(targets) - startingCount
+      if (result.reason === 'success' || afterDelta > 0) return succeed(Math.max(result.collected || 0, afterDelta))
+      if (result.reason === 'drop_direct_walk_no_progress') {
+        const recovery = await localDropRecovery(targets, startingCount, deadline, diagnostics, aroundPosition, radius)
+        const recoveryDelta = inventoryCountForTargets(targets) - startingCount
+        if (recovery.reason === 'success' || recoveryDelta > 0) return succeed(Math.max(recovery.collected || 0, recoveryDelta))
+        diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, recoveryDelta)
+        // Retry from new position if time allows (pass 2+)
+        if (deadline - Date.now() >= 1000) continue
+        diagnostics.inventoryDeltaAfterDig = 0
+        return recovery
+      }
+      diagnostics.inventoryDeltaAfterDig = 0
+      diagnostics.inventoryDeltaAfterDropCollection = 0
+      return result
+    }
+
+    // Farther drop: try pathfinder first
+    diagnostics.dropCollectionMethod = diagnostics.dropCollectionMethod || 'pathfinder'
+    diagnostics.dropPathAttempts += 1
+    const pathMs = Math.min(4000, deadline - Date.now() - 800)
+    if (pathMs < 500) break
+
+    try {
+      await withTimeout(
+        bot.pathfinder.goto(new goals.GoalNear(nearest.position.x, nearest.position.y, nearest.position.z, 1)),
+        pathMs,
+        'collect dropped item path'
+      )
+      await delay(300)
+    } catch (_) {
+      stopMovement()
+      const afterDelta = inventoryCountForTargets(targets) - startingCount
+      if (afterDelta > 0) return succeed(afterDelta)
+
+      const stillPresent = Boolean(bot.entities && bot.entities[entityId] && bot.entities[entityId].position)
+      if (!stillPresent) {
+        diagnostics.dropEntityDisappeared = true
+        diagnostics.inventoryDeltaAfterDig = 0
+        diagnostics.inventoryDeltaAfterDropCollection = 0
+        return { collected: 0, reason: 'drop_disappeared_without_inventory_delta' }
+      }
+
+      // Pathfinder failed but drop is still there — fall back to direct walk
+      const distNow = bot.entity.position.distanceTo(nearest.position)
+      if (distNow <= DROP_DIRECT_WALK_RADIUS * 1.5 && deadline - Date.now() >= 1000) {
+        diagnostics.dropCollectionMethod = 'direct_walk'
+        const walkResult = await directWalkToDrop(nearest, targets, startingCount, deadline, diagnostics, aroundPosition, radius)
+        const walkDelta = inventoryCountForTargets(targets) - startingCount
+        if (walkResult.reason === 'success' || walkDelta > 0) return succeed(Math.max(walkResult.collected || 0, walkDelta))
+        if (walkResult.reason === 'drop_direct_walk_no_progress') {
+          const recovery = await localDropRecovery(targets, startingCount, deadline, diagnostics, aroundPosition, radius)
+          const recoveryDelta = inventoryCountForTargets(targets) - startingCount
+          if (recovery.reason === 'success' || recoveryDelta > 0) return succeed(Math.max(recovery.collected || 0, recoveryDelta))
+          diagnostics.inventoryDeltaAfterDropCollection = Math.max(0, recoveryDelta)
+          // Retry from new position if time allows (pass 2+)
+          if (deadline - Date.now() >= 1000) continue
+          diagnostics.inventoryDeltaAfterDig = 0
+          return recovery
+        }
+        diagnostics.inventoryDeltaAfterDig = 0
+        diagnostics.inventoryDeltaAfterDropCollection = 0
+        return walkResult
+      }
+
+      diagnostics.inventoryDeltaAfterDig = 0
+      diagnostics.inventoryDeltaAfterDropCollection = 0
+      return { collected: 0, reason: 'drop_unreachable' }
+    }
+  }
+
+  const finalDelta = Math.max(0, inventoryCountForTargets(targets) - startingCount)
+  diagnostics.inventoryDeltaAfterDig = finalDelta
+  diagnostics.inventoryDeltaAfterDropCollection = finalDelta
+  if (finalDelta > 0) {
+    return succeed(finalDelta)
+  }
+
+  // Bug guard: a close drop was observed but no pickup was ever attempted.
+  if (
+    diagnostics.dropEntityStillExists === true &&
+    diagnostics.nearestDropDistance !== null &&
+    diagnostics.nearestDropDistance <= CLOSE_DROP_PICKUP_RADIUS &&
+    !diagnostics.closeDropPickupAttempted &&
+    !diagnostics.dropDirectWalkAttempted
+  ) {
+    return { collected: 0, reason: 'internal_drop_collection_bug' }
+  }
+
+  return { collected: 0, reason: 'drop_collection_timeout' }
+}
+
+async function closeRangeAccessFallback(targetBlock, targetSet, diagnostics) {
+  diagnostics.closeRangeFallbackAttempted += 1
+  diagnostics.closeRangeFailureReason = null
+
+  // 1. Try direct dig if in arm reach
+  diagnostics.directDigAttempted += 1
+  let directDigThrew = false
+  try {
+    if (bot.canDigBlock && bot.canDigBlock(targetBlock)) {
+      await equipBestToolForBlock(targetBlock)
+      await bot.lookAt(targetBlock.position.offset(0.5, 0.5, 0.5), true)
+      await digBlockWithTimeout(targetBlock, ACQUIRE_DIG_TIMEOUT_MS)
+      return { ok: true, mined: true }
+    }
+  } catch (_) {
+    directDigThrew = true
+  }
+
+  // 2. Short local stand adjustment: GoalNear within 1 block, then retry direct dig
+  diagnostics.localStandAdjustmentAttempted = true
+  let goalNearFailed = false
+  try {
+    const tp = targetBlock.position
+    await withTimeout(
+      bot.pathfinder.goto(new goals.GoalNear(tp.x, tp.y, tp.z, 1)),
+      CLOSE_RANGE_PATH_TIMEOUT_MS,
+      'close range stand adjustment'
+    )
+    const freshBlock = bot.blockAt(targetBlock.position)
+    if (!freshBlock || !isTargetBlock(freshBlock, targetSet)) {
+      diagnostics.closeRangeFailureReason = 'target_missing'
+      return { ok: false }
+    }
+    if (bot.canDigBlock && bot.canDigBlock(freshBlock)) {
+      await equipBestToolForBlock(freshBlock)
+      await bot.lookAt(freshBlock.position.offset(0.5, 0.5, 0.5), true)
+      await digBlockWithTimeout(freshBlock, ACQUIRE_DIG_TIMEOUT_MS)
+      return { ok: true, mined: true }
+    }
+    return { ok: true, moved: true }
+  } catch (_) {
+    stopMovement()
+    goalNearFailed = true
+  }
+
+  // 3. Local excavation: dig blocking non-dangerous blocks toward the target
+  if (!bot.entity) {
+    diagnostics.closeRangeFailureReason = 'target_out_of_reach'
+    return { ok: false }
+  }
+  const base = bot.entity.position.floored()
+  const direction = staircaseDirection(base, targetBlock.position)
+  let excavated = 0
+  let hadLiquid = false
+  let hadDangerous = false
+  const checkPositions = localAccessExcavationPositions(base, targetBlock.position, direction)
+  for (const pos of checkPositions) {
+    if (excavated >= LOCAL_EXCAVATION_STEP_LIMIT) break
+    const b = bot.blockAt(pos)
+    if (!b || canReplaceBlock(b)) continue
+    if (isTargetBlock(b, targetSet)) continue
+    if (isDirectlyUnderBot(b)) continue
+    if (isLiquidBlock(b)) { hadLiquid = true; continue }
+    if (isDangerousAdjacent(b)) { hadDangerous = true; continue }
+    if (!canExcavateAccessBlock(b, diagnostics)) continue
+    try {
+      diagnostics.dropBlockedBy = diagnostics.dropBlockedBy || { name: b.name, position: positionJson(b.position) }
+      diagnostics.dropBlockedByDiggable = true
+      diagnostics.dropBlockedBySafeToDig = true
+      diagnostics.dropBlockedByWithinReach = bot.canDigBlock ? bot.canDigBlock(b) : null
+      await digAccessBlock(b, diagnostics)
+      excavated += 1
+      diagnostics.localExcavationSteps += 1
+    } catch (_) {
+      continue
+    }
+  }
+
+  // After excavation retry direct dig
+  if (excavated > 0) {
+    const positionBeforePostExcavationMove = bot.entity ? bot.entity.position.clone() : null
+    try {
+      const tp = targetBlock.position
+      await withTimeout(
+        bot.pathfinder.goto(new goals.GoalNear(tp.x, tp.y, tp.z, 1)),
+        Math.min(3000, CLOSE_RANGE_PATH_TIMEOUT_MS),
+        'close range stand adjustment after local excavation'
+      )
+    } catch (_) {
+      stopMovement()
+      try {
+        await cautiousMoveTowardPosition(targetBlock.position, Date.now() + 1800, diagnostics)
+      } catch (_) {
+        stopMovement()
+      }
+    }
+
+    try {
+      const freshBlock = bot.blockAt(targetBlock.position)
+      if (freshBlock && isTargetBlock(freshBlock, targetSet) && bot.canDigBlock && bot.canDigBlock(freshBlock)) {
+        await equipBestToolForBlock(freshBlock)
+        await bot.lookAt(freshBlock.position.offset(0.5, 0.5, 0.5), true)
+        await digBlockWithTimeout(freshBlock, ACQUIRE_DIG_TIMEOUT_MS)
+        return { ok: true, mined: true }
+      }
+      const movedAfterExcavation = Boolean(
+        bot.entity &&
+        positionBeforePostExcavationMove &&
+        bot.entity.position.distanceTo(positionBeforePostExcavationMove) > 0.25
+      )
+      if (freshBlock && isTargetBlock(freshBlock, targetSet) && movedAfterExcavation) {
+        return { ok: true, moved: true }
+      }
+    } catch (_) {
+      // fall through
+    }
+    diagnostics.closeRangeFailureReason = excavated >= LOCAL_EXCAVATION_STEP_LIMIT
+      ? 'local_excavation_limit_reached'
+      : 'target_out_of_reach'
+    return { ok: false }
+  }
+
+  // No excavation was possible — set the most specific reason
+  if (hadLiquid) {
+    diagnostics.closeRangeFailureReason = 'water_or_lava_risk'
+  } else if (hadDangerous) {
+    diagnostics.closeRangeFailureReason = 'unsafe_blocks_between_bot_and_target'
+  } else if (directDigThrew) {
+    diagnostics.closeRangeFailureReason = 'direct_dig_failed'
+  } else {
+    diagnostics.closeRangeFailureReason = 'no_diggable_block_toward_target'
+  }
+  return { ok: false }
+}
+
 async function approachTarget(_block, standPosition) {
   await withTimeout(
     bot.pathfinder.goto(new goals.GoalBlock(standPosition.x, standPosition.y, standPosition.z)),
@@ -7760,14 +10495,20 @@ async function mineBlockSafe(block, targets) {
   await digBlockWithTimeout(freshBlock, ACQUIRE_DIG_TIMEOUT_MS)
 }
 
-function findNearestExcavationTarget(targets, radius, ignoredPositions, diagnostics) {
-  return findTargetCandidates(targets, radius, diagnostics)
-    .filter((block) => !ignoredPositions.has(positionKey(block.position)))
-    .filter((block) => !isProtectedBlock(block))
-    .filter((block) => !isDirectlyUnderBot(block))
-    .filter((block) => canMineBlock(block))
-    .filter((block) => !isDangerousAdjacent(block))
-    .sort((a, b) => bot.entity.position.distanceTo(a.position) - bot.entity.position.distanceTo(b.position))[0] || null
+async function findNearestExcavationTarget(targets, radius, ignoredPositions, diagnostics) {
+  // Candidates are already distance-sorted by findTargetCandidates; return the first passing block.
+  const cap = RESOURCE_DEBUG_FULL_SCAN ? Infinity : MAX_RESOURCE_CANDIDATES_EVALUATED
+  let checked = 0
+  for (const block of await findTargetCandidates(targets, radius, diagnostics)) {
+    if (++checked > cap) break
+    if (ignoredPositions.has(positionKey(block.position))) continue
+    if (isProtectedBlock(block)) continue
+    if (isDirectlyUnderBot(block)) continue
+    if (!canMineBlock(block)) continue
+    if (isDangerousAdjacent(block)) continue
+    return block
+  }
+  return null
 }
 
 async function safeStaircaseStep(target, targets, diagnostics) {
@@ -7844,6 +10585,53 @@ function staircaseDirection(from, to) {
   return new Vec3(0, 0, Math.sign(dz) || 1)
 }
 
+function localAccessExcavationPositions(from, to, direction) {
+  const positions = []
+  const seen = new Set()
+  const add = (position) => {
+    const key = positionKey(position)
+    if (seen.has(key)) return
+    seen.add(key)
+    positions.push(position)
+  }
+
+  const dx = to.x - from.x
+  const dz = to.z - from.z
+  const steps = Math.max(Math.abs(dx), Math.abs(dz), 1)
+  const yLevels = [from.y, from.y + 1, from.y - 1, to.y + 1, to.y]
+  const sideOffsets = [
+    [0, 0],
+    [Math.sign(dx) || 0, 0],
+    [0, Math.sign(dz) || 0],
+    [-(Math.sign(dx) || 0), 0],
+    [0, -(Math.sign(dz) || 0)],
+  ]
+
+  for (let i = 1; i <= steps; i++) {
+    const x = Math.round(from.x + (dx * i) / steps)
+    const z = Math.round(from.z + (dz * i) / steps)
+    for (const y of yLevels) {
+      for (const [ox, oz] of sideOffsets) {
+        add(new Vec3(x + ox, y, z + oz))
+      }
+    }
+  }
+
+  // Keep the original single-axis probes as a cheap fallback for tight corners.
+  for (const pos of [
+    from.offset(direction.x, 0, direction.z),
+    from.offset(direction.x, 1, direction.z),
+    from.offset(direction.x, -1, direction.z),
+    from.offset(0, 0, direction.z),
+    from.offset(0, 1, direction.z),
+    from.offset(direction.x, 2, direction.z),
+  ]) {
+    add(pos)
+  }
+
+  return positions
+}
+
 function canExcavateAccessBlock(block, diagnostics) {
   if (!block || canReplaceBlock(block)) {
     return true
@@ -7864,7 +10652,7 @@ function canExcavateAccessBlock(block, diagnostics) {
     return false
   }
 
-  if (!isSoftExposureBlock(block)) {
+  if (!isSoftExposureBlock(block) && !HARD_EXCAVATE_BLOCK_NAMES.has(block.name)) {
     diagnostics.rejectedUnsupported += 1
     return false
   }
@@ -7921,11 +10709,11 @@ async function equipBestToolForBlock(block) {
     return await equipBestAvailableTool(AXE_PRIORITY)
   }
 
-  if (['stone', 'cobblestone', 'deepslate', 'coal_ore', 'deepslate_coal_ore', 'iron_ore', 'deepslate_iron_ore', 'copper_ore', 'deepslate_copper_ore'].includes(block.name)) {
+  if (['stone', 'cobblestone', 'deepslate', 'andesite', 'diorite', 'granite', 'coal_ore', 'deepslate_coal_ore', 'iron_ore', 'deepslate_iron_ore', 'copper_ore', 'deepslate_copper_ore'].includes(block.name)) {
     return await equipBestPickaxe()
   }
 
-  if (['dirt', 'grass_block', 'sand', 'gravel', 'snow', 'snow_block'].includes(block.name)) {
+  if (['dirt', 'grass_block', 'sand', 'gravel', 'snow', 'snow_block', 'moss_block'].includes(block.name)) {
     return await equipBestAvailableTool(SHOVEL_PRIORITY)
   }
 
@@ -8054,26 +10842,7 @@ async function craftCraftingTable(requestedCount) {
 }
 
 async function placeCraftingTable() {
-  const existingTable = findNearbyCraftingTable(4)
-  if (existingTable) {
-    return ok('place_crafting_table', {
-      placed: false,
-      alreadyPresent: true,
-      position: positionJson(existingTable.position),
-      inventory: inventoryJson()
-    })
-  }
-
-  const tableItem = firstInventoryItemByNames(['crafting_table'])
-  return await placeItemSafely('crafting_table', {
-    action: 'place_crafting_table',
-    item: tableItem,
-    verifyBlockNames: ['crafting_table'],
-    requireOpenArea: true,
-    avoidEntities: true,
-    avoidWater: true,
-    avoidLava: true,
-  })
+  return await placeStationRobust('place_crafting_table', 'crafting_table', ['crafting_table'], findNearbyCraftingTable)
 }
 
 // place_block — generic solid-block placement from the allowlist.
@@ -8265,23 +11034,9 @@ async function placeChest() {
 
 }
 
-// place_furnace — delegate to generic placement.
-async function placeFurnace() {
-  const existing = findNearbyFurnace(4)
-  if (existing) {
-    return ok('place_furnace', { alreadyPresent: true, position: positionJson(existing.position), inventory: inventoryJson() })
-  }
-  const item = firstInventoryItemByNames(['furnace'])
-  return await placeItemSafely('furnace', {
-    action: 'place_furnace',
-    item,
-    verifyBlockNames: ['furnace'],
-    requireOpenArea: true,
-    avoidEntities: true,
-    avoidWater: true,
-    avoidLava: true,
-  })
-
+// place_furnace — robust placement with expanded search and optional nuisance clearing.
+async function placeFurnace(args = {}) {
+  return await placeStationRobust('place_furnace', 'furnace', ['furnace'], findNearbyFurnace, args)
 }
 
 // place_torch — floor placement on the nearest valid solid surface.
@@ -8361,7 +11116,7 @@ async function craftAllowedItem(action, itemName, desiredOutputCount) {
 
   let craftingTable = null
   if (spec.table) {
-    craftingTable = findNearbyCraftingTable(6)
+    craftingTable = findNearbyCraftingTable(STATION_USE_RADIUS)
     if (!craftingTable) {
       return noCraftingTableFail(action)
     }
@@ -8395,7 +11150,7 @@ async function craftAllowedItem(action, itemName, desiredOutputCount) {
 }
 
 async function craftIronArmor() {
-  const craftingTable = findNearbyCraftingTable(6)
+  const craftingTable = findNearbyCraftingTable(STATION_USE_RADIUS)
   if (!craftingTable) {
     return noCraftingTableFail('craft_iron_armor')
   }
@@ -8449,7 +11204,7 @@ async function craftIronArmor() {
 }
 
 async function craftWoodenPickaxe() {
-  const craftingTable = findNearbyCraftingTable(4)
+  const craftingTable = findNearbyCraftingTable(STATION_USE_RADIUS)
   if (!craftingTable) {
     return noCraftingTableFail('craft_wooden_pickaxe')
   }
@@ -8503,25 +11258,258 @@ async function mineStone(requestedCount) {
   })
 }
 
-async function mineCoal(requestedCount) {
-  const targetCount = requestedCount === undefined ? MINE_COAL_DEFAULT_COUNT : requestedCount
+async function mineCoal(args) {
+  const argsObj = args && typeof args === 'object' ? args : {}
+  const targetCount = argsObj.count !== undefined ? argsObj.count : MINE_COAL_DEFAULT_COUNT
+  const radius = argsObj.radius !== undefined ? argsObj.radius : ACQUIRE_BLOCKS_DEFAULT_RADIUS
+  const accessMode = argsObj.accessMode !== undefined ? argsObj.accessMode : 'safe_staircase'
+  const allowExcavate = argsObj.allowExcavate !== undefined ? argsObj.allowExcavate : true
+  const coalTargets = ['coal_ore', 'deepslate_coal_ore']
+  const coalTargetSet = new Set(coalTargets)
+
   if (!hasPickaxe()) {
     return fail('mine_coal', 'Missing tool: wooden_pickaxe or better is required.')
   }
 
-  const before = countItemInInventory('coal')
-  const result = await acquireBlocksForAction('mine_coal', {
-    targets: ['coal_ore', 'deepslate_coal_ore'],
-    count: targetCount,
-    radius: ACQUIRE_BLOCKS_DEFAULT_RADIUS,
-    allowExcavate: true,
-    accessMode: 'safe_staircase'
-  })
-  if (result.result) {
-    result.result.coal_count = countItemInInventory('coal')
-    result.result.coal_gained = Math.max(0, result.result.coal_count - before)
+  const inventoryBefore = inventoryCounts()
+  const nearbyBefore = nearbyBlockCountsJson(Math.min(radius, 32), 64)
+  const positionBefore = bot.entity ? { x: bot.entity.position.x, y: bot.entity.position.y, z: bot.entity.position.z } : null
+  const coalBefore = inventoryCountForTargets(coalTargets)
+
+  const visibleFloorDrops = bot.entity
+    ? droppedItemEntitiesNear(bot.entity.position, Math.min(radius, DROP_COLLECTION_RADIUS))
+    : []
+  if (visibleFloorDrops.length > 0) {
+    const floorDropDiagnostics = emptyAcquireResult({ targets: coalTargets, count: targetCount }, 'floor_drop')
+    floorDropDiagnostics.inventoryBefore = inventoryBefore
+    floorDropDiagnostics.currentSubstep = 'collect_floor_coal_drop'
+    floorDropDiagnostics.floorDropCollectionAttempted = true
+    const dropResult = await collectNearbyDrops({
+      aroundPosition: bot.entity.position,
+      targets: coalTargets,
+      radius: Math.min(radius, DROP_COLLECTION_RADIUS),
+      timeoutMs: Math.min(5000, DROP_COLLECTION_TIMEOUT_MS)
+    }, floorDropDiagnostics)
+    const coalAfterDrop = inventoryCountForTargets(coalTargets)
+    const coalDelta = Math.max(0, coalAfterDrop - coalBefore)
+    if (dropResult.collected > 0 || coalDelta > 0) {
+      updateResourceInventoryDiagnostics(floorDropDiagnostics, coalTargets, inventoryBefore, targetCount)
+      floorDropDiagnostics.dropCollectionSucceeded = true
+      floorDropDiagnostics.bot_position = bot.entity ? positionJson(bot.entity.position) : null
+      floorDropDiagnostics.allowExcavate = allowExcavate
+      floorDropDiagnostics.accessMode = accessMode
+      return resourceSuccessFromInventory('mine_coal', floorDropDiagnostics, 'collected_floor_drop') || ok('mine_coal', floorDropDiagnostics)
+    }
   }
+
+  // Quick pre-scan to understand burial state before committing to excavation.
+  const preScanDiag = emptyAcquireResult({ targets: coalTargets, count: 0 }, 'scan')
+  const preCandidates = await findTargetCandidates(coalTargetSet, Math.min(radius, MAX_SCAN_RADIUS), preScanDiag)
+  const preExposedCount = preCandidates.filter(
+    (b) => hasExposedFace(b) && !isDangerousAdjacent(b) && !isProtectedBlock(b)
+  ).length
+  const preTotalFound = preScanDiag.targetCandidatesFound
+  const preNearestDist = preScanDiag.nearestTargetDistance
+  const preNearestPos = preScanDiag.nearestTargetPosition
+
+  const result = await acquireBlocksForAction('mine_coal', {
+    targets: coalTargets,
+    count: targetCount,
+    radius,
+    allowExcavate,
+    accessMode
+  })
+
+  if (result.result) {
+    const r = result.result
+    const positionAfter = bot.entity ? positionJson(bot.entity.position) : null
+
+    r.bot_position = positionAfter
+    r.inventoryBefore = inventoryBefore
+    updateResourceInventoryDiagnostics(r, coalTargets, inventoryBefore, targetCount)
+    r.allowExcavate = allowExcavate
+    r.accessMode = accessMode
+
+    const successResponse = resourceSuccessFromInventory('mine_coal', r, r.drop_collection_reason)
+    if (successResponse) return successResponse
+
+    if (!result.ok) {
+      const isTimeout = r.failure_type === 'action_timeout'
+
+      // partial_progress_timeout: timed out but inventory gained or position changed > 2 blocks.
+      if (isTimeout) {
+        const hasInvGain = Object.values(r.inventory_delta || {}).some((v) => v > 0)
+        let posDist = 0
+        if (positionBefore && positionAfter) {
+          const dx = (positionAfter.x || 0) - positionBefore.x
+          const dy = (positionAfter.y || 0) - positionBefore.y
+          const dz = (positionAfter.z || 0) - positionBefore.z
+          posDist = Math.sqrt(dx * dx + dy * dy + dz * dz)
+        }
+        if (hasInvGain || posDist > 2) {
+          r.failure_type = 'partial_progress_timeout'
+          r.partial_success = true
+        }
+      }
+
+      // resource_buried: candidates found pre-scan but none exposed (and not a timeout).
+      if (!isTimeout && preTotalFound > 0 && preExposedCount === 0) {
+        r.failure_type = 'resource_buried'
+        r.failed_because = [{
+          kind: 'resource_target_buried',
+          block: 'coal_ore',
+          candidates_found: preTotalFound,
+          nearest_distance: preNearestDist,
+          nearest_position: preNearestPos,
+          exposed_faces: 0,
+          safe_stand_candidate: false
+        }]
+      }
+
+      // scan_mismatch: no candidates in range but nearbyBlockCounts sees coal.
+      if (r.targetCandidatesFound === 0 && preTotalFound === 0 && !r.failure_type) {
+        const nearbyCoal = (nearbyBefore['coal_ore'] || 0) + (nearbyBefore['deepslate_coal_ore'] || 0)
+        if (nearbyCoal > 0) {
+          r.failure_type = 'scan_mismatch'
+          r.scan_mismatch_detail = {
+            nearby_coal_ore: nearbyBefore['coal_ore'] || 0,
+            nearby_deepslate_coal_ore: nearbyBefore['deepslate_coal_ore'] || 0
+          }
+        } else {
+          r.failure_type = 'target_not_found'
+        }
+      }
+
+      // resource_candidates_rejected: candidates found but none accessible (fallback).
+      if (r.targetCandidatesFound > 0 && r.accessCandidatesFound === 0 && !r.failure_type) {
+        r.failure_type = 'resource_candidates_rejected'
+      }
+
+      // Enrich navigation_failed with nearest target distance.
+      if (r.failure_type === 'navigation_failed' && r.nearestTargetDistance !== null) {
+        const fb = Array.isArray(r.failed_because) ? r.failed_because : []
+        if (!fb.some((e) => typeof e === 'object' && e !== null && e.kind === 'path_timeout')) {
+          fb.push({
+            kind: 'path_timeout',
+            nearestTargetDistance: r.nearestTargetDistance,
+            nearestTargetPosition: r.nearestTargetPosition
+          })
+          r.failed_because = fb
+        }
+      }
+    }
+  }
+
   return result
+}
+
+async function debugFindBlocks(targets, radius) {
+  const targetList = Array.isArray(targets) ? targets.filter((t) => typeof t === 'string' && t.length > 0) : []
+  const searchRadius = typeof radius === 'number' && radius > 0 ? Math.min(radius, MAX_SCAN_RADIUS) : ACQUIRE_BLOCKS_DEFAULT_RADIUS
+  const targetSet = new Set(targetList)
+  const botPos = bot.entity ? bot.entity.position : null
+
+  if (targetList.length === 0) {
+    return fail('debug_find_blocks', 'No targets specified.')
+  }
+
+  const matching = targetList
+    .map((name) => bot.registry.blocksByName[name])
+    .filter((blockType) => blockType)
+    .map((blockType) => blockType.id)
+
+  const positions = matching.length > 0
+    ? bot.findBlocks({ matching, maxDistance: searchRadius, count: 64 }) || []
+    : []
+
+  const blocks = positions
+    .map((position) => bot.blockAt(position))
+    .filter((block) => block && targetSet.has(block.name))
+    .sort((a, b) => (botPos ? botPos.distanceTo(a.position) - botPos.distanceTo(b.position) : 0))
+
+  const entries = []
+  for (const block of blocks) {
+    const distance = botPos ? Math.round(botPos.distanceTo(block.position) * 10) / 10 : null
+    const exposed = hasExposedFace(block)
+    const dangerous = isDangerousAdjacent(block)
+    const protected_ = isProtectedBlock(block)
+    let safeStandCandidate = false
+    if (exposed && !dangerous && !protected_) {
+      const faceInfo = findExposedFace(block)
+      if (faceInfo) {
+        const standPos = findSafeStandNearFace(block, faceInfo)
+        safeStandCandidate = standPos !== null
+      }
+    }
+    entries.push({
+      name: block.name,
+      position: positionJson(block.position),
+      distance,
+      exposedFaces: MINE_FACE_OFFSETS.filter((o) => {
+        const n = bot.blockAt(block.position.plus(o))
+        return n && canReplaceBlock(n)
+      }).length,
+      isProtected: protected_,
+      isDangerous: dangerous,
+      hasSafeStandCandidate: safeStandCandidate
+    })
+  }
+
+  return ok('debug_find_blocks', {
+    targets: targetList,
+    radius: searchRadius,
+    bot_position: botPos ? positionJson(botPos) : null,
+    total_found: entries.length,
+    blocks: entries
+  })
+}
+
+async function debugCollectDrops(targetItems, radius) {
+  const DEFAULT_TARGETS = ['coal', 'raw_iron', 'cobblestone', 'stone']
+  const targets = Array.isArray(targetItems) && targetItems.length > 0
+    ? targetItems.filter((t) => typeof t === 'string' && t.length > 0)
+    : DEFAULT_TARGETS
+  const searchRadius = typeof radius === 'number' && radius > 0 ? Math.min(radius, 32) : 8
+
+  if (!bot.entity) return fail('debug_collect_drops', 'Bot not ready.')
+
+  const diagnostics = emptyAcquireResult({ targets, count: 0 }, 'failed')
+  diagnostics.minedTargetBlocks = 0
+  diagnostics.inventoryBefore = inventoryCountForTargets(targets)
+
+  const aroundPosition = bot.entity.position.clone()
+  const collectResult = await collectNearbyDrops(
+    { aroundPosition, targets, radius: searchRadius, timeoutMs: DROP_COLLECTION_TIMEOUT_MS },
+    diagnostics
+  )
+
+  diagnostics.inventoryAfter = inventoryCountForTargets(targets)
+
+  const collected = diagnostics.targetInventoryDelta || 0
+
+  if (collectResult && (collectResult.reason === 'success' || collected > 0)) {
+    return ok('debug_collect_drops', {
+      ...diagnostics,
+      collected,
+      targets,
+      radius: searchRadius,
+      bot_position: positionJson(aroundPosition),
+    })
+  }
+
+  return {
+    ok: false,
+    action: 'debug_collect_drops',
+    result: {
+      ...diagnostics,
+      collected,
+      targets,
+      radius: searchRadius,
+      bot_position: positionJson(aroundPosition),
+      stop_reason: (collectResult && collectResult.reason) || 'drop_collection_timeout',
+    },
+    error: `debug_collect_drops: ${(collectResult && collectResult.reason) || 'drop_collection_timeout'}`,
+  }
 }
 
 async function mineIronOre(requestedCount) {
@@ -8554,7 +11542,7 @@ async function smeltItem(inputName, fuelName, requestedCount, action = 'smelt_it
   const output = SMELT_INPUTS[input]
   if (!output) return fail(action, `Smelt input is not allowed: ${input}.`)
 
-  const furnaceBlock = findNearbyFurnace(6)
+  const furnaceBlock = findNearbyFurnace(STATION_USE_RADIUS)
   if (!furnaceBlock) {
     return noFurnaceFail(action)
   }
@@ -8661,7 +11649,7 @@ async function smeltItem(inputName, fuelName, requestedCount, action = 'smelt_it
 }
 
 async function craftStonePickaxe() {
-  const craftingTable = findNearbyCraftingTable(4)
+  const craftingTable = findNearbyCraftingTable(STATION_USE_RADIUS)
   if (!craftingTable) {
     return noCraftingTableFail('craft_stone_pickaxe')
   }
@@ -8730,7 +11718,7 @@ async function craftBlazePowder() {
 
 // craft_diamond_pickaxe: 3 diamonds + 2 sticks, requires crafting table
 async function craftDiamondPickaxe() {
-  const craftingTable = findNearbyCraftingTable(4)
+  const craftingTable = findNearbyCraftingTable(STATION_USE_RADIUS)
   if (!craftingTable) {
     return noCraftingTableFail('craft_diamond_pickaxe')
   }
@@ -8765,7 +11753,7 @@ async function craftDiamondPickaxe() {
 
 // craft_diamond_sword: 2 diamonds + 1 stick, requires crafting table
 async function craftDiamondSword() {
-  const craftingTable = findNearbyCraftingTable(4)
+  const craftingTable = findNearbyCraftingTable(STATION_USE_RADIUS)
   if (!craftingTable) {
     return noCraftingTableFail('craft_diamond_sword')
   }
@@ -8801,7 +11789,7 @@ async function craftDiamondSword() {
 // craft_diamond_armor: craft pieces in priority order (chestplate→leggings→helmet→boots)
 // Each piece uses as many diamonds as available. Equips each piece after crafting.
 async function craftDiamondArmor() {
-  const craftingTable = findNearbyCraftingTable(4)
+  const craftingTable = findNearbyCraftingTable(STATION_USE_RADIUS)
   if (!craftingTable) {
     return noCraftingTableFail('craft_diamond_armor')
   }
@@ -8942,6 +11930,9 @@ function withTimeout(promise, ms, label) {
   let timeoutId = null
   const timeout = new Promise((_resolve, reject) => {
     timeoutId = setTimeout(() => {
+      if (String(label || '').toLowerCase().includes('path')) {
+        stopMovement()
+      }
       reject(new Error(`Timed out ${label} after ${ms}ms.`))
     }, ms)
   })
@@ -8953,17 +11944,26 @@ function withTimeout(promise, ms, label) {
   })
 }
 
+async function yieldToEventLoop() {
+  await new Promise((resolve) => setImmediate(resolve))
+}
+
 function gotoNearBlockWithTimeout(block, timeoutMs) {
   let timeoutId = null
   const goal = new goals.GoalNear(block.position.x, block.position.y, block.position.z, 2)
+  lastPathGoal = { type: 'GoalNear', x: block.position.x, y: block.position.y, z: block.position.z, radius: 2, target: block.name }
 
   const timeout = new Promise((_resolve, reject) => {
     timeoutId = setTimeout(() => {
+      stopMovement()
       reject(new Error(`Timed out pathing near ${block.name} after ${timeoutMs}ms.`))
     }, timeoutMs)
   })
 
-  return Promise.race([bot.pathfinder.goto(goal), timeout]).finally(() => {
+  return Promise.race([bot.pathfinder.goto(goal), timeout]).catch((err) => {
+    if (isGoalChangedError(err)) lastPathCancelReason = 'path_goal_changed'
+    throw err
+  }).finally(() => {
     if (timeoutId) {
       clearTimeout(timeoutId)
     }
@@ -8987,16 +11987,25 @@ function digBlockWithTimeout(block, timeoutMs) {
 }
 
 function gotoPositionWithTimeout(position, timeoutMs) {
+  return gotoPositionNearWithTimeout(position, 2, timeoutMs)
+}
+
+function gotoPositionNearWithTimeout(position, radius, timeoutMs) {
   let timeoutId = null
-  const goal = new goals.GoalNear(position.x, position.y, position.z, 2)
+  const goal = new goals.GoalNear(position.x, position.y, position.z, radius)
+  lastPathGoal = { type: 'GoalNear', x: position.x, y: position.y, z: position.z, radius }
 
   const timeout = new Promise((_resolve, reject) => {
     timeoutId = setTimeout(() => {
+      stopMovement()
       reject(new Error(`Timed out pathing after ${timeoutMs}ms.`))
     }, timeoutMs)
   })
 
-  return Promise.race([bot.pathfinder.goto(goal), timeout]).finally(() => {
+  return Promise.race([bot.pathfinder.goto(goal), timeout]).catch((err) => {
+    if (isGoalChangedError(err)) lastPathCancelReason = 'path_goal_changed'
+    throw err
+  }).finally(() => {
     if (timeoutId) {
       clearTimeout(timeoutId)
     }
@@ -9044,7 +12053,7 @@ async function waitForCraftingTable(position, timeoutMs) {
       return true
     }
 
-    const nearby = findNearbyCraftingTable(4)
+    const nearby = findNearbyCraftingTable(STATION_USE_RADIUS)
     if (nearby) {
       return true
     }
@@ -9328,6 +12337,220 @@ function buildFloorPlacementCandidates(options, diagnostics) {
     candidates.push({ referenceBlock: refBlock, faceVector: faceUp, targetPosition })
   }
   return candidates
+}
+
+// Station-specific diagnostics with richer field set than the generic placementDiagnostics.
+function stationPlacementDiagnostics(stationName, item) {
+  return {
+    station: stationName,
+    bot_position: bot.entity ? positionJson(bot.entity.position) : null,
+    item_in_inventory: Boolean(item),
+    candidates_checked: 0,
+    candidates_found: 0,
+    rejected_no_support: 0,
+    rejected_not_replaceable: 0,
+    rejected_blocked_headroom: 0,
+    rejected_too_far: 0,
+    rejected_dangerous: 0,
+    rejected_entity_collision: 0,
+    placement_reference_block: null,
+    placement_face: null,
+    selected_candidate: null,
+  }
+}
+
+// Expanded candidate search for station placement. Covers radius 1..5, no headroom
+// requirement (stations are accessed from the side, not the top).
+function buildExpandedStationCandidates(options, diag) {
+  if (!bot.entity) return []
+  const base = bot.entity.position.floored()
+  const faceUp = new Vec3(0, 1, 0)
+  const maxRadius = Math.min(5, Math.max(2, Number(options.radius || 4)))
+
+  // Collect all (dx, dz) within radius, sorted closest-first.
+  const pairs = []
+  for (let dx = -maxRadius; dx <= maxRadius; dx++) {
+    for (let dz = -maxRadius; dz <= maxRadius; dz++) {
+      const dist = Math.sqrt(dx * dx + dz * dz)
+      if (dist < 0.5 || dist > maxRadius + 0.5) continue
+      pairs.push({ dx, dz, dist })
+    }
+  }
+  pairs.sort((a, b) => a.dist - b.dist)
+
+  const candidates = []
+  for (const { dx, dz } of pairs) {
+    // Try floor-based (dy=-1: reference below target) then wall-based (dy=0: reference same level).
+    for (const dy of [-1, 0]) {
+      diag.candidates_checked++
+      const refPos = base.offset(dx, dy, dz)
+      const refBlock = bot.blockAt(refPos)
+      if (!isSolidBlock(refBlock)) { diag.rejected_no_support++; continue }
+      if (STATION_BLOCK_TYPES.has(refBlock.name)) continue   // don't stack on stations
+
+      const targetPos = refPos.offset(0, 1, 0)
+      const targetBlock = bot.blockAt(targetPos)
+      if (!canReplaceBlock(targetBlock)) { diag.rejected_not_replaceable++; continue }
+      if (isLiquidBlock(targetBlock)) { diag.rejected_dangerous++; continue }
+
+      // No headroom check: stations are usable from the side even under a 1-block ceiling.
+      if (placementHasUnsafeLiquidNearby(targetPos, { avoidLava: true, avoidWater: false })) {
+        diag.rejected_dangerous++; continue
+      }
+      if (placementIntersectsBot(targetPos) || placementIntersectsEntity(targetPos, options)) {
+        diag.rejected_entity_collision++; continue
+      }
+      if (bot.entity.position.distanceTo(targetPos) > maxRadius + 1) {
+        diag.rejected_too_far++; continue
+      }
+
+      diag.candidates_found++
+      candidates.push({ referenceBlock: refBlock, faceVector: faceUp, targetPosition: targetPos })
+    }
+  }
+  return candidates
+}
+
+// Dig at most STATION_NUISANCE_MAX_DIG vegetation/leaf blocks blocking placement candidates.
+async function digNuisanceBlocksForStationArea(diag) {
+  if (!bot.entity) return 0
+  const base = bot.entity.position.floored()
+  let count = 0
+
+  const toCheck = []
+  for (let dx = -3; dx <= 3; dx++) {
+    for (let dz = -3; dz <= 3; dz++) {
+      for (let dy = -1; dy <= 2; dy++) {
+        if (dx === 0 && dz === 0 && dy <= 0) continue   // never dig directly below self
+        toCheck.push(base.offset(dx, dy, dz))
+      }
+    }
+  }
+  toCheck.sort((a, b) => base.distanceTo(a) - base.distanceTo(b))
+
+  for (const pos of toCheck) {
+    if (count >= STATION_NUISANCE_MAX_DIG) break
+    const block = bot.blockAt(pos)
+    if (!block || !STATION_NUISANCE_BLOCK_NAMES.has(block.name)) continue
+    if (isDangerousAdjacent(block)) continue
+    if (isDirectlyUnderBot(block)) continue
+    try {
+      await digBlockWithTimeout(block, 3000)
+      count++
+    } catch (_) { /* skip un-diggable */ }
+  }
+  return count
+}
+
+// Robust station placement: expanded search → optional nuisance clearing → up to 3 attempts.
+async function placeStationRobust(action, itemName, verifyBlockNames, findFn, opts = {}) {
+  const searchRadius = Math.max(1, Math.min(8, Number(opts.radius || 4)))
+  const allowPrepareArea = opts.allowPrepareArea !== false
+
+  // 1. Already nearby and usable?
+  const existing = findFn(STATION_USE_RADIUS)
+  if (existing) {
+    return ok(action, {
+      alreadyPresent: true,
+      already_satisfied: true,
+      stop_reason: 'station_already_available',
+      [`has_${itemName}`]: true,
+      [`${itemName}_position`]: positionJson(existing.position),
+      position: positionJson(existing.position),
+      workspace_position: bot.entity ? positionJson(bot.entity.position) : null,
+      has_nearby_furnace: itemName === 'furnace' ? true : undefined,
+      has_inventory_furnace: itemName === 'furnace' ? Boolean(firstInventoryItemByNames([itemName])) : undefined,
+      inventory: inventoryJson(),
+    })
+  }
+
+  // 2. Need the item in inventory.
+  const item = firstInventoryItemByNames([itemName])
+  const diag = stationPlacementDiagnostics(itemName, item)
+  diag.radius = searchRadius
+  diag.allow_prepare_area = allowPrepareArea
+  diag.has_nearby_item = false
+  diag.has_inventory_item = Boolean(item)
+
+  if (!item) {
+    return makePlacementFailure(action, 'missing_item', diag, {
+      failed_because: [{ kind: 'missing_item', station: itemName, needed: `${itemName} in inventory` }],
+    })
+  }
+
+  const searchOpts = { itemName, avoidLava: true, avoidWater: true, avoidEntities: true, radius: searchRadius }
+
+  // 3. First candidate search.
+  let candidates = buildExpandedStationCandidates(searchOpts, diag)
+
+  // 4. Area preparation if no candidates found (only when allowPrepareArea).
+  let preparedBlocksDug = 0
+  if (candidates.length === 0 && allowPrepareArea) {
+    preparedBlocksDug = await digNuisanceBlocksForStationArea(diag)
+    if (preparedBlocksDug > 0) {
+      diag.candidates_checked = 0; diag.candidates_found = 0
+      diag.rejected_no_support = 0; diag.rejected_not_replaceable = 0
+      diag.rejected_blocked_headroom = 0; diag.rejected_too_far = 0
+      diag.rejected_dangerous = 0; diag.rejected_entity_collision = 0
+      candidates = buildExpandedStationCandidates(searchOpts, diag)
+    }
+  }
+
+  // 5. No candidate even after prep → rich failure.
+  if (candidates.length === 0) {
+    return fail(action, 'No safe placement position found nearby.', {
+      failure_type: 'no_safe_placement',
+      stop_reason: 'no_station_placement_candidate',
+      area_cramped: true,
+      failed_because: [{ kind: 'no_safe_placement', station: itemName, candidate_positions_found: 0, area_cramped: true }],
+      diagnostics: diag,
+    })
+  }
+
+  // 6. Try up to 3 candidates.
+  const maxAttempts = Math.min(3, candidates.length)
+  for (let i = 0; i < maxAttempts; i++) {
+    const cand = candidates[i]
+    diag.selected_candidate = positionJson(cand.targetPosition)
+    diag.placement_reference_block = positionJson(cand.referenceBlock.position)
+    diag.placement_face = 'up'
+
+    stopMovement()
+    await delay(50)
+
+    const freshRef = bot.blockAt(cand.referenceBlock.position)
+    if (!freshRef || !isSolidBlock(freshRef)) continue   // reference block gone, try next
+
+    try {
+      await bot.equip(item, 'hand')
+      const lookTarget = faceCenter(freshRef.position, cand.faceVector)
+      await bot.lookAt(lookTarget, true)
+      await delay(80)
+      await placeBlockWithTimeout(freshRef, cand.faceVector, PLACE_TIMEOUT_MS)
+    } catch (_) { /* verify below */ }
+
+    const verified = await waitForBlockAt(cand.targetPosition, verifyBlockNames, PLACE_VERIFY_MS)
+    if (verified) {
+      rememberPlacementWaypoint(action, cand.targetPosition)
+      return ok(action, {
+        placed: true,
+        [`${itemName}_position`]: positionJson(cand.targetPosition),
+        [`has_${itemName}`]: true,
+        workspace_position: bot.entity ? positionJson(bot.entity.position) : null,
+        position: positionJson(cand.targetPosition),
+        ...(preparedBlocksDug > 0 ? { preparedArea: true, preparedBlocksDug } : {}),
+        diagnostics: diag,
+        inventory: inventoryJson(),
+      })
+    }
+  }
+
+  return fail(action, 'Placement failed after trying safe candidates.', {
+    failure_type: 'no_safe_placement',
+    stop_reason: 'placement_failed',
+    failed_because: [{ kind: 'no_safe_placement', station: itemName, candidate_positions_found: diag.candidates_found, area_cramped: diag.candidates_found === 0 }],
+    diagnostics: diag,
+  })
 }
 
 function findSafePlacementCandidate(options = {}) {
@@ -9851,7 +13074,7 @@ function findDirectionalPlacementCandidate(direction) {
   return null
 }
 
-function findSafeExplorePosition(radius) {
+async function findSafeExplorePosition(radius) {
   if (!bot.entity) {
     return null
   }
@@ -9869,6 +13092,7 @@ function findSafeExplorePosition(radius) {
   ]
 
   for (const offset of candidates) {
+    await yieldToEventLoop()
     const candidate = base.plus(offset)
     const safe = nearestSafeStandPosition(candidate, 4)
     if (safe) {
@@ -9907,6 +13131,14 @@ function findNearbyCraftingTable(radius) {
   return position || null
 }
 
+function findNearestStationBlock(station, radius) {
+  if (!bot.entity) return null
+  if (station === 'crafting_table') return findNearbyCraftingTable(radius)
+  if (station === 'furnace') return findNearbyFurnace(radius)
+  if (station === 'chest') return findNearbyChest(radius)
+  return null
+}
+
 // Kept for compatibility — delegates to the generalised version.
 function findCraftingTableCandidates() {
   return findGeneralFloorCandidates()
@@ -9924,27 +13156,69 @@ function findNearbyFurnace(radius) {
 }
 
 function noCraftingTableFail(action) {
-  return fail(action, 'No crafting table found within radius 6.', {
+  const visible = findNearbyCraftingTable(STATION_SCAN_RADIUS)
+  if (visible) {
+    const distance = bot.entity ? bot.entity.position.distanceTo(visible.position) : null
+    return fail(action, `Crafting table is visible but too far to use (${formatDistance(distance)} blocks).`, {
+      failure_type: 'missing_station',
+      stop_reason: 'station_visible_but_too_far',
+      station_needed: 'crafting_table',
+      nearest_station_distance: distance,
+      nearest_station_position: positionJson(visible.position),
+      usable_radius: STATION_USE_RADIUS,
+      suggested_next_action: 'approach_station',
+      fallback_suggested_next_action: 'return_to_workspace',
+      possible_next_actions: ['approach_station', 'return_to_workspace', 'setup_workspace', 'place_crafting_table'],
+      can_retry: true,
+      inventory: inventoryJson()
+    })
+  }
+
+  return fail(action, `No crafting table found within radius ${STATION_SCAN_RADIUS}.`, {
     failure_type: 'missing_station',
     stop_reason: 'no_crafting_table_nearby',
     station_needed: 'crafting_table',
-    suggested_next_action: 'return_to_workspace',
-    fallback_suggested_next_action: 'setup_workspace',
+    suggested_next_action: 'setup_workspace',
+    fallback_suggested_next_action: 'place_crafting_table',
+    possible_next_actions: ['setup_workspace', 'place_crafting_table', 'craft_crafting_table', 'look_around'],
     can_retry: true,
     inventory: inventoryJson()
   })
 }
 
 function noFurnaceFail(action) {
-  return fail(action, 'No furnace found within 6 blocks.', {
+  const visible = findNearbyFurnace(STATION_SCAN_RADIUS)
+  if (visible) {
+    const distance = bot.entity ? bot.entity.position.distanceTo(visible.position) : null
+    return fail(action, `Furnace is visible but too far to use (${formatDistance(distance)} blocks).`, {
+      failure_type: 'missing_station',
+      stop_reason: 'station_visible_but_too_far',
+      station_needed: 'furnace',
+      nearest_station_distance: distance,
+      nearest_station_position: positionJson(visible.position),
+      usable_radius: STATION_USE_RADIUS,
+      suggested_next_action: 'approach_station',
+      fallback_suggested_next_action: 'return_to_workspace',
+      possible_next_actions: ['approach_station', 'return_to_workspace', 'setup_workspace', 'place_furnace'],
+      can_retry: true,
+      inventory: inventoryJson()
+    })
+  }
+
+  return fail(action, `No furnace found within radius ${STATION_SCAN_RADIUS}.`, {
     failure_type: 'missing_station',
     stop_reason: 'no_furnace_nearby',
     station_needed: 'furnace',
-    suggested_next_action: 'return_to_workspace',
-    fallback_suggested_next_action: 'setup_workspace',
+    suggested_next_action: 'setup_workspace',
+    fallback_suggested_next_action: 'place_furnace',
+    possible_next_actions: ['setup_workspace', 'place_furnace', 'craft_furnace', 'look_around'],
     can_retry: true,
     inventory: inventoryJson()
   })
+}
+
+function formatDistance(distance) {
+  return typeof distance === 'number' ? (Math.round(distance * 10) / 10).toFixed(1) : 'unknown'
 }
 
 function missingCraftMaterials(spec, craftIterations) {
@@ -10210,13 +13484,24 @@ function errorMessage(error) {
   return error && error.message ? error.message : String(error)
 }
 
+function isPathTimeoutError(error) {
+  const text = errorMessage(error).toLowerCase()
+  return (
+    (text.includes('path') && (text.includes('timed out') || text.includes('timeout'))) ||
+    text.includes('took too long')
+  )
+}
+
+function isPlanningTimeoutError(error) {
+  return errorMessage(error).toLowerCase().includes('took too long to decide path')
+}
+
 function positionKey(position) {
   return `${position.x},${position.y},${position.z}`
 }
 
 function stopMovement() {
-  bot.pathfinder.setGoal(null)
-  bot.clearControlStates()
+  safeStopMovement(bot)
 }
 
 function shortJump() {

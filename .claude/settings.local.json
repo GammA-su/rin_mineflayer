@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(node --check \"c:\\\\Projecyt\\\\rin_mineflayer\\\\ai-vtuber-mc\\\\bot\\\\mineflayer_bot.js\")",
-      "Bash(uv run python -c ' *)"
+      "Bash(uv run python -c ' *)",
+      "Bash(uv run *)"
     ]
   }
 }

@@ -120,9 +120,19 @@ def objective_item_name(objective: str) -> str | None:
 
 
 def has_nearby_crafting_table(status: dict[str, Any]) -> bool:
+    usable_fact = status.get("has_nearby_crafting_table_usable")
+    if isinstance(usable_fact, bool):
+        return usable_fact
+
     nearby_blocks = status.get("nearbyBlocks")
     if not isinstance(nearby_blocks, dict):
         return False
 
     crafting_table = nearby_blocks.get("crafting_table")
-    return isinstance(crafting_table, dict)
+    if not isinstance(crafting_table, dict):
+        return False
+
+    distance = crafting_table.get("distance")
+    if isinstance(distance, (int, float)):
+        return distance <= 6
+    return True

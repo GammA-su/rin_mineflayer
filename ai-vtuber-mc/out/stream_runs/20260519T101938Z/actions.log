@@ -1,0 +1,28 @@
+Stream loop starting — output: out/stream_runs/20260519T101938Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+Press Ctrl+C to stop.
+
+[1] look_around {} -> ok=true failure=none
+[2] collect_wood {"count":16} -> ok=true failure=none stop=collected_drop collected=1
+[3] craft_planks {} -> ok=true failure=none
+[4] craft_crafting_table {} -> ok=true failure=none
+[5] craft_furnace {} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting table found within radius 24.'
+[6] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=true failure=none
+[7] craft_furnace {} -> ok=true failure=none
+[8] place_furnace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe placement position found nearby.'
+[9] find_safe_workspace {} -> ok=true failure=none
+[10] scan_workspace {} -> ok=true failure=none
+[11] place_furnace {} -> ok=false failure=no_safe_placement stop=placement_failed error='Placement failed after trying safe candidates.'
+[12] place_furnace {} -> ok=false failure=no_safe_placement stop=placement_failed error='Placement failed after trying safe candidates.'
+[13] place_furnace {} -> ok=false failure=no_safe_placement stop=placement_failed error='Placement failed after trying safe candidates.'
+[14] place_furnace {} -> ok=false failure=no_safe_placement stop=placement_failed error='Placement failed after trying safe candidates.'
+[15] find_safe_workspace {} -> ok=true failure=none
+[16] place_furnace {} -> ok=false failure=no_safe_placement stop=placement_failed error='Placement failed after trying safe candidates.'
+[17] place_furnace {} -> ok=false failure=no_safe_placement stop=placement_failed error='Placement failed after trying safe candidates.'
+[18] setup_workspace {} -> ok=true failure=none
+[19] place_furnace {} -> ok=false failure=no_safe_placement stop=placement_failed error='Placement failed after trying safe candidates.'
+  [batch 1 saved  ticks 1-19 (partial)]
+
+Stopped. 19 ticks total. Output: out/stream_runs/20260519T101938Z

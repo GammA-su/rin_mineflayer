@@ -1,0 +1,241 @@
+Stream loop starting — output: out/stream_runs/20260519T181507Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+Press Ctrl+C to stop.
+
+[1] approach_station {"station":"furnace","radius":3} -> ok=false failure=missing_station stop=no_furnace_nearby error='No furnace visible within radius 24.'
+[2] return_to_workspace {} -> ok=false failure=navigation_failed stop=navigation_failed error='Could not reach position: Took to long to decide path to goal!'
+[3] explore_nearby {} -> ok=true failure=none
+[4] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 60000ms.'
+[5] explore_nearby {} -> ok=false failure=action_failed stop=action_failed error='Exploration path failed: The goal was changed before it could be completed!'
+[6] mine_iron_ore {} -> ok=true failure=none stop=collected_drop_after_local_excavation collected=3
+[7] mine_iron_ore {} -> ok=true failure=none stop=targets_found_but_not_accessible collected=1
+[8] acquire_blocks {"targets":["coal_ore"],"count":3,"radius":16,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined coal_ore but drop collection failed: drop_collection_partial_progress'
+[9] acquire_blocks {"targets":["coal_ore"],"count":1,"allowExcavate":true} -> ok=false failure=partial_progress_timeout stop=drop_no_safe_stand collected=0 error='Mined coal_ore but drop collection failed: drop_no_safe_stand'
+[10] mine_coal {"count":1} -> ok=false failure=partial_progress_timeout stop=drop_no_safe_stand collected=0 error='Mined target block but drop collection failed: drop_no_safe_stand'
+[11] mine_coal {"count":1,"radius":8,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=1
+[12] mine_coal {"count":1,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=1
+[13] mine_coal {"count":1,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=1
+[14] mine_coal {"count":1,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=1
+[15] mine_coal {"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=4
+[16] mine_coal {"count":1,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=1
+[17] mine_coal {"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=partial_collected collected=3
+[18] mine_coal {"count":1,"radius":32,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=2
+[19] mine_coal {"count":2,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=2
+[20] mine_coal {"count":2,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=partial_collected collected=1
+[21] mine_coal {"count":2,"accessMode":"safe_staircase","allowExcavate":true} -> ok=false failure=partial_progress_timeout stop=drop_no_safe_stand collected=0 error='Mined target block but drop collection failed: drop_no_safe_stand'
+[22] mine_coal {"accessMode":"safe_staircase","allowExcavate":true} -> ok=true failure=none stop=partial_collected collected=2
+[23] mine_coal {"count":16,"radius":32,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=partial_collected collected=1
+[24] mine_coal {"count":3,"radius":32,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=partial_collected collected=1
+[25] mine_coal {"count":1,"radius":8,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=1
+  [batch 1 saved  ticks 1-25]
+[26] acquire_blocks {"targets":["coal_ore"],"count":3,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=targets_found_but_not_accessible collected=1
+[27] acquire_blocks {"targets":["coal_ore"],"count":1,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined coal_ore but drop collection failed: drop_collection_partial_progress'
+[28] acquire_blocks {"targets":["coal_ore"],"count":1,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_drop collected=2
+[29] status {} -> ok=true failure=none
+[30] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=drop_local_excavation_progress collected=0 error='Mined target block but drop collection failed: drop_local_excavation_progress'
+[31] mine_iron_ore {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[32] mine_iron_ore {} -> ok=true failure=none stop=targets_found_but_not_accessible collected=1
+[33] mine_iron_ore {} -> ok=true failure=none stop=targets_found_but_not_accessible collected=1
+[34] mine_iron_ore {} -> ok=true failure=none stop=targets_found_but_not_accessible collected=1
+[35] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined target block but drop collection failed: drop_collection_partial_progress'
+[36] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=drop_no_safe_stand collected=0 error='Mined target block but drop collection failed: drop_no_safe_stand'
+[37] mine_iron_ore {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[38] mine_iron_ore {} -> ok=true failure=none stop=collected_drop_after_local_excavation collected=3
+[39] mine_iron_ore {} -> ok=true failure=none stop=collected_drop collected=3
+[40] mine_iron_ore {} -> ok=true failure=none stop=collected_drop collected=3
+[41] mine_iron_ore {} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[42] mine_iron_ore {"count":3} -> ok=false failure=partial_progress_timeout stop=close_range_access_timeout collected=0 error='Close-range access partial progress for target block'
+[43] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined target block but drop collection failed: drop_collection_partial_progress'
+[44] mine_iron_ore {"count":1} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined target block but drop collection failed: drop_direct_walk_no_progress'
+[45] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[46] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=no_furnace_nearby error='No furnace found within radius 24.'
+[47] setup_workspace {"need_furnace":true} -> ok=true failure=none
+[48] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=no_furnace_nearby error='No furnace found within radius 24.'
+[49] setup_workspace {"need_furnace":true,"need_crafting_table":true} -> ok=true failure=none
+[50] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=true failure=none
+  [batch 2 saved  ticks 26-50]
+[51] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=no_furnace_nearby error='No furnace found within radius 24.'
+[52] setup_workspace {"need_furnace":true,"need_crafting_table":true} -> ok=true failure=none
+[53] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=true failure=none
+[54] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[55] smelt_item {"input":"raw_iron"} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+[56] smelt_item {"input":"raw_iron","count":1,"fuel":"coal"} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+[57] approach_station {"station":"crafting_table"} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting_table visible within radius 24.'
+[58] return_to_workspace {"purpose":"crafting"} -> ok=false failure=station_not_reached stop=workspace_reached_but_station_not_usable error='At workspace, but crafting_table is not within usable range.'
+[59] setup_workspace {} -> ok=true failure=none
+[60] approach_station {"station":"crafting_table","radius":3} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting_table visible within radius 24.'
+[61] return_to_workspace {} -> ok=true failure=none
+[62] setup_workspace {} -> ok=true failure=none
+[63] craft_crafting_table {} -> ok=true failure=none
+[64] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting table found within radius 24.'
+[65] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting table found within radius 24.'
+[66] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[67] look_around {} -> ok=true failure=none
+[68] look_around {"radius":16} -> ok=true failure=none
+[69] craft_planks {"count":1} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[70] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 60000ms.'
+[71] status {} -> ok=true failure=none
+[72] collect_wood {"count":1} -> ok=true failure=none stop=collected_drop collected=2
+[73] craft_planks {"count":1} -> ok=false failure=no_progress
+[74] craft_planks {"count":1} -> ok=false failure=no_progress
+[75] craft_planks {"count":1} -> ok=false failure=no_progress
+  [batch 3 saved  ticks 51-75]
+[76] craft_planks {} -> ok=true failure=none
+[77] craft_sticks {"count":1} -> ok=true failure=none
+[78] setup_workspace {"need_crafting_table":true} -> ok=true failure=none
+[79] craft_stone_pickaxe {} -> ok=true failure=none
+[80] mine_iron_ore {} -> ok=true failure=none stop=collected_drop collected=3
+[81] mine_iron_ore {} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[82] mine_iron_ore {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[83] smelt_iron {} -> ok=false failure=missing_station stop=no_furnace_nearby error='No furnace found within radius 24.'
+[84] setup_workspace {"need_furnace":true} -> ok=true failure=none
+[85] setup_workspace {"need_furnace":true,"need_crafting_table":true,"radius":24} -> ok=true failure=none
+[86] setup_workspace {"need_furnace":true,"need_crafting_table":true} -> ok=true failure=none
+[87] smelt_iron {} -> ok=false failure=missing_station stop=no_furnace_nearby error='No furnace found within radius 24.'
+[88] setup_workspace {"need_furnace":true,"need_crafting_table":true,"radius":8} -> ok=true failure=none
+[89] craft_furnace {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (12.9 blocks).'
+[90] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[91] setup_workspace {} -> ok=true failure=none
+[92] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[93] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (11.8 blocks).'
+[94] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[95] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (9.6 blocks).'
+[96] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[97] craft_stone_pickaxe {} -> ok=false failure=no_progress
+[98] craft_stone_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 1.'
+[99] craft_sticks {} -> ok=true failure=none
+[100] mine_stone {} -> ok=true failure=none stop=partial_collected collected=2
+  [batch 4 saved  ticks 76-100]
+[101] craft_sticks {} -> ok=true failure=none
+[102] craft_stone_pickaxe {} -> ok=false failure=no_progress
+[103] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined stone but drop collection failed: drop_direct_walk_no_progress'
+[104] mine_stone {} -> ok=true failure=none stop=collected_drop collected=4
+[105] mine_stone {} -> ok=true failure=none stop=partial_collected collected=1
+[106] mine_stone {"count":16} -> ok=true failure=none stop=partial_collected collected=1
+[107] mine_stone {"count":16} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[108] mine_stone {} -> ok=true failure=none stop=collected_drop collected=4
+[109] craft_stone_pickaxe {} -> ok=false failure=no_progress
+[110] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[111] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=no_furnace_nearby error='No furnace found within radius 24.'
+[112] setup_workspace {"need_furnace":true} -> ok=true failure=none
+[113] smelt_item {"input":"raw_iron","count":1} -> ok=false failure=missing_materials stop=no_furnace_nearby error='No furnace found within radius 24.'
+[114] setup_workspace {"need_furnace":true,"radius":16} -> ok=true failure=none
+[115] setup_workspace {"need_furnace":true} -> ok=true failure=none
+[116] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=no_furnace_nearby error='No furnace found within radius 24.'
+[117] setup_workspace {"need_crafting_table":true,"need_furnace":true,"radius":16} -> ok=true failure=none
+[118] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[119] setup_workspace {} -> ok=true failure=none
+[120] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[121] smelt_item {"input":"raw_iron","count":1,"fuel":"coal"} -> ok=false failure=missing_materials stop=no_furnace_nearby error='No furnace found within radius 24.'
+[122] setup_workspace {"need_crafting_table":true,"need_furnace":true,"radius":16} -> ok=true failure=none
+[123] smelt_item {"input":"raw_iron","count":1,"fuel":"coal"} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+[124] mine_iron_ore {} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[125] smelt_item {"input":"raw_iron","count":1,"fuel":"coal"} -> ok=false failure=missing_materials stop=no_furnace_nearby error='No furnace found within radius 24.'
+  [batch 5 saved  ticks 101-125]
+[126] setup_workspace {"need_furnace":true} -> ok=true failure=none
+[127] approach_station {"station":"furnace"} -> ok=false failure=missing_station stop=no_furnace_nearby error='No furnace visible within radius 24.'
+[128] return_to_workspace {} -> ok=true failure=none
+[129] place_furnace {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[130] craft_furnace {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (12.3 blocks).'
+[131] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[132] craft_furnace {} -> ok=false failure=no_progress
+[133] craft_furnace {} -> ok=false failure=no_progress
+[134] craft_furnace {} -> ok=false failure=no_progress
+[135] craft_furnace {} -> ok=true failure=none
+[136] place_furnace {} -> ok=true failure=none
+[137] smelt_item {"input":"raw_iron","count":1,"fuel":"coal"} -> ok=true failure=none
+[138] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[139] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[140] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[141] smelt_item {"fuel":"coal","input":"raw_iron"} -> ok=true failure=none
+[142] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[143] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[144] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[145] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[146] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[147] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[148] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[149] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[150] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+  [batch 6 saved  ticks 126-150]
+[151] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[152] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[153] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[154] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[155] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[156] mine_iron_ore {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[157] smelt_item {"fuel":"coal"} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[158] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[159] smelt_item {"input":"raw_iron","fuel":"coal"} -> ok=true failure=none
+[160] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[161] navigate_to_block_type {"targets":["iron_ore"],"radius":8} -> ok=true failure=none
+[162] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[163] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[164] navigate_to_block_type {"targets":["iron_ore"],"radius":10} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[165] approach_station {"station":"furnace"} -> ok=true failure=none
+[166] smelt_item {"count":12} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[167] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[168] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[169] navigate_to_block_type {"targets":["iron_ore"],"radius":10} -> ok=true failure=none
+[170] mine_iron_ore {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[171] smelt_item {"count":11} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[172] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=station_visible_but_too_far error='Furnace is visible but too far to use (10.7 blocks).'
+[173] approach_station {"station":"furnace"} -> ok=true failure=none
+[174] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[175] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+  [batch 7 saved  ticks 151-175]
+[176] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[177] smelt_item {"input":"raw_iron","count":1} -> ok=true failure=none
+[178] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[179] smelt_item {"count":7} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[180] smelt_item {"input":"raw_iron","count":1} -> ok=true failure=none
+[181] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[182] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[183] smelt_item {"input":"raw_iron","count":1} -> ok=true failure=none
+[184] status {} -> ok=true failure=none
+[185] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[186] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[187] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[188] smelt_item {"input":"raw_iron"} -> ok=true failure=none
+[189] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=drop_no_safe_stand collected=0 error='Mined target block but drop collection failed: drop_no_safe_stand'
+[190] mine_iron_ore {"count":3} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 60000ms.'
+[191] approach_station {"station":"furnace"} -> ok=true failure=none
+[192] mine_iron_ore {} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[193] mine_iron_ore {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[194] mine_iron_ore {} -> ok=true failure=none stop=path_timeout_before_target collected=1
+[195] approach_station {"station":"furnace"} -> ok=true failure=none
+[196] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined target block but drop collection failed: drop_collection_partial_progress'
+[197] mine_iron_ore {} -> ok=true failure=none stop=collected_drop collected=2
+[198] mine_iron_ore {} -> ok=true failure=none stop=path_timeout_before_target collected=2
+[199] mine_iron_ore {"count":3} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 60000ms.'
+[200] mine_iron_ore {} -> ok=false failure=navigation_failed stop=navigation_failed collected=0 error='The goal was changed before it could be completed!'
+  [batch 8 saved  ticks 176-200]
+[201] explore_nearby {} -> ok=true failure=none
+[202] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[203] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (9.8 blocks).'
+[204] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[205] mine_iron_ore {"count":16} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[206] approach_station {"station":"crafting_table"} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting_table visible within radius 24.'
+[207] return_to_workspace {} -> ok=true failure=none
+[208] return_to_workspace {} -> ok=true failure=none
+[209] approach_station {"station":"crafting_table"} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting_table visible within radius 24.'
+[210] return_to_workspace {} -> ok=true failure=none
+[211] place_crafting_table {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[212] craft_crafting_table {} -> ok=true failure=none
+[213] place_crafting_table {} -> ok=true failure=none
+[214] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[215] mine_iron_ore {"count":1} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[216] navigate_to_block_type {"targets":["iron_ore"],"radius":8} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[217] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[218] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[219] mine_iron_ore {} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+[220] mine_iron_ore {} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+[221] mine_iron_ore {"count":1} -> ok=false failure=blocked_repetition error='Skipped blocked repeated action because requirements/environment have not changed.'
+[222] mine_coal {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined target block but drop collection failed: drop_collection_partial_progress'
+[223] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[224] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=station_visible_but_too_far error='Furnace is visible but too far to use (18.1 blocks).'
+  [batch 9 saved  ticks 201-224 (partial)]
+
+Stopped. 224 ticks total. Output: out/stream_runs/20260519T181507Z

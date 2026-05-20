@@ -1,0 +1,13 @@
+Stream loop starting — output: out/stream_runs/20260519T180604Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+Press Ctrl+C to stop.
+
+[1] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[2] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=path_timeout_before_target collected=0 error='Timed out pathing to target block after 12000ms.'
+[3] smelt_item {} -> ok=false failure=invalid_args error="Action 'smelt_item' requires args.input as a non-empty string."
+[4] smelt_item {"input":"raw_iron"} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need raw_iron.'
+  [batch 1 saved  ticks 1-4 (partial)]
+
+Stopped. 4 ticks total. Output: out/stream_runs/20260519T180604Z

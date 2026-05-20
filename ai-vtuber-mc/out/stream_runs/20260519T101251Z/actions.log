@@ -1,0 +1,8 @@
+Stream loop starting — output: out/stream_runs/20260519T101251Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/live
+  ticks/batch: 25  tick_delay: 1.0s
+Press Ctrl+C to stop.
+
+
+Stopped by user.
