@@ -1,0 +1,112 @@
+Stream loop starting — output: out/stream_runs/20260520T125211Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, stuck-state facts, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+  personality: http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] mine_coal {"count":1,"radius":8,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=1
+[2] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[3] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[4] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[5] mine_coal {"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=4
+[6] mine_stone {} -> ok=true failure=none stop=collected_drop_after_local_excavation collected=3
+[7] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[8] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[9] mine_coal {"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=partial_collected collected=2
+[10] mine_coal {"radius":32,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=4
+[11] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (20.0 blocks).'
+[12] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[13] mine_coal {} -> ok=true failure=none stop=partial_collected_after_timeout collected=1
+[14] mine_coal {"count":1,"allowExcavate":true} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[15] mine_coal {"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=partial_collected collected=2
+[16] mine_coal {"count":2,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=partial_collected collected=1
+[17] mine_coal {"count":3,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=true failure=none stop=collected_requested collected=3
+[18] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[19] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 60000ms.'
+[20] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[21] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (6.9 blocks).'
+[22] approach_station {"station":"crafting_table","radius":6} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[23] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (6.9 blocks).'
+[24] approach_station {"station":"crafting_table","radius":6} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[25] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+  [batch 1 saved  ticks 1-25]
+[26] navigate_to_block_type {"targets":["crafting_table"],"radius":8} -> ok=false failure=wrong_action_for_target_type stop=wrong_action_for_target_type error="navigate_to_block_type cannot target 'crafting_table' — stations use approach_station, not navigate_to_block_type."
+[27] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[28] approach_station {"radius":6,"station":"crafting_table"} -> ok=true failure=none
+[29] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[30] craft_planks {} -> ok=true failure=none
+[31] craft_crafting_table {} -> ok=true failure=none
+[32] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[33] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[34] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[35] approach_station {"station":"crafting_table","radius":6} -> ok=true failure=none
+[36] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[37] craft_stone_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 1.'
+[38] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[39] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[40] collect_wood {"count":4} -> ok=true failure=none stop=collected_drop collected=4
+[41] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[42] craft_planks {"count":1} -> ok=true failure=none
+[43] craft_sticks {"count":2} -> ok=true failure=none
+[44] craft_stone_pickaxe {} -> ok=true failure=none
+[45] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[46] craft_stone_pickaxe {} -> ok=true failure=none
+[47] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[48] mine_stone {} -> ok=true failure=none stop=partial_collected collected=1
+[49] mine_stone {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[50] mine_stone {} -> ok=true failure=none stop=collected_drop_after_local_excavation collected=3
+  [batch 2 saved  ticks 26-50]
+[51] mine_stone {} -> ok=true failure=none stop=partial_collected collected=1
+[52] mine_stone {"count":16} -> ok=true failure=none stop=partial_collected collected=3
+[53] mine_stone {"count":16} -> ok=true failure=none stop=collected_drop collected=1
+[54] mine_stone {} -> ok=true failure=none stop=collected_drop_after_local_excavation collected=3
+[55] mine_stone {} -> ok=true failure=none stop=partial_collected collected=1
+[56] mine_stone {"count":16} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[57] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[58] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[59] mine_stone {} -> ok=true failure=none stop=collected_drop collected=4
+[60] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[61] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[62] craft_stone_pickaxe {} -> ok=true failure=none
+[63] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[64] mine_stone {} -> ok=true failure=none stop=partial_collected collected=1
+[65] mine_stone {"count":16} -> ok=true failure=none stop=collected_drop collected=1
+[66] mine_stone {} -> ok=true failure=none stop=collected_drop collected=1
+[67] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[68] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[69] craft_stone_pickaxe {} -> ok=true failure=none
+[70] mine_stone {} -> ok=true failure=none stop=collected_drop_after_local_excavation collected=3
+[71] mine_stone {} -> ok=true failure=none stop=collected_drop_after_local_excavation collected=4
+[72] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[73] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[74] mine_stone {} -> ok=true failure=none stop=partial_collected collected=1
+[75] mine_stone {"count":16} -> ok=true failure=none stop=partial_collected collected=12
+  [batch 3 saved  ticks 51-75]
+[76] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[77] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (7.0 blocks).'
+[78] approach_station {"station":"crafting_table","radius":6} -> ok=true failure=none
+[79] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (7.0 blocks).'
+[80] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[81] craft_stone_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 1.'
+[82] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[83] craft_planks {} -> ok=true failure=none
+[84] craft_sticks {} -> ok=true failure=none
+[85] craft_stone_pickaxe {} -> ok=true failure=none
+[86] mine_stone {"count":1} -> ok=true failure=none stop=collected_drop collected=2
+[87] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[88] craft_stone_pickaxe {} -> ok=true failure=none
+[89] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_no_safe_stand collected=0 error='Mined stone but drop collection failed: drop_no_safe_stand'
+[90] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+  [API error] Server error '500 Internal Server Error' for url 'http://127.0.0.1:8000/agent/tick'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500 — retrying in 5s …
+  [API error] Server error '500 Internal Server Error' for url 'http://127.0.0.1:8000/agent/tick'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500 — retrying in 5s …
+  [API error] Server error '500 Internal Server Error' for url 'http://127.0.0.1:8000/agent/tick'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500 — retrying in 5s …
+  [API error] Server error '500 Internal Server Error' for url 'http://127.0.0.1:8000/agent/tick'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/500 — retrying in 5s …
+[91] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+  [batch 4 saved  ticks 76-91 (partial)]
+
+Stopped. 91 ticks total. Output: out/stream_runs/20260520T125211Z

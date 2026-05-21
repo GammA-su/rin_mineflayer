@@ -1,0 +1,878 @@
+Stream loop starting — output: out/stream_runs/20260520T142142Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, stuck-state facts, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  llm        : provider=local_openai_compatible model=Qwen3.6-27B-Q4_K_M.gguf base_url=http://127.0.0.1:8087/v1 api_key_env=(provider default)
+  ticks/batch: 25  tick_delay: 1.0s
+  personality: http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] return_to_workspace {} -> ok=true failure=none
+[2] smelt_iron {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Furnace is visible but too far to use (20.5 blocks).'
+[3] approach_station {"station":"furnace"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[4] return_to_workspace {} -> ok=true failure=none
+[5] approach_station {"station":"furnace","radius":6} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[6] approach_station {"station":"furnace","radius":6} -> ok=true failure=none
+[7] smelt_iron {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Furnace is visible but too far to use (6.6 blocks).'
+[8] approach_station {"station":"furnace"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[9] smelt_iron {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out smelt_iron after 30000ms.'
+[10] smelt_iron {} -> ok=false failure=action_failed stop=smelt_interrupted error="Smelting started but did not complete: Can't find raw_iron in slots [3 - 39], (item id: 867)"
+[11] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[12] explore_nearby {} -> ok=true failure=none
+[13] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[14] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[15] explore_nearby {} -> ok=true failure=none
+[16] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[17] smelt_iron {} -> ok=false failure=missing_station stop=no_furnace_nearby error='No furnace found within radius 24.'
+[18] setup_workspace {"need_furnace":true,"need_crafting_table":true} -> ok=true failure=none
+[19] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[20] craft_planks {} -> ok=true failure=none
+[21] craft_crafting_table {} -> ok=true failure=none
+[22] place_crafting_table {} -> ok=true failure=none
+[23] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[24] smelt_iron {} -> ok=false failure=missing_station stop=no_furnace_nearby error='No furnace found within radius 24.'
+[25] setup_workspace {"need_furnace":true} -> ok=true failure=none
+  [batch 1 saved  ticks 1-25]
+[26] craft_furnace {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (6.7 blocks).'
+[27] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[28] craft_furnace {} -> ok=true failure=none
+[29] place_furnace {} -> ok=true failure=none
+[30] smelt_iron {} -> ok=true failure=none
+[31] mine_iron_ore {"count":4} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[32] status {} -> ok=true failure=none
+[33] status {} -> ok=true failure=none
+[34] mine_iron_ore {} -> ok=true failure=none stop=collected_drop collected=1
+[35] smelt_iron {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Furnace is visible but too far to use (18.6 blocks).'
+[36] approach_station {"station":"furnace"} -> ok=true failure=none
+[37] smelt_iron {} -> ok=true failure=none
+[38] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[39] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[40] smelt_iron {} -> ok=false failure=missing_station stop=no_furnace_nearby error='No furnace found within radius 24.'
+[41] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[42] setup_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not navigate to workspace: Timed out pathing after 20000ms.'
+[43] explore_nearby {} -> ok=true failure=none
+[44] approach_station {"station":"crafting_table"} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting_table visible within radius 24.'
+[45] setup_workspace {} -> ok=true failure=none
+[46] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[47] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[48] explore_nearby {} -> ok=true failure=none
+[49] explore_nearby {} -> ok=true failure=none
+[50] explore_nearby {} -> ok=true failure=none
+  [batch 2 saved  ticks 26-50]
+[51] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[52] explore_nearby {} -> ok=true failure=none
+[53] explore_nearby {} -> ok=true failure=none
+[54] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[55] explore_nearby {} -> ok=true failure=none
+[56] explore_nearby {} -> ok=true failure=none
+[57] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[58] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[59] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[60] explore_nearby {} -> ok=true failure=none
+[61] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[62] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[63] explore_nearby {} -> ok=true failure=none
+[64] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[65] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[66] explore_nearby {} -> ok=true failure=none
+[67] explore_nearby {} -> ok=true failure=none
+[68] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[69] explore_nearby {} -> ok=true failure=none
+[70] explore_nearby {} -> ok=true failure=none
+[71] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[72] explore_nearby {} -> ok=true failure=none
+[73] explore_nearby {} -> ok=true failure=none
+[74] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[75] explore_nearby {} -> ok=true failure=none
+  [batch 3 saved  ticks 51-75]
+[76] explore_nearby {} -> ok=true failure=none
+[77] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[78] explore_nearby {} -> ok=true failure=none
+[79] explore_nearby {} -> ok=true failure=none
+[80] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[81] explore_nearby {} -> ok=true failure=none
+[82] explore_nearby {} -> ok=true failure=none
+[83] collect_wood {"count":1} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[84] explore_nearby {} -> ok=true failure=none
+[85] explore_nearby {} -> ok=true failure=none
+[86] smelt_iron {} -> ok=true failure=none
+[87] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[88] explore_nearby {} -> ok=false failure=navigation_cancelled stop=path_goal_changed error='Exploration path failed: The goal was changed before it could be completed!'
+[89] smelt_iron {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Furnace is visible but too far to use (20.9 blocks).'
+[90] approach_station {"station":"furnace"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[91] setup_workspace {} -> ok=true failure=none
+[92] return_to_workspace {} -> ok=true failure=none
+[93] setup_workspace {} -> ok=true failure=none
+[94] return_to_workspace {} -> ok=true failure=none
+[95] setup_workspace {} -> ok=true failure=none
+[96] return_to_workspace {} -> ok=true failure=none
+[97] setup_workspace {} -> ok=true failure=none
+[98] return_to_workspace {} -> ok=true failure=none
+[99] setup_workspace {} -> ok=true failure=none
+[100] return_to_workspace {} -> ok=true failure=none
+  [batch 4 saved  ticks 76-100]
+[101] setup_workspace {} -> ok=true failure=none
+[102] place_crafting_table {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[103] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[104] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[105] explore_nearby {} -> ok=true failure=none
+[106] return_to_workspace {} -> ok=true failure=none
+[107] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[108] setup_workspace {} -> ok=true failure=none
+[109] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[110] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[111] explore_nearby {} -> ok=true failure=none
+[112] return_to_workspace {} -> ok=true failure=none
+[113] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[114] setup_workspace {} -> ok=true failure=none
+[115] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[116] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[117] explore_nearby {} -> ok=true failure=none
+[118] return_to_workspace {} -> ok=true failure=none
+[119] explore_nearby {} -> ok=true failure=none
+[120] setup_workspace {} -> ok=true failure=none
+[121] explore_nearby {} -> ok=true failure=none
+[122] explore_nearby {} -> ok=true failure=none
+[123] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[124] explore_nearby {} -> ok=true failure=none
+[125] explore_nearby {} -> ok=true failure=none
+  [batch 5 saved  ticks 101-125]
+[126] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[127] explore_nearby {} -> ok=true failure=none
+[128] explore_nearby {} -> ok=true failure=none
+[129] look_around {} -> ok=true failure=none
+[130] explore_nearby {} -> ok=true failure=none
+[131] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[132] explore_nearby {} -> ok=true failure=none
+[133] explore_nearby {} -> ok=true failure=none
+[134] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[135] explore_nearby {} -> ok=true failure=none
+[136] explore_nearby {} -> ok=true failure=none
+[137] explore_nearby {} -> ok=true failure=none
+[138] setup_workspace {} -> ok=true failure=none
+[139] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[140] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[141] explore_nearby {} -> ok=true failure=none
+[142] explore_nearby {} -> ok=true failure=none
+[143] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[144] explore_nearby {} -> ok=true failure=none
+[145] explore_nearby {} -> ok=true failure=none
+[146] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[147] explore_nearby {} -> ok=true failure=none
+[148] explore_nearby {} -> ok=true failure=none
+[149] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[150] explore_nearby {} -> ok=true failure=none
+  [batch 6 saved  ticks 126-150]
+[151] explore_nearby {} -> ok=true failure=none
+[152] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[153] explore_nearby {} -> ok=true failure=none
+[154] explore_nearby {} -> ok=true failure=none
+[155] look_around {} -> ok=true failure=none
+[156] explore_nearby {} -> ok=true failure=none
+[157] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[158] explore_nearby {} -> ok=true failure=none
+[159] explore_nearby {} -> ok=true failure=none
+[160] explore_nearby {} -> ok=true failure=none
+[161] explore_nearby {} -> ok=true failure=none
+[162] setup_workspace {} -> ok=true failure=none
+[163] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 1.'
+[164] collect_wood {} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[165] explore_nearby {} -> ok=true failure=none
+[166] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[167] status {} -> ok=true failure=none
+[168] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[169] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[170] explore_nearby {} -> ok=true failure=none
+[171] collect_wood {"count":4} -> ok=false failure=no_progress stop=no_targets_found collected=0 error='No target block found nearby. Try explore_nearby.'
+[172] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[173] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[174] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 30000ms.'
+[175] dig_staircase {} -> ok=false failure=no_progress
+  [batch 7 saved  ticks 151-175]
+[176] look_around {} -> ok=true failure=none
+[177] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[178] collect_wood {"count":1} -> ok=false failure=no_progress stop=low_health collected=0 error='Health too low for block acquisition: 7.83333158493042.'
+[179] status {} -> ok=true failure=none
+[180] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[181] collect_wood {"count":1} -> ok=false failure=no_progress stop=low_health collected=0 error='Health too low for block acquisition: 3.5000014305114746.'
+[182] eat_food {} -> ok=true failure=none
+[183] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[184] craft_planks {} -> ok=true failure=none
+[185] craft_sticks {} -> ok=true failure=none
+[186] craft_wooden_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 3 planks, have 2.'
+[187] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[188] collect_wood {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[189] craft_planks {} -> ok=true failure=none
+[190] craft_wooden_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (9.6 blocks).'
+[191] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[192] craft_wooden_pickaxe {} -> ok=true failure=none
+[193] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_deep_unreachable collected=0 error='Mined stone but drop fell deep and unreachable (vertDelta=-4, noSafeStand): abandoning this drop'
+[194] mine_stone {"count":1} -> ok=false failure=partial_progress_timeout stop=drop_no_safe_stand collected=0 error='Mined stone but drop collection failed: drop_no_safe_stand'
+[195] mine_stone {"count":1} -> ok=false failure=partial_progress_timeout stop=drop_no_safe_stand collected=0 error='Mined stone but drop collection failed: drop_no_safe_stand'
+[196] recover_position {} -> ok=true failure=none
+[197] mine_stone {"count":1} -> ok=true failure=none stop=collected_drop collected=3
+[198] craft_stone_pickaxe {} -> ok=true failure=none
+[199] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[200] explore_nearby {} -> ok=true failure=none
+  [batch 8 saved  ticks 176-200]
+[201] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[202] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[203] mine_coal {} -> ok=false failure=partial_progress_timeout stop=drop_deep_unreachable collected=0 error='Mined target block but drop fell deep and unreachable (vertDelta=-3.1, noSafeStand): abandoning this drop'
+[204] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_deep_unreachable collected=0 error='Mined stone but drop fell deep and unreachable (vertDelta=-3.8, noSafeStand): abandoning this drop'
+[205] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[206] explore_nearby {} -> ok=false failure=navigation_cancelled stop=path_goal_changed error='Exploration path failed: The goal was changed before it could be completed!'
+[207] return_to_workspace {} -> ok=true failure=none
+[208] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[209] setup_workspace {} -> ok=true failure=none
+[210] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 3.'
+[211] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[212] collect_wood {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[213] craft_planks {} -> ok=true failure=none
+[214] craft_crafting_table {} -> ok=true failure=none
+[215] place_crafting_table {} -> ok=true failure=none
+[216] craft_furnace {} -> ok=true failure=none
+[217] place_furnace {} -> ok=true failure=none
+[218] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[219] craft_sticks {} -> ok=true failure=none
+[220] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[221] explore_nearby {} -> ok=true failure=none
+[222] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[223] explore_nearby {} -> ok=true failure=none
+[224] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[225] mine_coal {} -> ok=false failure=partial_progress_timeout stop=drop_no_safe_stand collected=0 error='Mined target block but drop collection failed: drop_no_safe_stand'
+  [batch 9 saved  ticks 201-225]
+[226] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[227] explore_nearby {} -> ok=true failure=none
+[228] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[229] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout collected=0 error='Block acquisition failed: Digging aborted'
+[230] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[231] setup_workspace {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out setup_workspace after 30000ms.'
+[232] status {} -> ok=true failure=none
+[233] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[234] craft_stone_pickaxe {} -> ok=true failure=none
+[235] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[236] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[237] mine_coal {} -> ok=false failure=partial_progress_timeout stop=drop_deep_unreachable collected=0 error='Mined target block but drop fell deep and unreachable (vertDelta=-3, noSafeStand): abandoning this drop'
+[238] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[239] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[240] recover_death_items {} -> ok=false failure=action_failed stop=action_failed error='Could not reach death location: Took to long to decide path to goal!'
+[241] return_to_spawn_or_home {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach world spawn: Timed out pathing after 20000ms.'
+[242] setup_workspace {} -> ok=true failure=none
+[243] mine_stone {} -> ok=false failure=missing_tool stop=missing_required_tool error='Missing tool: wooden_pickaxe or better is required.'
+[244] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[245] craft_planks {} -> ok=true failure=none
+[246] craft_sticks {} -> ok=true failure=none
+[247] craft_wooden_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (10.8 blocks).'
+[248] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[249] craft_wooden_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 3 planks, have 2.'
+[250] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+  [batch 10 saved  ticks 226-250]
+[251] collect_wood {"count":1} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined target block but drop collection failed: drop_collection_partial_progress'
+[252] collect_wood {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[253] craft_planks {} -> ok=true failure=none
+[254] craft_wooden_pickaxe {} -> ok=true failure=none
+[255] mine_stone {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_stone after 30000ms.'
+[256] craft_stone_pickaxe {} -> ok=true failure=none
+[257] mine_stone {"count":5} -> ok=true failure=none stop=partial_collected collected=3
+[258] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[259] explore_nearby {} -> ok=true failure=none
+[260] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[261] explore_nearby {} -> ok=false failure=navigation_cancelled stop=path_goal_changed error='Exploration path failed: The goal was changed before it could be completed!'
+[262] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[263] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[264] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[265] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[266] mine_stone {} -> ok=true failure=none stop=collected_drop collected=1
+[267] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[268] mine_coal {} -> ok=true failure=none stop=partial_collected collected=1
+[269] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[270] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[271] mine_coal {} -> ok=false failure=partial_progress_timeout stop=drop_local_excavation_progress collected=0 error='Mined target block but drop collection failed: drop_local_excavation_progress'
+[272] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[273] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[274] explore_nearby {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe nearby exploration target found within radius 16.'
+[275] find_safe_workspace {"purpose":"general"} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+  [batch 11 saved  ticks 251-275]
+[276] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[277] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 30000ms.'
+[278] unstuck_escape {"mode":"any","radius":8} -> ok=true failure=none
+[279] status {} -> ok=true failure=none
+[280] approach_station {"station":"crafting_table"} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting_table visible within radius 24.'
+[281] return_to_workspace {"purpose":"crafting"} -> ok=false failure=station_not_reached stop=workspace_reached_but_station_not_usable error='At workspace, but crafting_table is not within usable range.'
+[282] setup_workspace {"need_crafting_table":true,"need_furnace":false,"need_chest":false} -> ok=true failure=none
+[283] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: The goal was changed before it could be completed!'
+[284] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=true failure=none
+[285] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 3.'
+[286] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[287] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[288] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[289] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[290] setup_workspace {"need_crafting_table":true,"need_furnace":false,"need_chest":false} -> ok=true failure=none
+[291] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[292] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[293] look_around {} -> ok=true failure=none
+[294] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[295] setup_workspace {"need_crafting_table":true,"need_furnace":false,"need_chest":false} -> ok=true failure=none
+[296] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 3.'
+[297] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[298] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[299] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[300] approach_station {"station":"crafting_table"} -> ok=true failure=none
+  [batch 12 saved  ticks 276-300]
+[301] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[302] collect_wood {"count":1} -> ok=true failure=none stop=collected_drop collected=1
+[303] craft_planks {} -> ok=true failure=none
+[304] craft_crafting_table {} -> ok=true failure=none
+[305] craft_sticks {} -> ok=true failure=none
+[306] craft_stone_pickaxe {} -> ok=true failure=none
+[307] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[308] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=partial_progress_timeout collected=0 error='Block acquisition failed: The goal was changed before it could be completed!'
+[309] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[310] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[311] setup_workspace {} -> ok=true failure=none
+[312] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[313] explore_nearby {} -> ok=true failure=none
+[314] mine_coal {} -> ok=true failure=none stop=partial_collected collected=1
+[315] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[316] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=drop_unreachable collected=0 error='Mined target block but drop collection failed: drop_unreachable'
+[317] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[318] explore_nearby {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe nearby exploration target found within radius 16.'
+[319] find_safe_workspace {"purpose":"general"} -> ok=false failure=navigation_cancelled stop=path_goal_changed error='Path to workspace failed: The goal was changed before it could be completed!'
+[320] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[321] craft_furnace {} -> ok=true failure=none
+[322] place_furnace {} -> ok=true failure=none
+[323] smelt_iron {} -> ok=true failure=none
+[324] craft_iron_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: iron_ingot x1.'
+[325] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+  [batch 13 saved  ticks 301-325]
+[326] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[327] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[328] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[329] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[330] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[331] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[332] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[333] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=action_timeout stop=action_timeout error='Timed out setup_workspace after 30000ms.'
+[334] status {} -> ok=true failure=none
+[335] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[336] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=action_timeout stop=action_timeout error='Timed out setup_workspace after 30000ms.'
+[337] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[338] unstuck_escape {"mode":"any","radius":8} -> ok=true failure=none
+[339] setup_workspace {"need_crafting_table":true,"need_furnace":true} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[340] return_to_surface {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out return_to_surface after 30000ms.'
+[341] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[342] setup_workspace {} -> ok=true failure=none
+[343] approach_station {"station":"crafting_table","radius":3} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[344] setup_workspace {} -> ok=true failure=none
+[345] craft_iron_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: iron_ingot x1.'
+[346] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[347] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[348] navigate_to_block_type {"targets":["iron_ore"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[349] explore_nearby {} -> ok=true failure=none
+[350] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+  [batch 14 saved  ticks 326-350]
+[351] craft_stone_pickaxe {} -> ok=true failure=none
+[352] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[353] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[354] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[355] mine_coal {} -> ok=false failure=partial_progress_timeout stop=drop_local_excavation_progress collected=0 error='Mined target block but drop collection failed: drop_local_excavation_progress'
+[356] mine_coal {} -> ok=true failure=none stop=partial_collected collected=1
+[357] mine_coal {} -> ok=true failure=none stop=partial_collected collected=3
+[358] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[359] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[360] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[361] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[362] explore_nearby {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe nearby exploration target found within radius 16.'
+[363] setup_workspace {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out setup_workspace after 30000ms.'
+[364] smelt_iron {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need raw_iron.'
+[365] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[366] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 30000ms.'
+[367] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 30000ms.'
+[368] explore_nearby {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe nearby exploration target found within radius 16.'
+[369] find_safe_workspace {"purpose":"general"} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+[370] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[371] mine_iron_ore {} -> ok=false failure=missing_tool stop=missing_required_tool error='Missing tool: stone_pickaxe or better is required.'
+[372] craft_stone_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 0.'
+[373] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[374] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[375] look_around {} -> ok=true failure=none
+  [batch 15 saved  ticks 351-375]
+[376] mine_iron_ore {} -> ok=false failure=missing_tool stop=missing_required_tool error='Missing tool: stone_pickaxe or better is required.'
+[377] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (9.8 blocks).'
+[378] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[379] craft_stone_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 0.'
+[380] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[381] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[382] mine_iron_ore {} -> ok=false failure=missing_tool stop=missing_required_tool error='Missing tool: stone_pickaxe or better is required.'
+[383] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (9.9 blocks).'
+[384] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[385] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[386] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[387] look_around {} -> ok=true failure=none
+[388] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[389] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[390] look_around {} -> ok=true failure=none
+[391] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[392] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[393] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[394] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[395] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[396] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[397] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[398] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[399] look_around {} -> ok=true failure=none
+[400] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+  [batch 16 saved  ticks 376-400]
+[401] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[402] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[403] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[404] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[405] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[406] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[407] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[408] look_around {} -> ok=true failure=none
+[409] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[410] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[411] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[412] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[413] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[414] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[415] look_around {} -> ok=true failure=none
+[416] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[417] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[418] status {} -> ok=true failure=none
+[419] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[420] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[421] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[422] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[423] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[424] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[425] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+  [batch 17 saved  ticks 401-425]
+[426] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[427] look_around {} -> ok=true failure=none
+[428] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[429] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[430] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[431] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[432] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[433] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[434] look_around {} -> ok=true failure=none
+[435] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[436] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[437] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[438] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[439] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[440] look_around {} -> ok=true failure=none
+[441] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[442] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[443] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[444] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[445] look_around {} -> ok=true failure=none
+[446] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[447] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[448] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[449] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[450] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+  [batch 18 saved  ticks 426-450]
+[451] look_around {} -> ok=true failure=none
+[452] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[453] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[454] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[455] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[456] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[457] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[458] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[459] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[460] look_around {} -> ok=true failure=none
+[461] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[462] status {} -> ok=true failure=none
+[463] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[464] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[465] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[466] look_around {} -> ok=true failure=none
+[467] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[468] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[469] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[470] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[471] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[472] look_around {} -> ok=true failure=none
+[473] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[474] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[475] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+  [batch 19 saved  ticks 451-475]
+[476] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[477] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[478] look_around {} -> ok=true failure=none
+[479] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[480] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[481] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[482] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[483] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[484] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[485] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[486] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[487] look_around {} -> ok=true failure=none
+[488] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[489] status {} -> ok=true failure=none
+[490] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[491] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[492] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[493] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[494] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[495] look_around {} -> ok=true failure=none
+[496] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[497] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[498] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[499] status {} -> ok=true failure=none
+[500] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+  [batch 20 saved  ticks 476-500]
+[501] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[502] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[503] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[504] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[505] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[506] look_around {} -> ok=true failure=none
+[507] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[508] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[509] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[510] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[511] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[512] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[513] status {} -> ok=true failure=none
+[514] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[515] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[516] look_around {} -> ok=true failure=none
+[517] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[518] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[519] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[520] navigate_to_block_type {"targets":["oak_log","spruce_log","birch_log","jungle_log","acacia_log","dark_oak_log","mangrove_log","cherry_log"]} -> ok=false failure=action_timeout stop=action_timeout error='Timed out navigate_to_block_type after 30000ms.'
+[521] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[522] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[523] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[524] look_around {} -> ok=true failure=none
+[525] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+  [batch 21 saved  ticks 501-525]
+[526] status {} -> ok=true failure=none
+[527] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[528] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[529] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[530] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[531] look_around {} -> ok=true failure=none
+[532] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[533] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[534] status {} -> ok=true failure=none
+[535] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[536] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[537] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[538] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[539] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[540] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[541] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[542] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[543] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[544] look_around {} -> ok=true failure=none
+[545] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[546] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[547] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[548] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[549] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[550] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+  [batch 22 saved  ticks 526-550]
+[551] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[552] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[553] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[554] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[555] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[556] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[557] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[558] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[559] look_around {} -> ok=true failure=none
+[560] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[561] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[562] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[563] status {} -> ok=true failure=none
+[564] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[565] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[566] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[567] look_around {} -> ok=true failure=none
+[568] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[569] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[570] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[571] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[572] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[573] look_around {} -> ok=true failure=none
+[574] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[575] status {} -> ok=true failure=none
+  [batch 23 saved  ticks 551-575]
+[576] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[577] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[578] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[579] look_around {} -> ok=true failure=none
+[580] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[581] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[582] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[583] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[584] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[585] look_around {} -> ok=true failure=none
+[586] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[587] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[588] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[589] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[590] look_around {} -> ok=true failure=none
+[591] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[592] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[593] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[594] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[595] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[596] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[597] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[598] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[599] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[600] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+  [batch 24 saved  ticks 576-600]
+[601] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[602] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[603] status {} -> ok=true failure=none
+[604] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[605] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[606] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[607] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[608] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[609] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[610] look_around {} -> ok=true failure=none
+[611] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[612] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[613] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[614] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[615] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[616] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[617] status {} -> ok=true failure=none
+[618] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[619] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[620] look_around {} -> ok=true failure=none
+[621] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[622] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[623] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[624] status {} -> ok=true failure=none
+[625] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+  [batch 25 saved  ticks 601-625]
+[626] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[627] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[628] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[629] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[630] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[631] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[632] look_around {} -> ok=true failure=none
+[633] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[634] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[635] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[636] look_around {} -> ok=true failure=none
+[637] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[638] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[639] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[640] look_around {} -> ok=true failure=none
+[641] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[642] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[643] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[644] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[645] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[646] look_around {} -> ok=true failure=none
+[647] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[648] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[649] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[650] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+  [batch 26 saved  ticks 626-650]
+[651] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[652] look_around {} -> ok=true failure=none
+[653] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[654] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[655] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[656] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[657] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[658] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[659] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[660] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[661] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[662] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[663] look_around {} -> ok=true failure=none
+[664] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[665] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[666] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[667] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[668] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[669] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[670] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[671] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[672] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[673] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[674] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[675] look_around {} -> ok=true failure=none
+  [batch 27 saved  ticks 651-675]
+[676] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[677] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[678] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[679] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[680] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[681] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[682] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[683] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[684] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[685] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[686] status {} -> ok=true failure=none
+[687] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[688] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[689] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[690] look_around {} -> ok=true failure=none
+[691] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[692] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[693] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[694] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[695] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[696] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[697] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[698] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[699] look_around {} -> ok=true failure=none
+[700] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+  [batch 28 saved  ticks 676-700]
+[701] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[702] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[703] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[704] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[705] status {} -> ok=true failure=none
+[706] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[707] look_around {} -> ok=true failure=none
+[708] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[709] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[710] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[711] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[712] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[713] look_around {} -> ok=true failure=none
+[714] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[715] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[716] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[717] look_around {} -> ok=true failure=none
+[718] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[719] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[720] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[721] status {} -> ok=true failure=none
+[722] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[723] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[724] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[725] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+  [batch 29 saved  ticks 701-725]
+[726] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[727] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[728] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[729] look_around {} -> ok=true failure=none
+[730] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[731] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[732] look_around {} -> ok=true failure=none
+[733] mine_stone {} -> ok=false failure=missing_tool stop=missing_required_tool error='Missing tool: wooden_pickaxe or better is required.'
+[734] craft_wooden_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 3 planks, have 1.'
+[735] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[736] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[737] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[738] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[739] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[740] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[741] look_around {} -> ok=true failure=none
+[742] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[743] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[744] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[745] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[746] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[747] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[748] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[749] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[750] look_around {} -> ok=true failure=none
+  [batch 30 saved  ticks 726-750]
+[751] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[752] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[753] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[754] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[755] status {} -> ok=true failure=none
+[756] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[757] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[758] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[759] status {} -> ok=true failure=none
+[760] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[761] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[762] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[763] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[764] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[765] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[766] look_around {} -> ok=true failure=none
+[767] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[768] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[769] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[770] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[771] collect_wood {"count":4} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[772] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[773] look_around {} -> ok=true failure=none
+[774] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[775] status {} -> ok=true failure=none
+  [batch 31 saved  ticks 751-775]
+[776] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[777] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[778] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[779] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[780] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[781] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[782] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[783] look_around {} -> ok=true failure=none
+[784] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[785] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[786] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[787] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[788] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[789] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[790] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[791] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[792] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[793] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[794] look_around {} -> ok=true failure=none
+[795] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[796] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[797] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[798] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[799] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[800] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+  [batch 32 saved  ticks 776-800]
+[801] look_around {} -> ok=true failure=none
+[802] scan_for_specific_block {"radius":32} -> ok=false failure=invalid_args error="Action 'scan_for_specific_block' requires args.targets as a non-empty list of block names."
+[803] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[804] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[805] status {} -> ok=true failure=none
+[806] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[807] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[808] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[809] look_around {} -> ok=true failure=none
+[810] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[811] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[812] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[813] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[814] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[815] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[816] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+[817] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[818] look_around {} -> ok=true failure=none
+[819] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[820] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[821] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[822] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[823] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[824] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[825] craft_sticks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 planks, have 1.'
+  [batch 33 saved  ticks 801-825]
+[826] collect_wood {} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[827] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[828] look_around {} -> ok=true failure=none
+[829] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[830] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[831] look_around {} -> ok=true failure=none
+[832] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[833] collect_wood {"count":1} -> ok=false failure=action_timeout stop=action_timeout error='Timed out collect_wood after 30000ms.'
+[834] explore_nearby {} -> ok=false failure=navigation_failed stop=path_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+  [batch 34 saved  ticks 826-834 (partial)]
+
+Stopped. 834 ticks total. Output: out/stream_runs/20260520T142142Z

@@ -32,6 +32,19 @@ def expect_valid_normalized(
     assert info.get("normalization_reason") == expected_reason
 
 
+def expect_valid_clamped_radius(request: ActionRequest, expected_radius: int, from_radius: int) -> None:
+    normalized = validate_action(request)
+    expected_args = dict(request.args or {})
+    expected_args["radius"] = expected_radius
+    assert normalized.action == request.action
+    assert normalized.args == expected_args
+    _, info = normalize_action_args(request)
+    assert info.get("args_normalized") is True
+    assert info.get("normalized_arg_keys") == ["radius"]
+    assert info.get("normalization_reason") == "arg_clamped"
+    assert info.get("clampedArgs") == {"radius": {"from": from_radius, "to": expected_radius}}
+
+
 def expect_canonical(request: ActionRequest, expected_action: str, expected_args: dict | None = None) -> None:
     canonical = validate_action(request)
     assert canonical.action == expected_action
@@ -73,6 +86,8 @@ def main() -> None:
     expect_valid(ActionRequest(action="set_vtuber_mood", args={"mood": "focused"}))
     expect_valid(ActionRequest(action="acquire_blocks", args={"targets": ["stone"]}))
     expect_valid_normalized(ActionRequest(action="acquire_blocks", args={"targets": "coal_ore"}), {"targets": ["coal_ore"]})
+    expect_valid_clamped_radius(ActionRequest(action="acquire_blocks", args={"targets": ["stone"], "radius": 4}), 8, 4)
+    expect_valid_clamped_radius(ActionRequest(action="acquire_blocks", args={"targets": ["stone"], "radius": 97}), 96, 97)
     expect_valid(ActionRequest(action="navigate_to_block_type", args={"targets": ["stone"]}))
     expect_valid_normalized(ActionRequest(action="navigate_to_block_type", args={"targets": "spruce_log"}), {"targets": ["spruce_log"]})
     expect_valid(ActionRequest(action="navigate_to_block_type", args={"targets": ["coal_ore"], "radius": 48}))
@@ -108,8 +123,12 @@ def main() -> None:
     expect_valid(ActionRequest(action="craft_wooden_pickaxe"))
     expect_valid(ActionRequest(action="mine_stone"))
     expect_valid(ActionRequest(action="mine_stone", args={"count": 3}))
+    expect_valid_clamped_radius(ActionRequest(action="mine_stone", args={"radius": 4}), 8, 4)
+    expect_valid_clamped_radius(ActionRequest(action="mine_stone", args={"radius": 97}), 96, 97)
     expect_valid(ActionRequest(action="mine_coal", args={"count": 32}))
     expect_valid(ActionRequest(action="mine_coal", args={"radius": 32}))
+    expect_valid_clamped_radius(ActionRequest(action="mine_coal", args={"radius": 4}), 8, 4)
+    expect_valid_clamped_radius(ActionRequest(action="mine_coal", args={"radius": 97}), 96, 97)
     expect_valid(ActionRequest(action="mine_coal", args={"count": 4, "radius": 16, "allowExcavate": True, "accessMode": "safe_staircase"}))
     expect_valid(ActionRequest(action="mine_coal", args={"allowExcavate": False, "accessMode": "surface_first"}))
     expect_valid_normalized(
@@ -124,6 +143,8 @@ def main() -> None:
     )
     expect_valid(ActionRequest(action="mine_coal", args={"accessMode": "exposed"}))
     expect_valid(ActionRequest(action="mine_iron_ore", args={"count": 3}))
+    expect_valid_clamped_radius(ActionRequest(action="mine_iron_ore", args={"radius": 4}), 8, 4)
+    expect_valid_clamped_radius(ActionRequest(action="mine_iron_ore", args={"radius": 97}), 96, 97)
     expect_valid(ActionRequest(action="craft_stone_pickaxe"))
     expect_valid_sanitized(ActionRequest(action="craft_stone_pickaxe", args={"count": 1}), {})
     expect_valid(ActionRequest(action="smelt_item", args={"input": "raw_iron", "fuel": "coal", "count": 3}))
@@ -158,7 +179,6 @@ def main() -> None:
     expect_error(ActionRequest(action="acquire_blocks", args={"targets": []}), "non-empty list")
     expect_error(ActionRequest(action="acquire_blocks", args={"targets": ["diamond_block"]}), "target is not allowed")
     expect_error(ActionRequest(action="acquire_blocks", args={"targets": ["stone"], "count": 33}), "between 1 and 32")
-    expect_error(ActionRequest(action="acquire_blocks", args={"targets": ["stone"], "radius": 7}), "between 8 and 96")
     expect_error(ActionRequest(action="acquire_blocks", args={"targets": ["stone"], "allowExcavate": "yes"}), "must be a boolean")
     expect_error(ActionRequest(action="acquire_blocks", args={"targets": ["stone"], "accessMode": "unsafe"}), "must be one of")
     expect_error(ActionRequest(action="navigate_to_block_type"), "requires args.targets")
@@ -215,8 +235,6 @@ def main() -> None:
     expect_error(ActionRequest(action="mine_stone", args={"count": 17}), "between 1 and 16")
     expect_error(ActionRequest(action="mine_stone", args={"count": False}), "must be an integer")
     expect_error(ActionRequest(action="mine_coal", args={"count": 33}), "between 1 and 32")
-    expect_error(ActionRequest(action="mine_coal", args={"radius": 7}), "between 8 and 96")
-    expect_error(ActionRequest(action="mine_coal", args={"radius": 97}), "between 8 and 96")
     expect_error(ActionRequest(action="mine_coal", args={"allowExcavate": "yes"}), "must be a boolean")
     expect_error(ActionRequest(action="mine_coal", args={"accessMode": "underground"}), "must be one of")
     expect_error(ActionRequest(action="mine_coal", args={"targets": ["coal_ore"]}), "unknown args")

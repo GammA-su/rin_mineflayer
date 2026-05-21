@@ -37,6 +37,8 @@ ALLOWED_ACTIONS = frozenset(
         "craft_iron_sword",
         "craft_iron_armor",
         "recover_position",
+        "unstuck_escape",
+        "seek_open_area",
         "check_inventory",
         "check_time_of_day",
         "check_light_level",
@@ -375,6 +377,7 @@ _ACTION_ARGS: dict[str, frozenset[str]] = {
     "mine_stone": frozenset({"count", "radius"}),
     "craft_stone_pickaxe": frozenset(),
     "recover_position": frozenset(),
+    "unstuck_escape": frozenset({"radius", "mode"}),
     "check_inventory": frozenset(),
     "check_time_of_day": frozenset(),
     "check_light_level": frozenset(),
@@ -624,6 +627,7 @@ def normalize_action_args(action_request: ActionRequest) -> tuple[ActionRequest,
     args = dict(request.args or {})
     normalized_keys: list[str] = []
     normalization_reasons: list[str] = []
+    clamped_args: dict[str, dict[str, int]] = {}
     for key in sorted(list_arg_keys):
         value = args.get(key)
         if isinstance(value, str) and value.strip():
@@ -645,15 +649,56 @@ def normalize_action_args(action_request: ActionRequest) -> tuple[ActionRequest,
             if "string_boolean_to_boolean" not in normalization_reasons:
                 normalization_reasons.append("string_boolean_to_boolean")
 
+    _normalize_radius_clamp(
+        request.action,
+        args,
+        normalized_keys=normalized_keys,
+        normalization_reasons=normalization_reasons,
+        clamped_args=clamped_args,
+    )
+
     if not normalized_keys:
         return request, {}
 
-    return request.model_copy(update={"args": args}), {
+    info = {
         "args_normalized": True,
         "normalized_arg_keys": normalized_keys,
         "normalization_reason": normalization_reasons[0] if len(normalization_reasons) == 1 else "multiple",
         "normalization_reasons": normalization_reasons,
     }
+    if clamped_args:
+        info["clampedArgs"] = clamped_args
+
+    return request.model_copy(update={"args": args}), info
+
+
+def _normalize_radius_clamp(
+    action: str,
+    args: dict[str, Any],
+    *,
+    normalized_keys: list[str],
+    normalization_reasons: list[str],
+    clamped_args: dict[str, dict[str, int]],
+) -> None:
+    if action not in {"mine_coal", "mine_iron_ore", "mine_stone", "acquire_blocks"}:
+        return
+    if "radius" not in args:
+        return
+
+    value = args["radius"]
+    if not isinstance(value, int) or isinstance(value, bool):
+        return
+
+    clamped = max(8, min(96, value))
+    if clamped == value:
+        return
+
+    args["radius"] = clamped
+    clamped_args["radius"] = {"from": value, "to": clamped}
+    if "radius" not in normalized_keys:
+        normalized_keys.append("radius")
+    if "arg_clamped" not in normalization_reasons:
+        normalization_reasons.append("arg_clamped")
 
 
 def validate_action(action_request: ActionRequest) -> ActionRequest:
@@ -709,12 +754,12 @@ def validate_action(action_request: ActionRequest) -> ActionRequest:
         pass
     elif request.action == "mine_stone":
         _validate_optional_count(request.action, request.args, max_count=16)
-        _validate_optional_int_range(request.action, request.args, "radius", min_value=4, max_value=96)
+        _validate_optional_int_range(request.action, request.args, "radius", min_value=8, max_value=96)
     elif request.action == "mine_coal":
         _validate_mine_coal(request.args)
     elif request.action == "mine_iron_ore":
         _validate_optional_count(request.action, request.args, max_count=32)
-        _validate_optional_int_range(request.action, request.args, "radius", min_value=4, max_value=96)
+        _validate_optional_int_range(request.action, request.args, "radius", min_value=8, max_value=96)
     elif request.action == "smelt_item":
         _validate_smelt_item(request.args)
     elif request.action == "smelt_iron":
@@ -844,6 +889,10 @@ def validate_action(action_request: ActionRequest) -> ActionRequest:
         _validate_optional_count("collect_blaze_rods", request.args, max_count=12)
     elif request.action == "describe_actions":
         _validate_describe_actions(request.args)
+    elif request.action == "unstuck_escape":
+        _validate_optional_int_range("unstuck_escape", request.args, "radius", 4, 16)
+        _validate_enum_optional("unstuck_escape", request.args, "mode",
+                                frozenset({"safe_random_walk", "dig_clearance", "upward_step", "any"}))
 
     return request
 

@@ -260,6 +260,16 @@ def verify_action(
             )
             relevant_state = None
             repeat_condition = "Only retry after providing valid targets." if failed_because else None
+        elif action_request.action == "return_to_surface":
+            failed_because = _build_return_to_surface_failed_because(result, stop_reason, failure_type)
+            relevant_state = _build_navigation_relevant_state(after, action_request.args if isinstance(action_request.args, dict) else {}, result)
+            repeatable_now_val = True
+            repeat_condition = "Retry after moving to a different area, changing direction, or gaining a pickaxe to dig out."
+        elif action_request.action == "unstuck_escape":
+            failed_because = _build_unstuck_escape_failed_because(result, stop_reason, failure_type)
+            relevant_state = _build_navigation_relevant_state(after, action_request.args if isinstance(action_request.args, dict) else {}, result)
+            repeatable_now_val = True
+            repeat_condition = "Retry with a different mode (dig_clearance, upward_step) or after gaining a pickaxe."
         else:
             # Build generic requirement failure fields once, here in the verifier.
             # These are passed through unchanged to the prompt — not re-derived later.
@@ -274,6 +284,42 @@ def verify_action(
             relevant_state = _build_relevant_state_for_failure(after, missing_materials)
             repeat_condition = "Only retry after missing requirements changed." if failed_because else None
 
+        # Override action_timeout → no_progress_timeout when JS profiler confirmed zero progress.
+        # Requirement: distance_moved < 0.5 AND inventory_delta empty AND needs_condition_change set.
+        needs_condition_change = False
+        if (
+            failure_type == "action_timeout"
+            and result.get("needs_condition_change") is True
+        ):
+            diag = result.get("diagnostics") if isinstance(result.get("diagnostics"), dict) else {}
+            dist = diag.get("distance_moved")
+            inv_delta = diag.get("inventory_delta")
+            profiler_no_progress = (
+                dist is None or (isinstance(dist, (int, float)) and dist < 0.5)
+            ) and not inv_delta
+            if profiler_no_progress:
+                failure_type = "no_progress_timeout"
+                repeatable_now_val = False
+                needs_condition_change = True
+                repeat_condition = (
+                    "No progress was made — position, inventory, and terrain unchanged. "
+                    "Move to a new area or change world state before retrying."
+                )
+
+        # Extract profiler diagnostics from JS result to surface in the verifier output.
+        js_diag = result.get("diagnostics") if isinstance(result.get("diagnostics"), dict) else {}
+        profiler_fields: dict[str, Any] = {}
+        for _k in (
+            "currentSubstep", "timeout_classification", "distance_moved", "y_delta",
+            "inventory_delta", "progress_made", "pathfinder_active", "path_goal",
+            "bot_position_start", "bot_position_end", "action_elapsed_ms",
+            "timeout_config", "needs_condition_change",
+        ):
+            if _k in js_diag:
+                profiler_fields[_k] = js_diag[_k]
+        if profiler_fields:
+            diagnostics = {**diagnostics, **profiler_fields}
+
         return {
             "success": False,
             "partial_success": partial_success,
@@ -282,6 +328,7 @@ def verify_action(
             # Generic requirement failure fields (first-class)
             "failed_because": failed_because,
             "repeatable_now": repeatable_now_val,
+            "needs_condition_change": needs_condition_change,
             "relevant_state": relevant_state,
             "repeat_condition": repeat_condition,
             "evidence": {
@@ -302,6 +349,7 @@ def verify_action(
                 "partial_success": partial_success,
                 "usable_for_station": usable_for_station,
                 "distance_improved": distance_improved,
+                "needs_condition_change": needs_condition_change,
                 "diagnostics": diagnostics,
                 "before": _small_evidence(before),
                 "after": _small_evidence(after),
@@ -768,6 +816,11 @@ def _failure_recommendation(
 ) -> str:
     if failure_type == "bridge_error":
         return "Check the bridge connection."
+    if failure_type == "no_progress_timeout":
+        return (
+            "Zero progress made — bot did not move, gain items, or change terrain. "
+            "Move to a new location, explore a different area, or change world state before retrying."
+        )
     if failure_type == "partial_progress_timeout":
         return "Partial progress means continuing may be reasonable, but you may choose any valid action."
     if failure_type == "partial_progress":
@@ -1364,3 +1417,58 @@ def _build_relevant_state_for_failure(
             else:
                 relevant[f"inv_{mat}"] = counts.get(mat, 0)
     return relevant
+
+
+def _build_return_to_surface_failed_because(
+    result: dict[str, Any],
+    stop_reason: str | None,
+    failure_type: str,
+) -> list[dict[str, Any]]:
+    """Build failed_because for return_to_surface non-partial-progress failures."""
+    kind = "no_progress" if failure_type == "no_progress" else "navigation_failed"
+    entry: dict[str, Any] = {
+        "kind": kind,
+        "action": "return_to_surface",
+        "recoverable": True,
+    }
+    if stop_reason:
+        entry["stop_reason"] = stop_reason
+    vertical_delta = result.get("vertical_delta")
+    if vertical_delta is not None:
+        entry["vertical_delta"] = vertical_delta
+    blocks_dug = result.get("blocks_dug")
+    if blocks_dug is not None:
+        entry["blocks_dug"] = blocks_dug
+    path_attempts = result.get("pathAttempts")
+    if path_attempts is not None:
+        entry["pathAttempts"] = path_attempts
+    diagnostics = result.get("diagnostics")
+    if isinstance(diagnostics, dict):
+        for k, v in diagnostics.items():
+            entry[k] = v
+    return [entry]
+
+
+def _build_unstuck_escape_failed_because(
+    result: dict[str, Any],
+    stop_reason: str | None,
+    failure_type: str,
+) -> list[dict[str, Any]]:
+    kind = "no_progress" if failure_type == "no_progress" else "navigation_failed"
+    entry: dict[str, Any] = {
+        "kind": kind,
+        "action": "unstuck_escape",
+        "recoverable": True,
+    }
+    if stop_reason:
+        entry["stop_reason"] = stop_reason
+    for field in ("distance_moved", "y_delta", "blocks_dug", "clearance_created",
+                  "local_space_before", "local_space_after", "escape_strategy_used"):
+        val = result.get(field)
+        if val is not None:
+            entry[field] = val
+    diagnostics = result.get("diagnostics")
+    if isinstance(diagnostics, dict):
+        for k, v in diagnostics.items():
+            entry[k] = v
+    return [entry]

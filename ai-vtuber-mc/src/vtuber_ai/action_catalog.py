@@ -155,6 +155,32 @@ _CATALOG_LIST: list[ActionSpec] = [
        preconditions=["bot_is_underground"],
        moves_bot=True, can_dig=True),
 
+    _s("unstuck_escape", "recovery", "implemented", "medium",
+       "Emergency escape for cramped underground navigation stalls. "
+       "Tries pathfinding to nearby safe positions, then digs body/head clearance if stuck. "
+       "Use when repeated return_to_surface/setup_workspace/approach_station fail with no movement. "
+       "Returns distance_moved, y_delta, blocks_dug, clearance_created, escape_strategy_used.",
+       "verify_position_changed", "safe_retry",
+       moves_bot=True, can_dig=True,
+       args_schema={
+           "radius": {"type": "number", "default": 8, "min": 4, "max": 16},
+           "mode": {"type": "string", "enum": ["safe_random_walk", "dig_clearance", "upward_step", "any"], "default": "any"},
+       }),
+
+    _s("seek_open_area", "recovery", "implemented", "low",
+       "Move toward a more open, surface-adjacent, or wood-accessible position. "
+       "Scores candidates by sky-light level, height gain, nearby logs/leaves, and danger avoidance. "
+       "Use as a recovery action when collect_wood repeatedly fails target_not_found or target_unreachable "
+       "and the environment (not pathfinding) is the bottleneck — the bot needs to be somewhere else. "
+       "Returns start/end position, distance_moved, y_delta, sky_visible, nearby_logs counts, selected_strategy.",
+       "verify_position_changed", "safe_retry",
+       args_schema={
+           "radius": {"type": "number", "default": 32, "min": 8, "max": 64},
+           "preferSurface": {"type": "boolean", "default": True},
+       },
+       moves_bot=True,
+       exposes_to_llm=True),
+
     _s("mark_waypoint", "core_control", "implemented", "low",
        "Save the current position and dimension as a named waypoint. "
        "Kinds: home|surface|crafting_area|furnace|mine_entrance|nether_portal_overworld|"
@@ -234,10 +260,13 @@ _CATALOG_LIST: list[ActionSpec] = [
        args_schema={"radius": "8-64 optional (default 16)"}),
 
     _s("scan_for_specific_block", "sensing", "implemented", "low",
-       "Scan for specific named blocks within radius; targets is required (non-empty list of block names). "
-       "Returns nearest occurrence of each. Read-only.",
+       "Scan for specific named blocks within radius. "
+       "REQUIRED: targets must be a non-empty list of exact block names, e.g. [\"oak_log\", \"birch_log\"]. "
+       "MAX 6 TARGETS per call — the bot scans only the first 6 targets in the list; excess targets are silently ignored. "
+       "Omitting targets or passing an empty list causes an invalid_args error. "
+       "Returns nearest occurrence of each scanned target. Read-only.",
        "verify_action_result_ok", "idempotent",
-       args_schema={"targets": "required non-empty list of block names to scan for", "radius": "8-96 optional (default 32)"}),
+       args_schema={"targets": "REQUIRED non-empty list of up to 6 block names to scan for", "radius": "8-96 optional (default 32)"}),
 
     _s("scan_for_liquids", "sensing", "implemented", "low",
        "Detect nearby water and lava clusters with distance and danger flags. "

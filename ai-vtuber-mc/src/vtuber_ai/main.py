@@ -10,6 +10,7 @@ from vtuber_ai.agent import run_agent_loop, run_agent_once
 from vtuber_ai.action_catalog import actions_by_status, validate_action_catalog
 from vtuber_ai.autonomy import current_agent_state, run_agent_live, run_agent_tick
 from vtuber_ai.curriculum import inventory_counts, recommend_objective
+from vtuber_ai.game_brain import generate_episode_summary
 from vtuber_ai.llm import plan_action
 from vtuber_ai.memory import get_recent_agent_ticks, get_recent_events, init_db, log_death_event, log_event
 from vtuber_ai.milestones import build_milestone_state
@@ -27,7 +28,7 @@ from vtuber_ai.world_memory import (
 )
 from vtuber_ai.mineflayer_client import get_bot_status, send_action
 from vtuber_ai.policy import PolicyError, validate_action
-from vtuber_ai.schemas import ActionResult, AgentLiveRequest, AgentRunRequest, AgentTickRequest, ChatGoalRequest
+from vtuber_ai.schemas import ActionResult, AgentLiveRequest, AgentRunRequest, AgentTickRequest, ChatGoalRequest, EpisodeSummaryRequest
 from vtuber_ai.tts import emit_speech_text
 
 load_dotenv()
@@ -264,6 +265,28 @@ async def agent_tick(request: AgentTickRequest | None = None) -> dict[str, Any]:
         )
 
     return await run_agent_tick(request)
+
+
+@app.post("/agent/episode_summary")
+async def agent_episode_summary(request: EpisodeSummaryRequest | None = None) -> dict[str, Any]:
+    request = request or EpisodeSummaryRequest()
+    llm_config: dict[str, Any] = {}
+    if request.llm is not None:
+        llm_config = request.llm.model_dump(exclude_none=True)
+    for key in ("llm_provider", "llm_model", "llm_base_url", "llm_api_key_env"):
+        val = getattr(request, key, None)
+        if val is not None:
+            llm_config[key.removeprefix("llm_")] = val
+
+    summary = generate_episode_summary(
+        episode_index=request.episode_index,
+        tick_range=request.tick_range,
+        episode_ticks=request.episode_ticks,
+        last_status=request.last_status,
+        milestones=request.milestones,
+        llm_config=llm_config or None,
+    )
+    return {"ok": True, **summary}
 
 
 @app.post("/agent/live")

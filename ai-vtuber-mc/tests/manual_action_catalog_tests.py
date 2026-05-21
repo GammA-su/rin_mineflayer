@@ -38,6 +38,15 @@ def main() -> None:
     for name, spec in get_llm_exposed_specs().items():
         assert spec.status in {"implemented", "partial"}, f"{name} exposes invalid status {spec.status}"
 
+    from vtuber_ai.action_catalog import CATALOG
+    unstuck = CATALOG.get("unstuck_escape")
+    assert unstuck is not None, "unstuck_escape missing from catalog"
+    assert unstuck.status == "implemented", f"unstuck_escape status={unstuck.status}"
+    assert unstuck.moves_bot, "unstuck_escape must have moves_bot=True"
+    assert unstuck.can_dig, "unstuck_escape must have can_dig=True"
+    assert "radius" in (unstuck.args_schema or {}), "unstuck_escape missing radius arg"
+    assert "mode" in (unstuck.args_schema or {}), "unstuck_escape missing mode arg"
+
     print(
         "manual_action_catalog_tests passed:",
         f"total={summary['total']}",

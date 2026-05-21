@@ -1,0 +1,12 @@
+Stream loop starting — output: out/stream_runs/20260521T114407Z
+  mission      : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, strategic episode memory, action results, stuck-state facts, failed requirements, and current state to recover naturally.
+  api_url      : http://127.0.0.1:8000/agent/tick
+  context_mode : episodic
+  backend mode : compressed + episode memory injection
+  episode_ticks: 50  max_episodes=20
+  llm          : provider=local_openai_compatible model=Qwen3.6-27B-Q4_K_M.gguf base_url=http://127.0.0.1:8087/v1 api_key_env=(provider default)
+  ticks/batch  : 25  tick_delay: 1.0s
+  personality  : http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] craft_iron_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: iron_ingot x1.'

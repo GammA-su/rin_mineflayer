@@ -1,0 +1,131 @@
+Stream loop starting — output: out/stream_runs/20260520T113421Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, stuck-state facts, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  ticks/batch: 25  tick_delay: 1.0s
+  personality: http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] explore_nearby {} -> ok=true failure=none
+[2] explore_nearby {} -> ok=true failure=none
+[3] navigate_to_block_type {"targets":["spruce_log"],"radius":8} -> ok=true failure=none
+[4] setup_workspace {} -> ok=true failure=none
+[5] craft_crafting_table {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 4 planks, have 0.'
+[6] craft_planks {} -> ok=true failure=none
+[7] craft_crafting_table {} -> ok=true failure=none
+[8] place_crafting_table {} -> ok=true failure=none
+[9] mine_stone {"count":1} -> ok=false failure=missing_tool stop=missing_required_tool error='Missing tool: wooden_pickaxe or better is required.'
+[10] craft_wooden_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 2 sticks, have 0.'
+[11] craft_sticks {} -> ok=true failure=none
+[12] craft_wooden_pickaxe {} -> ok=true failure=none
+[13] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[14] mine_stone {"count":1} -> ok=false failure=partial_progress_timeout stop=drop_deep_unreachable collected=0 error='Mined stone but drop fell deep and unreachable (vertDelta=-4.4, noSafeStand): abandoning this drop'
+[15] mine_stone {"count":1} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[16] mine_stone {"count":1} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined stone but drop collection failed: drop_direct_walk_no_progress'
+[17] mine_stone {"count":1} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[18] mine_stone {"count":1} -> ok=true failure=none stop=collected_drop collected=4
+[19] craft_sticks {"count":4} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: need 8 planks, have 7.'
+[20] mine_stone {} -> ok=true failure=none stop=partial_collected collected=2
+[21] mine_stone {"count":10} -> ok=true failure=none stop=partial_collected collected=5
+[22] craft_sticks {} -> ok=true failure=none
+[23] craft_stone_pickaxe {} -> ok=true failure=none
+[24] mine_stone {} -> ok=true failure=none stop=collected_drop collected=3
+[25] mine_stone {} -> ok=true failure=none stop=partial_collected collected=2
+  [batch 1 saved  ticks 1-25]
+[26] mine_stone {"count":16} -> ok=true failure=none stop=partial_collected collected=1
+[27] mine_stone {"count":4} -> ok=true failure=none stop=collected_drop collected=4
+[28] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[29] craft_stone_pickaxe {} -> ok=true failure=none
+[30] mine_coal {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_coal after 60000ms.'
+[31] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[32] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (10.7 blocks).'
+[33] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[34] approach_station {"station":"crafting_table","radius":6} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[35] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (6.7 blocks).'
+[36] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[37] mine_coal {"radius":16,"allowExcavate":true} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined target block but drop collection failed: drop_collection_partial_progress'
+[38] mine_coal {"radius":32,"allowExcavate":true} -> ok=true failure=none stop=partial_collected collected=1
+[39] approach_station {"station":"crafting_table","radius":3} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[40] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[41] return_to_surface {} -> ok=false failure=no_progress
+[42] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[43] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[44] return_to_surface {} -> ok=false failure=no_progress
+[45] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[46] setup_workspace {"need_crafting_table":true,"need_furnace":false} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[47] return_to_surface {} -> ok=false failure=no_progress
+[48] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[49] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[50] return_to_surface {} -> ok=false failure=no_progress
+  [batch 2 saved  ticks 26-50]
+[51] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[52] setup_workspace {"need_crafting_table":true,"need_furnace":false,"radius":8} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 8.'
+[53] return_to_surface {} -> ok=false failure=no_progress
+[54] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[55] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[56] return_to_surface {} -> ok=false failure=no_progress
+[57] find_safe_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[58] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[59] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[60] return_to_surface {} -> ok=false failure=no_progress
+[61] setup_workspace {"need_crafting_table":true,"radius":20} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 20.'
+[62] return_to_surface {} -> ok=false failure=no_progress
+[63] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[64] status {} -> ok=true failure=none
+[65] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[66] return_to_surface {} -> ok=false failure=no_progress
+[67] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[68] setup_workspace {"need_crafting_table":true,"need_furnace":false,"radius":8} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 8.'
+[69] return_to_surface {} -> ok=false failure=no_progress
+[70] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[71] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[72] return_to_surface {} -> ok=false failure=no_progress
+[73] place_crafting_table {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[74] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[75] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+  [batch 3 saved  ticks 51-75]
+[76] return_to_surface {} -> ok=false failure=no_progress
+[77] setup_workspace {"need_crafting_table":true,"need_furnace":true,"radius":32} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 32.'
+[78] return_to_surface {} -> ok=false failure=no_progress
+[79] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[80] explore_nearby {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe nearby exploration target found within radius 16.'
+[81] find_safe_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[82] return_to_workspace {} -> ok=true failure=none
+[83] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[84] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[85] return_to_surface {} -> ok=false failure=no_progress
+[86] setup_workspace {"need_crafting_table":true,"need_furnace":false,"radius":16} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[87] return_to_workspace {} -> ok=true failure=none
+[88] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[89] return_to_workspace {} -> ok=true failure=none
+[90] status {} -> ok=true failure=none
+[91] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[92] explore_nearby {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe nearby exploration target found within radius 16.'
+[93] find_safe_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[94] place_crafting_table {} -> ok=false failure=missing_materials stop=missing_placeable_item error='Missing materials: no placeable item in inventory.'
+[95] craft_crafting_table {} -> ok=true failure=none
+[96] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=path_timeout error='Could not approach crafting_table: Timed out pathing after 20000ms.'
+[97] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[98] return_to_surface {} -> ok=false failure=no_progress
+[99] return_to_workspace {} -> ok=true failure=none
+[100] place_crafting_table {} -> ok=true failure=none
+  [batch 4 saved  ticks 76-100]
+[101] craft_torches {"count":4} -> ok=true failure=none
+[102] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[103] status {} -> ok=true failure=none
+[104] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined stone but drop collection failed: drop_collection_partial_progress'
+[105] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined stone but drop collection failed: drop_direct_walk_no_progress'
+[106] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined stone but drop collection failed: drop_direct_walk_no_progress'
+[107] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined stone but drop collection failed: drop_direct_walk_no_progress'
+[108] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined stone but drop collection failed: drop_direct_walk_no_progress'
+[109] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined stone but drop collection failed: drop_direct_walk_no_progress'
+[110] mine_stone {} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined stone but drop collection failed: drop_direct_walk_no_progress'
+[111] craft_torches {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: coal_or_charcoal x1.'
+[112] mine_coal {"count":1,"radius":8} -> ok=false failure=partial_progress_timeout stop=drop_collection_partial_progress collected=0 error='Mined target block but drop collection failed: drop_collection_partial_progress'
+[113] mine_coal {"count":1,"radius":16,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined target block but drop collection failed: drop_direct_walk_no_progress'
+[114] mine_coal {"count":1,"radius":4,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=false failure=invalid_action error="Action 'mine_coal' args.radius must be between 8 and 96."
+[115] mine_coal {"radius":32,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined target block but drop collection failed: drop_direct_walk_no_progress'
+[116] mine_coal {"count":1,"radius":8,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined target block but drop collection failed: drop_direct_walk_no_progress'
+[117] mine_coal {"count":1,"radius":8,"allowExcavate":true,"accessMode":"safe_staircase"} -> ok=false failure=partial_progress_timeout stop=drop_direct_walk_no_progress collected=0 error='Mined target block but drop collection failed: drop_direct_walk_no_progress'
+  [batch 5 saved  ticks 101-117 (partial)]
+
+Stopped. 117 ticks total. Output: out/stream_runs/20260520T113421Z

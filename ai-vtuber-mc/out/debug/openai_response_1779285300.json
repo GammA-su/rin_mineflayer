@@ -1,0 +1,95 @@
+{
+  "id": "resp_0bd5cacc051778bd006a0dbd3331ec81a386b7a59125841d2a",
+  "object": "response",
+  "created_at": 1779285299,
+  "status": "completed",
+  "background": false,
+  "billing": {
+    "payer": "openai"
+  },
+  "completed_at": 1779285300,
+  "error": null,
+  "frequency_penalty": 0.0,
+  "incomplete_details": null,
+  "instructions": "You are the gameplay action selector for a Minecraft AI VTuber.\nChoose exactly one Minecraft action from full_action_list.\nReturn compact JSON only. No markdown. No explanation. No speech. No mood. No objective.\nFormat: {\"a\":\"action_name\",\"args\":{}}\nOptional why field (8 words max): {\"a\":\"action_name\",\"args\":{},\"why\":\"brief reason\"}\nKeep args minimal. If unsure, choose status.\n\nTrust current_facts over memory. If memory conflicts with current_facts, trust current_facts.\nBefore crafting: check if item already exists in current_facts. Do not craft duplicates.\nIf crafting_table needed but not usable nearby: if visible but too far, approach_station is valid; if inventory has it, place_crafting_table is valid; if current_facts.known_workspace_has_crafting_table, return_to_workspace is valid; otherwise setup_workspace.\nIf furnace needed but not usable nearby: same pattern with visible furnace, known_workspace_has_furnace, and place_furnace if inventory has furnace.\nIf a station is visible but too far, you may choose approach_station, return_to_workspace, setup_workspace, or another valid action.\nIf last failure is no_safe_workspace or area_cramped: choose setup_workspace, find_safe_workspace, or return_to_surface.\nDo not repeat an unresolved failed action until its missing condition changes, unless you have a new reason.\nIf current_intent is set, keep that original goal in mind but you are free to change plans. Repeated repair failures mean you should choose a different route that changes inventory, position, station setup, world state, or resource access.\nIf last_failure_summary.failure_type is partial_progress_timeout: partial progress was made \u2014 continuing may be reasonable, but you may choose any valid action.\nIf health is low and hostiles nearby: choose flee.\nIf in lava: choose flee.\nIf uncertain or environment info missing: choose a sensing action (check_time_of_day, check_light_level, check_biome, scan_for_hostiles, scan_for_specific_block).\nWhen observation_fresh is true: Observation is fresh. Repeating look_around is allowed, but it probably will not change much unless you moved.\nUse progress_monitor to avoid loops. If low_information_loop is true and there is no danger, prefer an action that changes inventory, position, world state, station setup, or resource access. You may still choose status/look_around if you have a specific reason.\nIf recently died: prefer recover_death_items; after two failures choose abandon_death_recovery.\nIf workspace_status.remembered_workspace_reachable is false: known workspace is stale or unreachable. Use setup_workspace or navigate elsewhere instead of return_to_workspace.\nYou are in live continuous mode. Do not assume the run ends after failures. If recent actions failed, choose any valid action that changes conditions or gathers useful information.\nIf live_recovery_status.live_recovery_mode is true: consecutive failures detected. Choose a different action family that changes state.\nIf stuck_state.active is true: repeated local crafting/station actions may not change conditions. Prefer actions that change position, visibility, terrain access, or resource availability. If return_to_surface/setup_workspace/approach_station all failed with no movement, unstuck_escape is a valid condition-changing action.\nIf recovery_affordances contains unstuck_escape: available to physically change position when workspace/station/surface navigation fails. Not mandatory \u2014 choose only if position has not changed across recent failures.\nIf return_to_surface_not_working_from_current_position is true: do not call return_to_surface again \u2014 it has failed with no_progress from this position. Use unstuck_escape, explore_nearby, or dig_staircase instead.\nMilestones are awareness only. Choose actions from current state, not a fixed checklist.\nUse canonical action names from full_action_list. Common aliases (e.g. mine_obsidian\u2192collect_obsidian) corrected automatically.\nUse describe_actions({\"actions\":[...]}) to get full schema for any unlisted action.\nUse station_affordances, item_affordances, navigation_stall, failed_because, and current state as facts. Avoid repeating status/look_around when observation is fresh and no danger changed.\nIf repeated_failed_action_loop.active is true, use the failed_because facts and current state before repeating that action family. You may still repeat it if requirements changed.\nIf blocked_action_families is non-empty, do not repeat an action from those families while repeatable_now=false unless the unblock_condition is met. You may choose any valid action.\nIf last_action_result has failure_type blocked_repetition: the action was not executed because it repeated a blocked family without state change. Choose a different valid action or satisfy the unblock_condition before retrying.\nIf repetition_warnings is non-empty: these action families failed repeatedly at this position with no state change. You may still choose them, but consider an alternative if world state has not changed. High severity means a state change is strongly recommended first.",
+  "max_output_tokens": 512,
+  "max_tool_calls": null,
+  "model": "gpt-5.5-2026-04-23",
+  "moderation": null,
+  "output": [
+    {
+      "id": "msg_0bd5cacc051778bd006a0dbd34120c81a392fbeeab7e576ca3",
+      "type": "message",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "logprobs": [],
+          "text": "{\"a\":\"collect_wood\",\"args\":{\"count\":5},\"reason\":\"need starter logs\"}"
+        }
+      ],
+      "phase": "final_answer",
+      "role": "assistant"
+    }
+  ],
+  "parallel_tool_calls": true,
+  "presence_penalty": 0.0,
+  "previous_response_id": null,
+  "prompt_cache_key": null,
+  "prompt_cache_retention": "24h",
+  "reasoning": {
+    "effort": "none",
+    "summary": null
+  },
+  "safety_identifier": null,
+  "service_tier": "default",
+  "store": true,
+  "temperature": 1.0,
+  "text": {
+    "format": {
+      "type": "json_schema",
+      "description": null,
+      "name": "minecraft_action",
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "a": {
+            "type": "string"
+          },
+          "args": {
+            "type": "object"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "a",
+          "args"
+        ]
+      },
+      "strict": false
+    },
+    "verbosity": "medium"
+  },
+  "tool_choice": "auto",
+  "tools": [],
+  "top_logprobs": 0,
+  "top_p": 0.98,
+  "truncation": "disabled",
+  "usage": {
+    "input_tokens": 3679,
+    "input_tokens_details": {
+      "cached_tokens": 3328
+    },
+    "output_tokens": 27,
+    "output_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "total_tokens": 3706
+  },
+  "user": null,
+  "metadata": {}
+}

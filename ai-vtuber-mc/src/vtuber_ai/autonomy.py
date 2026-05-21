@@ -40,6 +40,17 @@ from vtuber_ai.verifier import verify_action
 PYTHON_SIDE_ACTIONS = frozenset({"return_to_workspace", "return_to_known_position", "describe_actions"})
 
 
+def _llm_config_from_request(request: AgentTickRequest | AgentLiveRequest) -> dict[str, Any]:
+    nested = request.llm.model_dump(exclude_none=True) if getattr(request, "llm", None) is not None else {}
+    flat = {
+        "provider": getattr(request, "llm_provider", None),
+        "model": getattr(request, "llm_model", None),
+        "base_url": getattr(request, "llm_base_url", None),
+        "api_key_env": getattr(request, "llm_api_key_env", None),
+    }
+    return {**nested, **{key: value for key, value in flat.items() if value is not None}}
+
+
 async def run_agent_tick(request: AgentTickRequest) -> dict[str, Any]:
     (before_status, status_error), (bridge_actions, bridge_fetch_error) = await asyncio.gather(
         _safe_get_status(),
@@ -69,12 +80,21 @@ async def run_agent_tick(request: AgentTickRequest) -> dict[str, Any]:
             if a not in bridge_actions_set and a not in PYTHON_SIDE_ACTIONS
         )
 
+    _context_mode = getattr(request, "context_mode", "compressed") or "compressed"
+    _full_context_cfg = getattr(request, "full_context", None)
+    _full_context = _full_context_cfg.model_dump() if _full_context_cfg is not None else None
+    _episode_memory = getattr(request, "episode_memory", None)
+
     decision, planner_info = choose_next_action(
         state=state,
         memory=recent_memory,
         mission=request.mission,
         allowed_actions=effective_allowed,
         planner=request.planner,
+        llm_config=_llm_config_from_request(request),
+        context_mode=_context_mode,
+        full_context=_full_context,
+        episode_memory=_episode_memory,
     )
 
     planner_info["bridge_supported_actions_count"] = len(bridge_actions_set) if not bridge_fetch_error else None
@@ -89,6 +109,10 @@ async def run_agent_tick(request: AgentTickRequest) -> dict[str, Any]:
             mission=request.mission,
             allowed_actions=effective_allowed,
             planner="fallback",
+            llm_config=_llm_config_from_request(request),
+            context_mode=_context_mode,
+            full_context=_full_context,
+            episode_memory=_episode_memory,
         )
         planner_info = {
             **planner_info,
@@ -384,6 +408,11 @@ async def run_agent_live(request: AgentLiveRequest) -> dict[str, Any]:
             user=request.user,
             planner=request.planner,
             allow_autonomy=True,
+            llm=request.llm,
+            llm_provider=request.llm_provider,
+            llm_model=request.llm_model,
+            llm_base_url=request.llm_base_url,
+            llm_api_key_env=request.llm_api_key_env,
         )
         tick = await run_agent_tick(tick_request)
         tick["tick"] = index + 1

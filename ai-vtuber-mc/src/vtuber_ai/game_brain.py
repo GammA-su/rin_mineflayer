@@ -1,9 +1,8 @@
 import json
 import os
 import time
+from collections import Counter
 from typing import Any
-
-import httpx
 
 from vtuber_ai.action_catalog import (
     CATALOG,
@@ -23,6 +22,12 @@ from vtuber_ai.memory import (
     pos_bucket,
     resource_acquisition_scoped_key,
     schema_blocked_family_key,
+)
+from vtuber_ai.llm_provider import (
+    chat_completion_json,
+    chat_failure_diagnostics,
+    llm_diagnostics_base,
+    resolve_llm_config,
 )
 from vtuber_ai.requirements import (
     build_requirement_failure_packet,
@@ -66,7 +71,7 @@ def build_repetition_warning(blocked_rec: dict[str, Any]) -> dict[str, Any]:
         "repetition_family": family,
         "recent_failures": failed_because,
         "why_repeating_may_be_low_value": (
-            f"This action family has failed {failure_count} time(s) at this location "
+            f"Action family '{family}' has failed {failure_count} time(s) at this location "
             "with no meaningful state change (position, inventory, dimension unchanged)."
         ),
         "state_change_needed": state_change_needed,
@@ -162,6 +167,7 @@ AUTONOMOUS_ALLOWED_ACTIONS = AUTONOMOUS_ALLOWED_ACTIONS + tuple(
         "abandon_death_recovery",
         "return_to_spawn_or_home",
         "recover_position",
+        "unstuck_escape",
         "find_safe_workspace",
         "setup_workspace",
         "approach_station",
@@ -231,6 +237,7 @@ AUTONOMOUS_ALLOWED_ACTIONS = AUTONOMOUS_ALLOWED_ACTIONS + tuple(
         "fight_dragon_phase",
         "return_to_overworld_via_end_portal",
         "describe_actions",
+        "seek_open_area",
     )
     if name in CATALOG and CATALOG[name].exposes_to_llm
 )
@@ -284,6 +291,61 @@ ACTION_ALIASES: dict[str, str] = {
     "collect_coal": "mine_coal",
 }
 
+MINECRAFT_WIN_PLAN: list[dict] = [
+    {
+        "phase": "early_survival",
+        "goal": "basic safety, food, wood, crafting table, stone tools",
+        "unlocks": ["stable crafting", "stone mining", "basic defense"],
+    },
+    {
+        "phase": "iron_tools",
+        "goal": "collect/smelt iron, craft shield, bucket, iron pickaxe, armor if possible",
+        "unlocks": ["mine key ores", "survive combat", "carry water/lava", "prepare Nether access"],
+    },
+    {
+        "phase": "nether_access",
+        "goal": "find lava/water or obsidian route, build/enter Nether portal",
+        "unlocks": ["Nether fortress search", "blaze rods"],
+    },
+    {
+        "phase": "nether_resources",
+        "goal": "get blaze rods, survive Nether, optionally get gold/barter pearls",
+        "unlocks": ["eyes of ender"],
+    },
+    {
+        "phase": "stronghold_route",
+        "goal": "get ender pearls, craft eyes, locate stronghold",
+        "unlocks": ["End access"],
+    },
+    {
+        "phase": "end_fight",
+        "goal": "enter End, destroy crystals, kill dragon",
+        "unlocks": ["game completion"],
+    },
+]
+
+# Compact phase list injected into the planner state when episode_memory is present.
+_COMPACT_WIN_PLAN: list[dict] = [
+    {"phase": p["phase"], "goal": p["goal"]} for p in MINECRAFT_WIN_PLAN
+]
+
+EPISODE_SUMMARY_SYSTEM_PROMPT = """You are a strategic Minecraft game analyst.
+You are analyzing an episode of gameplay to produce a strategic plan for the next 50 ticks.
+Your goal is to advance the Minecraft win condition: defeating the Ender Dragon.
+
+Win path phases (in order):
+1. early_survival: basic safety, food, wood, crafting table, stone tools
+2. iron_tools: collect/smelt iron, craft shield, bucket, iron pickaxe, armor if possible
+3. nether_access: find lava/water or obsidian, build/enter Nether portal
+4. nether_resources: get blaze rods, survive Nether, barter for ender pearls
+5. stronghold_route: get ender pearls, craft eyes, locate stronghold
+6. end_fight: enter End, destroy crystals, kill dragon
+
+Output ONLY valid JSON. No markdown. No explanation. No code fences.
+
+Schema:
+{"episode_index":<int>,"tick_range":[<start>,<end>],"self_summary":"<2-3 sentences: what happened, what succeeded, what failed>","current_game_phase":"<phase name>","phase_confidence":"low|medium|high","win_condition_progress":{"what_advanced":["<item or milestone>"],"new_capabilities_unlocked":["<capability>"],"why_this_matters_for_beating_game":"<1 sentence>"},"current_assets":{"important_items":["<item>"],"stations":["<station>"],"resources":["<resource>"]},"blocking_gaps":[{"gap":"<missing thing>","why_it_matters":"<reason>"}],"lessons_learned":["<lesson>"],"next_50_tick_strategy":{"strategic_intent":"<one sentence goal>","why_this_advances_the_game":"<one sentence>","priority_order":["<step 1>","<step 2>","<step 3>"],"avoid":["<thing to avoid>"]}}"""
+
 BRAIN_SYSTEM_PROMPT = """You are the gameplay brain of an AI VTuber playing Minecraft.
 Your mission is to beat Minecraft by playing naturally and surviving.
 You receive current game state, inventory, nearby blocks/entities, available actions, and previous action result.
@@ -311,6 +373,12 @@ Use progress_monitor to avoid loops. If low_information_loop is true and there i
 If workspace_status is present and remembered_workspace_reachable is false: the known workspace was unreachable multiple times and may be stale. Prefer setup_workspace, navigate to a different area, or use another valid action. Current state and current_facts are more reliable than stale workspace memory.
 You are in live continuous mode. Do not assume the run ends after failures. If recent actions failed, choose any valid action that changes conditions or gathers useful information.
 If live_recovery_status is present and live_recovery_mode is true: multiple recent actions failed consecutively. Do not repeat the same action family. Choose an action that changes inventory, position, world state, station setup, or resource access.
+If stuck_state.active is true and kind is underground_no_wood_no_workspace: repeated local crafting or station actions cannot change conditions. Choose an action that changes position, visibility, terrain access, or resource availability (e.g. explore_nearby, navigate to a new area, dig toward the surface, look for wood in a different direction). If return_to_surface, setup_workspace, and approach_station all failed with no movement, unstuck_escape is a valid condition-changing action that tries pathfinding to nearby safe positions and digs body/head clearance if cramped. Local crafting and station retries will not help until the environment changes.
+If stuck_state.active is true and kind is underground_no_wood_no_workspace and collect_wood repeatedly fails target_not_found or target_unreachable: the bot needs to be in a different area. seek_open_area moves toward higher-Y, sky-exposed, or log-adjacent positions. It is a recovery action — not mandatory, but useful when position is the bottleneck.
+If stuck_state.active is true and kind is workspace_navigation_stuck: workspace, station, and surface navigation actions are all failing. Choose an action that physically changes position or terrain — for example unstuck_escape, explore_nearby, or dig_staircase. Retrying the same workspace/station/surface actions will not help until position or terrain changes.
+If recovery_affordances is present and unstuck_escape.available is true: this action is available to physically change local position or terrain when workspace/station/surface navigation keeps failing. It is not mandatory — choose it only if repeated attempts produced no movement and no terrain change. Args: {radius: 4-16, mode: safe_random_walk|dig_clearance|upward_step|any}.
+If recovery_affordances is present and seek_open_area.available is true: this action moves the bot toward a more open, surface-adjacent, or wood-accessible area. Use it when collect_wood fails target_not_found or unreachable repeatedly and position is the bottleneck — the current location simply has no logs. Args: {radius: 8-64, preferSurface: true|false}.
+If return_to_surface_not_working_from_current_position is true: return_to_surface has failed with no_progress 2+ times from this position — do not call it again until position changes. Prefer unstuck_escape, explore_nearby, or dig_staircase to escape the current area first.
 If in The End during the dragon fight, prefer bounded phase actions: end_safe_landing first after entering, then fight_dragon_phase, and return_to_overworld_via_end_portal only after the dragon is gone.
 If recently died, decide whether to recover items or restart progression. Prefer recover_death_items only when the death location is recent and not repeatedly lethal; after two recovery failures, choose abandon_death_recovery or return_to_spawn_or_home.
 Milestones are awareness, not a deterministic checklist. Use them to understand progress and prerequisites, but choose actions from the actual current state.
@@ -323,6 +391,9 @@ If repeated_failed_action_loop.active is true, use the failed_because facts and 
 If blocked_action_families is non-empty, do not repeat an action from those families while repeatable_now=false unless the unblock_condition is met. You may choose any valid action.
 If last_action_result has failure_type blocked_repetition: the action was not executed because it repeated a blocked family without state change. Choose a different valid action or satisfy the unblock_condition before retrying.
 If repetition_warnings is non-empty, these action families failed repeatedly at this location with no meaningful state change (position, inventory, dimension unchanged). You may still choose them — the world may have changed — but consider exploring, changing position, or trying a different approach first. If warning_severity is high, the action is very likely to fail again without a state change.
+You are not only selecting the next action. You are advancing the long-term Minecraft win condition: defeat the Ender Dragon. Use episode_memory.current_phase and next_50_tick_strategy as strategic continuity. Prefer actions that move the current phase forward, but adapt if current state contradicts the plan.
+If episode_memory is present: trust current_strategic_intent and priority_order as your strategic compass. Example: if current_phase is iron_tools, prioritize smelting iron and crafting iron pickaxe/shield/bucket over other goals, unless survival is at risk.
+Connect low-level actions to the high-level goal. Example: smelt_iron enables iron pickaxe/shield/bucket, which prepares Nether access, which leads to blaze rods, eyes of ender, and the dragon fight.
 Return one compact JSON object only.
 No markdown. No code. No comments.
 Output format: {"objective":"short objective","action":"action_name_from_full_action_list","args":{},"speech":"short stream line","mood":"neutral|focused|happy|surprised|scared|confused","reason":"brief reason"}
@@ -353,6 +424,10 @@ If recently died: prefer recover_death_items; after two failures choose abandon_
 If workspace_status.remembered_workspace_reachable is false: known workspace is stale or unreachable. Use setup_workspace or navigate elsewhere instead of return_to_workspace.
 You are in live continuous mode. Do not assume the run ends after failures. If recent actions failed, choose any valid action that changes conditions or gathers useful information.
 If live_recovery_status.live_recovery_mode is true: consecutive failures detected. Choose a different action family that changes state.
+If stuck_state.active is true: repeated local crafting/station actions may not change conditions. Prefer actions that change position, visibility, terrain access, or resource availability. If return_to_surface/setup_workspace/approach_station all failed with no movement, unstuck_escape is a valid condition-changing action.
+If recovery_affordances contains unstuck_escape: available to physically change position when workspace/station/surface navigation fails. Not mandatory — choose only if position has not changed across recent failures.
+If recovery_affordances contains seek_open_area: use when collect_wood repeatedly fails target_not_found or unreachable — moves toward higher/more open area with potential logs. Not mandatory. Args: {radius: 8-64, preferSurface: true}.
+If return_to_surface_not_working_from_current_position is true: do not call return_to_surface again — it has failed with no_progress from this position. Use unstuck_escape, explore_nearby, or dig_staircase instead.
 Milestones are awareness only. Choose actions from current state, not a fixed checklist.
 Use canonical action names from full_action_list. Common aliases (e.g. mine_obsidian→collect_obsidian) corrected automatically.
 Use describe_actions({"actions":[...]}) to get full schema for any unlisted action.
@@ -360,7 +435,8 @@ Use station_affordances, item_affordances, navigation_stall, failed_because, and
 If repeated_failed_action_loop.active is true, use the failed_because facts and current state before repeating that action family. You may still repeat it if requirements changed.
 If blocked_action_families is non-empty, do not repeat an action from those families while repeatable_now=false unless the unblock_condition is met. You may choose any valid action.
 If last_action_result has failure_type blocked_repetition: the action was not executed because it repeated a blocked family without state change. Choose a different valid action or satisfy the unblock_condition before retrying.
-If repetition_warnings is non-empty: these action families failed repeatedly at this position with no state change. You may still choose them, but consider an alternative if world state has not changed. High severity means a state change is strongly recommended first."""
+If repetition_warnings is non-empty: these action families failed repeatedly at this position with no state change. You may still choose them, but consider an alternative if world state has not changed. High severity means a state change is strongly recommended first.
+If episode_memory present: use current_phase and priority_order as strategic continuity. Prefer actions advancing current_phase toward the Ender Dragon win. Connect each low-level action to the win path: iron→tools/bucket→Nether→blaze rods→eyes→dragon."""
 
 ALLOWED_MOODS = frozenset({"neutral", "focused", "happy", "surprised", "scared", "confused"})
 FRESH_OBSERVATION_ACTIONS = frozenset({"look_around", "status", "check_inventory"})
@@ -398,6 +474,10 @@ def choose_next_action(
     mission: str,
     allowed_actions: list[str] | tuple[str, ...],
     planner: str = "hybrid",
+    llm_config: dict[str, Any] | None = None,
+    context_mode: str = "compressed",
+    full_context: dict[str, Any] | None = None,
+    episode_memory: dict[str, Any] | None = None,
 ) -> tuple[BrainDecision, dict[str, Any]]:
     """Choose one high-level skill for the next autonomous tick."""
 
@@ -418,13 +498,24 @@ def choose_next_action(
                 "prompt_size_chars": 0,
                 "args_sanitized": False,
                 "removed_arg_keys": [],
+                "context_mode": context_mode,
+                "episode_memory_present": episode_memory is not None,
+                "current_game_phase": (episode_memory or {}).get("current_game_phase"),
             }
 
     if mode in {"llm", "hybrid"}:
-        llm_decision, llm_info = _llm_decision(state, memory, mission, allowed)
+        llm_decision, llm_info = _llm_decision(
+            state, memory, mission, allowed, llm_config=llm_config,
+            context_mode=context_mode, full_context=full_context,
+            episode_memory=episode_memory,
+        )
         if llm_decision is not None:
             llm_decision, sanitize_info = sanitize_decision_args(llm_decision)
             llm_info.update(sanitize_info)
+            _recent_ticks = state.get("recent_ticks") if isinstance(state.get("recent_ticks"), list) else []
+            _summary = _summary_from_status_or_state(state)
+            _stuck = _underground_no_wood_no_workspace_stuck_state(_recent_ticks, _summary)
+            llm_decision = _repair_scan_specific_block_args(llm_decision, _stuck)
             llm_info["planner"] = mode
             llm_info["source"] = "llm"
             llm_info["fallback_used"] = False
@@ -446,6 +537,9 @@ def choose_next_action(
         "prompt_size_chars": 0,
         "args_sanitized": False,
         "removed_arg_keys": [],
+        "context_mode": context_mode,
+        "episode_memory_present": episode_memory is not None,
+        "current_game_phase": (episode_memory or {}).get("current_game_phase"),
     }
 
 
@@ -455,6 +549,9 @@ def build_llm_state_packet(
     last_result: dict[str, Any] | None,
     bridge_actions: list[str] | tuple[str, ...],
     mission: str = "Beat Minecraft while playing naturally and surviving.",
+    context_mode: str = "compressed",
+    full_context: dict[str, Any] | None = None,
+    episode_memory: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build the compact game-state packet sent to the LLM planner."""
 
@@ -478,6 +575,18 @@ def build_llm_state_packet(
     workspace_status = _workspace_status_from_ticks(recent_ticks)
     station_access_status = _station_access_status_from_ticks_and_summary(recent_ticks, summary)
     live_recovery_status = _live_recovery_status_from_ticks(recent_ticks)
+    wood_access_status = _wood_access_status_from_ticks(recent_ticks)
+    stuck_state = _underground_no_wood_no_workspace_stuck_state(recent_ticks, summary)
+    workspace_nav_stuck = _workspace_navigation_stuck_state(recent_ticks, summary)
+    # Prefer the more specific underground detector; fall back to the broader workspace one.
+    effective_stuck_state = stuck_state or workspace_nav_stuck
+    rts_position_stuck = _rts_position_stuck_from_ticks(recent_ticks)
+    if rts_position_stuck and effective_stuck_state is not None:
+        effective_stuck_state = dict(effective_stuck_state)
+        effective_stuck_state["facts"] = {
+            **effective_stuck_state.get("facts", {}),
+            "return_to_surface_not_working_from_current_position": True,
+        }
     milestone_state = build_milestone_state(
         status=raw_status,
         recent_memory=recent_memory,
@@ -500,21 +609,55 @@ def build_llm_state_packet(
         bridge_actions=bridge_actions,
         max_count=max_detailed,
         current_intent=current_intent,
+        stuck_state=effective_stuck_state,
     )
     detailed_action_docs = get_detailed_action_docs(relevant_names)
+
+    recovery_affordances: dict[str, Any] | None = None
+    if isinstance(effective_stuck_state, dict) and effective_stuck_state.get("active"):
+        stuck_kind = effective_stuck_state.get("kind", "")
+        stuck_facts = effective_stuck_state.get("facts") or {}
+        recovery_affordances = {
+            "unstuck_escape": {
+                "available": True,
+                "purpose": "physically change local position/clearance when pathing/workspace/station actions fail",
+                "not_a_forced_action": True,
+            }
+        }
+        # For wood-dependency loops: expose actions that change position toward accessible logs.
+        if stuck_kind == "underground_no_wood_no_workspace" or stuck_facts.get("no_logs_nearby"):
+            recovery_affordances["seek_open_area"] = {
+                "available": True,
+                "purpose": "move to a more open/surface-adjacent area where logs may be reachable",
+                "args_hint": {"radius": 32, "preferSurface": True},
+                "not_a_forced_action": True,
+            }
+            recovery_affordances["return_to_surface"] = {
+                "available": True,
+                "purpose": "pathfind or dig upward to reach open sky where surface logs are accessible",
+                "not_a_forced_action": True,
+            }
 
     show_pna = os.getenv("VTUBER_SHOW_POSSIBLE_NEXT_ACTIONS_TO_LLM", "0").strip() == "1"
 
     # Advisory vs hard-block mode for repeated actions.
-    # Hard mode (VTUBER_HARD_BLOCK_REPETITIONS=1): expose blocked families and skip execution.
-    # Advisory mode (default, =0): expose repetition_warnings; LLM may still choose the action.
+    # Hard mode (VTUBER_HARD_BLOCK_REPETITIONS=1): all blocked families shown; autonomy skips.
+    # Advisory mode (default, =0): drop_collection/schema families remain in blocked_action_families
+    # (pure diagnostics); resource_acquisition/action/navigation families move to repetition_warnings.
     _all_blocked = _blocked_action_families(recent_ticks, summary)
+    _ADVISORY_PASSTHROUGH = ("drop_collection:", "action_schema:")
     if hard_block_repetitions_enabled():
         _blocked_for_llm = _all_blocked
         _repetition_warnings: list[dict[str, Any]] = []
     else:
-        _blocked_for_llm = []
-        _repetition_warnings = [build_repetition_warning(bf) for bf in _all_blocked]
+        _blocked_for_llm = [
+            bf for bf in _all_blocked
+            if any(bf.get("family", "").startswith(p) for p in _ADVISORY_PASSTHROUGH)
+        ]
+        _repetition_warnings = [
+            build_repetition_warning(bf) for bf in _all_blocked
+            if not any(bf.get("family", "").startswith(p) for p in _ADVISORY_PASSTHROUGH)
+        ]
 
     return {
         "mission": mission,
@@ -531,7 +674,11 @@ def build_llm_state_packet(
         "continuation_facts": _continuation_facts_from_ticks(recent_ticks),
         "workspace_status": workspace_status,
         "station_access_status": station_access_status,
+        "wood_access_status": wood_access_status,
         "live_recovery_status": live_recovery_status,
+        "stuck_state": effective_stuck_state,
+        "recovery_affordances": recovery_affordances,
+        "return_to_surface_not_working_from_current_position": True if rts_position_stuck else None,
         "progress_monitor": progress_monitor,
         "observation_fresh": observation_freshness["observation_fresh"],
         "repeated_sensing_count": observation_freshness["repeated_sensing_count"],
@@ -563,6 +710,71 @@ def build_llm_state_packet(
         "recent_completed_intents": _recent_completed_intents_from_ticks(recent_ticks),
         "recent_resource_successes": _recent_resource_successes_from_ticks(recent_ticks, summary),
         "resource_sufficiency": _resource_sufficiency(summary),
+        "context_mode": context_mode,
+        **_build_full_tick_context(context_mode, full_context),
+        **({"episode_memory": _compact_episode_memory_for_planner(episode_memory)} if episode_memory is not None else {}),
+    }
+
+
+def _build_full_tick_context(
+    context_mode: str,
+    full_context: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Build the full_tick_history and history_before_window_summary fields.
+
+    Returns an empty dict when context_mode is 'compressed' or full_context is absent.
+    """
+    if context_mode == "compressed" or not isinstance(full_context, dict):
+        return {}
+
+    all_ticks: list[dict[str, Any]] = full_context.get("ticks") or []
+    max_ticks: int = int(full_context.get("max_ticks") or 1000)
+    window_ticks: int = int(full_context.get("window_ticks") or 200)
+
+    if context_mode == "full-window":
+        pre_window = all_ticks[:-window_ticks] if len(all_ticks) > window_ticks else []
+        window = all_ticks[-window_ticks:] if all_ticks else []
+
+        pre_summary: dict[str, Any] | None = None
+        if pre_window:
+            action_counts: dict[str, int] = {}
+            failure_counts: dict[str, int] = {}
+            last_major: str | None = None
+            for t in pre_window:
+                a = t.get("action") or "?"
+                action_counts[a] = action_counts.get(a, 0) + 1
+                ft = t.get("failure_type") or ("none" if t.get("ok") else "unknown")
+                if ft and ft != "none":
+                    failure_counts[ft] = failure_counts.get(ft, 0) + 1
+                if t.get("ok") and t.get("inventory_delta"):
+                    last_major = f"tick {t.get('global_tick', '?')}: {a} ok"
+            pre_summary = {
+                "total_ticks_before_window": len(pre_window),
+                "action_counts": dict(sorted(action_counts.items(), key=lambda x: -x[1])[:10]),
+                "failure_counts": dict(sorted(failure_counts.items(), key=lambda x: -x[1])[:10]),
+                "last_major_progress": last_major,
+            }
+
+        return {
+            "full_tick_history": window,
+            "history_before_window_summary": pre_summary,
+        }
+
+    # context_mode == "full"
+    total = len(all_ticks)
+    if total <= max_ticks:
+        return {"full_tick_history": all_ticks}
+
+    keep_first = 25
+    keep_last = max_ticks - keep_first
+    kept = all_ticks[:keep_first] + all_ticks[-keep_last:]
+    omitted = total - len(kept)
+    return {
+        "full_tick_history": kept,
+        "full_context_truncated": True,
+        "ticks_omitted": omitted,
+        "kept_first_ticks": keep_first,
+        "kept_last_ticks": keep_last,
     }
 
 
@@ -630,11 +842,17 @@ def _llm_decision(
     memory: list[dict[str, Any]],
     mission: str,
     allowed: tuple[str, ...],
+    llm_config: dict[str, Any] | None = None,
+    context_mode: str = "compressed",
+    full_context: dict[str, Any] | None = None,
+    episode_memory: dict[str, Any] | None = None,
 ) -> tuple[BrainDecision | None, dict[str, Any]]:
     output_mode = os.getenv("VTUBER_PLANNER_OUTPUT_MODE", "compact").strip().lower()
     if output_mode not in {"compact", "full"}:
         output_mode = "compact"
     system_prompt = COMPACT_BRAIN_SYSTEM_PROMPT if output_mode == "compact" else BRAIN_SYSTEM_PROMPT
+    default_max_tokens = 48 if output_mode == "compact" else 96
+    resolved_llm_config = resolve_llm_config(llm_config, default_max_tokens=default_max_tokens)
 
     compact_context = build_llm_state_packet(
         status=state,
@@ -642,10 +860,16 @@ def _llm_decision(
         last_result=_last_action_result_from_state(state),
         bridge_actions=allowed,
         mission=mission,
+        context_mode=context_mode,
+        full_context=full_context,
+        episode_memory=episode_memory,
     )
     user_content = json.dumps(compact_context, separators=(",", ":"))
     prompt_size_chars = len(system_prompt) + len(user_content)
     max_prompt_chars = _int_env("VTUBER_MAX_PROMPT_CHARS", 9000)
+    _full_tick_history = compact_context.get("full_tick_history")
+    _full_context_tick_count = len(_full_tick_history) if isinstance(_full_tick_history, list) else 0
+    _full_context_truncated = bool(compact_context.get("full_context_truncated"))
     _full_action_list = compact_context.get("full_action_list") or ""
     _detailed_docs = compact_context.get("detailed_action_docs") or {}
     _compact_action_set = set(allowed) & set(AUTONOMOUS_ALLOWED_ACTIONS)
@@ -710,54 +934,51 @@ def _llm_decision(
         "chose_blocked_action_family": False,
         "blocked_action_family_name": None,
         "unblock_condition": None,
+        # Context-mode diagnostics
+        "context_mode": context_mode,
+        "full_context_tick_count": _full_context_tick_count,
+        "full_context_chars": len(user_content) if context_mode != "compressed" else 0,
+        "full_context_truncated": _full_context_truncated,
+        "state_packet_char_count": len(user_content),
+        "estimated_input_tokens": (len(system_prompt) + len(user_content)) // 4,
+        "history_omitted_count": compact_context.get("ticks_omitted", 0),
+        # Episode strategic memory diagnostics
+        "episode_memory_present": episode_memory is not None,
+        "current_game_phase": (episode_memory or {}).get("current_game_phase"),
+        "current_strategic_intent": ((episode_memory or {}).get("next_50_tick_strategy") or {}).get("strategic_intent"),
+        "latest_episode_why_this_advances_the_game": ((episode_memory or {}).get("next_50_tick_strategy") or {}).get("why_this_advances_the_game"),
+        "next_50_priority_count": len(((episode_memory or {}).get("next_50_tick_strategy") or {}).get("priority_order") or []),
+        **llm_diagnostics_base(resolved_llm_config),
+        "llm_request_ms": 0,
+        "llm_retried_due_to_param_compat": False,
     }
 
-    base_url = (os.getenv("VTUBER_LLM_BASE_URL") or "").rstrip("/")
-    if not base_url:
+    requested_provider = str((llm_config or {}).get("provider") or os.getenv("VTUBER_LLM_PROVIDER") or "").strip().lower()
+    if requested_provider == "fake":
         return None, {
             **diagnostics,
-            "fallback_reason": "VTUBER_LLM_BASE_URL is not set.",
+            "llm_provider": "fake",
+            "llm_model": "fake",
+            "llm_base_url_host": None,
+            "fallback_reason": "VTUBER_LLM_PROVIDER=fake.",
         }
-
-    model = os.getenv("VTUBER_LLM_MODEL") or "local-model"
-    default_max_tokens = 48 if output_mode == "compact" else 96
-    max_tokens = _int_env("VTUBER_LLM_MAX_TOKENS", default_max_tokens)
-    timeout_sec = _float_env("VTUBER_LLM_TIMEOUT_SEC", 120.0)
-    api_key = os.getenv("VTUBER_LLM_API_KEY")
-    headers = {"Content-Type": "application/json"}
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-
-    payload = {
-        "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content},
-        ],
-        "temperature": 0.4,
-        "max_tokens": max_tokens,
-        "response_format": {"type": "json_object"},
-    }
 
     alias_info: dict[str, Any] = {}
     canonical_info: dict[str, Any] = {}
     parsed_compact_output = False
     completion_tokens: int | None = None
-    started = time.perf_counter()
     raw_content: str | None = None
+    started = time.perf_counter()
     try:
-        response = httpx.post(
-            f"{base_url}/chat/completions",
-            headers=headers,
-            json=payload,
-            timeout=timeout_sec,
+        parsed, raw_content, resp_json, llm_diag = chat_completion_json(
+            config=resolved_llm_config,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
         )
-        llm_latency_sec = round(time.perf_counter() - started, 3)
-        response.raise_for_status()
-        resp_json = response.json()
         completion_tokens = (resp_json.get("usage") or {}).get("completion_tokens")
-        raw_content = resp_json["choices"][0]["message"]["content"]
-        parsed = json.loads(raw_content)
+        llm_latency_sec = round(llm_diag["llm_request_ms"] / 1000, 3)
         decision, parsed_compact_output = _parse_llm_raw(parsed)
         canonical = ACTION_ALIASES.get(decision.action)
         if canonical is not None:
@@ -777,17 +998,30 @@ def _llm_decision(
         decision, canonical_info = _canonicalize_decision_action(decision)
         decision = _normalize_decision(decision)
     except Exception as exc:
+        raw_content = getattr(exc, "raw_text", raw_content)
+        failure_diag = chat_failure_diagnostics(resolved_llm_config, started, raw_content, exc=exc)
+
+        fallback_reason = f"LLM planner failed: {type(exc).__name__}."
+        if isinstance(exc, ValueError):
+            if getattr(exc, "llm_empty_output", False):
+                fallback_reason = "LLM planner produced empty Responses output"
+            else:
+                fallback_reason = f"LLM planner output extraction failed: {str(exc)}"
+
         info: dict[str, Any] = {
             **diagnostics,
             **alias_info,
             **canonical_info,
-            "fallback_reason": f"LLM planner failed: {type(exc).__name__}.",
-            "model": model,
-            "llm_latency_sec": round(time.perf_counter() - started, 3),
+            **failure_diag,
+            "fallback_reason": fallback_reason,
+            "model": resolved_llm_config.model,
+            "llm_latency_sec": round(failure_diag["llm_request_ms"] / 1000, 3),
             "raw_llm_output_chars": len(raw_content) if raw_content is not None else 0,
             "parsed_compact_output": parsed_compact_output,
             "completion_tokens": completion_tokens,
         }
+        if getattr(exc, "llm_empty_output", False):
+            info["llm_empty_output"] = True
         if isinstance(exc, json.JSONDecodeError) and raw_content is not None:
             info["json_extraction_success"] = False
             info["raw_llm_text_len"] = len(raw_content)
@@ -802,11 +1036,13 @@ def _llm_decision(
             **alias_info,
             **canonical_info,
             "fallback_reason": f"LLM chose disallowed action: {decision.action}.",
-            "model": model,
+            "model": resolved_llm_config.model,
             "llm_latency_sec": llm_latency_sec,
+            **llm_diag,
             "raw_llm_output_chars": len(raw_content) if raw_content is not None else 0,
             "parsed_compact_output": parsed_compact_output,
             "completion_tokens": completion_tokens,
+            "_raw_response_json": resp_json,
         }
 
     _chosen_family = action_family_key(
@@ -820,14 +1056,16 @@ def _llm_decision(
         **diagnostics,
         **alias_info,
         **canonical_info,
-        "model": model,
+        "model": resolved_llm_config.model,
         "llm_latency_sec": llm_latency_sec,
+        **llm_diag,
         "raw_llm_output_chars": len(raw_content) if raw_content is not None else 0,
         "parsed_compact_output": parsed_compact_output,
         "completion_tokens": completion_tokens,
         "chose_blocked_action_family": _blocked_match is not None,
         "blocked_action_family_name": _blocked_match.get("family") if _blocked_match else None,
         "unblock_condition": _blocked_match.get("unblock_condition") if _blocked_match else None,
+        "_raw_response_json": resp_json,
     }
 
 
@@ -952,6 +1190,12 @@ def _normalize_decision(decision: BrainDecision) -> BrainDecision:
     elif decision.action == "dig_staircase":
         if "max_steps" in args:
             args["max_steps"] = _clamp_int(args["max_steps"], 1, 32)
+    elif decision.action == "scan_for_specific_block":
+        targets = args.get("targets")
+        if isinstance(targets, list) and len(targets) > 6:
+            args["targets"] = targets[:6]
+        if "radius" in args:
+            args["radius"] = _clamp_int(args["radius"], 8, 96)
 
     return BrainDecision(
         objective=decision.objective.strip() or "Act safely",
@@ -960,6 +1204,53 @@ def _normalize_decision(decision: BrainDecision) -> BrainDecision:
         speech=decision.speech[:160],
         mood=mood,
         reason=decision.reason.strip() or "Model selected this safe skill.",
+    )
+
+
+_WOOD_LOG_TARGETS: tuple[str, ...] = (
+    "oak_log", "birch_log", "spruce_log", "jungle_log",
+    "acacia_log", "dark_oak_log", "mangrove_log", "cherry_log",
+    "crimson_stem", "warped_stem",
+)
+# scan_for_specific_block accepts max 6 targets. Use the 6 most common overworld logs.
+_SCAN_WOOD_TARGETS: tuple[str, ...] = (
+    "oak_log", "birch_log", "spruce_log", "jungle_log", "acacia_log", "dark_oak_log",
+)
+
+
+def _repair_scan_specific_block_args(
+    decision: BrainDecision,
+    stuck_state: dict[str, Any] | None,
+) -> BrainDecision:
+    """Fill missing targets for scan_for_specific_block when inside a wood dependency loop.
+
+    When the LLM emits scan_for_specific_block without targets during a
+    wood-dependency stuck loop, supply all wood log/stem names so the action
+    can proceed rather than bouncing back as invalid_args.
+    """
+    if decision.action != "scan_for_specific_block":
+        return decision
+
+    args = dict(decision.args)
+    targets = args.get("targets")
+    if isinstance(targets, list) and len(targets) > 0:
+        return decision  # already valid
+
+    stuck_kind = (stuck_state or {}).get("kind", "")
+    if stuck_kind != "underground_no_wood_no_workspace":
+        return decision  # not in wood loop — leave for policy to reject with clear error
+
+    # Use the 6 most common overworld logs — scan_for_specific_block accepts max 6 targets.
+    args["targets"] = list(_SCAN_WOOD_TARGETS)
+    args["args_repaired"] = True
+    args["repair_reason"] = "wood_dependency_loop_default_log_targets"
+    return BrainDecision(
+        objective=decision.objective,
+        action=decision.action,
+        args=args,
+        speech=decision.speech,
+        mood=decision.mood,
+        reason=decision.reason,
     )
 
 
@@ -1054,6 +1345,7 @@ def _select_relevant_actions(
     bridge_actions: list[str] | tuple[str, ...],
     max_count: int = 12,
     current_intent: dict[str, Any] | None = None,
+    stuck_state: dict[str, Any] | None = None,
 ) -> list[str]:
     """Select which actions receive full detailed docs in the prompt."""
     bridge_set = set(bridge_actions)
@@ -1063,6 +1355,18 @@ def _select_relevant_actions(
     for a in ("status", "flee", "eat_food", "recover_position"):
         if a in bridge_set or a in AUTONOMOUS_ALLOWED_ACTIONS:
             priority.append(a)
+
+    # When stuck, surface recovery actions first so they get full docs.
+    # seek_open_area is added for wood-dependency loops specifically.
+    if isinstance(stuck_state, dict) and stuck_state.get("active"):
+        stuck_kind = stuck_state.get("kind", "")
+        stuck_facts = stuck_state.get("facts") or {}
+        recovery_priority = ["unstuck_escape"]
+        if stuck_kind == "underground_no_wood_no_workspace" or stuck_facts.get("no_logs_nearby"):
+            recovery_priority.append("seek_open_area")
+        for a in recovery_priority:
+            if a in bridge_set or a in AUTONOMOUS_ALLOWED_ACTIONS:
+                priority.append(a)
 
     # Inject actions the LLM previously requested via describe_actions
     last_action = (last_result or {}).get("action") if isinstance(last_result, dict) else None
@@ -1884,6 +2188,303 @@ def _live_recovery_status_from_ticks(recent_ticks: list[dict[str, Any]], window:
     }
 
 
+def _underground_no_wood_no_workspace_stuck_state(
+    recent_ticks: list[dict[str, Any]],
+    current_summary: dict[str, Any],
+    window: int = 15,
+) -> dict[str, Any] | None:
+    """Detect the underground no-wood / no-workspace stuck loop.
+
+    Fires when recent ticks show failed wood collection, missing-materials craft
+    failures, cramped workspace setup, failed surface navigation, and unreachable
+    crafting station — all with no intervening success that would break the loop.
+
+    Clears when wood/logs are in inventory, planks/sticks are gained, a workspace
+    is established, the surface is reached, or a crafting table becomes usable.
+    """
+    ticks = [t for t in recent_ticks[:window] if isinstance(t, dict)]
+    if not ticks:
+        return None
+
+    # --- Clearing: inventory state and recent successes ---
+    counts = dict(current_summary.get("inventory_counts") or {})
+    has_logs = any(
+        isinstance(v, int) and v > 0
+        for k, v in counts.items()
+        if k.endswith("_log") or k.endswith("_stem")
+    )
+    has_planks = any(
+        isinstance(v, int) and v > 0
+        for k, v in counts.items()
+        if k.endswith("_planks")
+    )
+    has_sticks = isinstance(counts.get("stick"), int) and counts.get("stick", 0) > 0
+
+    nearby_blocks = current_summary.get("nearby_blocks") or {}
+    ct_block = nearby_blocks.get("crafting_table")
+    crafting_table_usable_nearby = isinstance(ct_block, dict) and (
+        not isinstance(ct_block.get("distance"), (int, float))
+        or ct_block.get("distance") <= 6.0
+    )
+
+    wood_collected = False
+    workspace_established = False
+    surface_reached = False
+    table_reached = False
+    unstuck_succeeded = False
+    for tick in ticks:
+        if _tick_ok(tick) is not True:
+            continue
+        action = tick.get("action")
+        if action == "collect_wood":
+            wood_collected = True
+        elif action == "setup_workspace":
+            workspace_established = True
+        elif action == "return_to_surface":
+            surface_reached = True
+        elif action in {"unstuck_escape", "seek_open_area"}:
+            unstuck_succeeded = True
+        elif action == "approach_station":
+            args_t = tick.get("args") if isinstance(tick.get("args"), dict) else {}
+            if args_t.get("station") == "crafting_table":
+                table_reached = True
+
+    if wood_collected or has_logs:
+        return None
+    if workspace_established or surface_reached or unstuck_succeeded:
+        return None
+    if table_reached or crafting_table_usable_nearby:
+        return None
+    if has_planks or has_sticks:
+        return None
+
+    # --- Signal detection ---
+    no_logs_nearby = False
+    planks_low = False
+    workspace_area_cramped = False
+    return_to_surface_failed = False
+    crafting_table_unreachable = False
+
+    for tick in ticks:
+        if _tick_ok(tick) is not False:
+            continue
+        action = tick.get("action")
+        if not isinstance(action, str):
+            continue
+        result, verifier = _tick_payloads(tick)
+        ft = str(verifier.get("failure_type") or result.get("failure_type") or "")
+        stop = str(result.get("stop_reason") or verifier.get("stop_reason") or "")
+
+        if action == "collect_wood":
+            # navigation_failed/resource_acquisition_failed: old acquireBlocksForAction shape
+            # target_not_found/target_unreachable/no_progress_timeout: new collectWood shape
+            if ft in {
+                "navigation_failed", "resource_acquisition_failed", "no_progress",
+                "target_not_found", "target_unreachable", "no_progress_timeout",
+            }:
+                no_logs_nearby = True
+
+        if action in {"craft_planks", "craft_sticks"}:
+            if ft == "missing_materials":
+                planks_low = True
+
+        if action in {"setup_workspace", "place_crafting_table", "find_safe_workspace"}:
+            if ft in {"no_safe_workspace", "no_safe_placement"} or stop == "area_cramped":
+                workspace_area_cramped = True
+
+        if action == "return_to_surface":
+            if ft in {"navigation_failed", "partial_progress_timeout", "no_progress", "action_timeout"}:
+                return_to_surface_failed = True
+
+        if action == "approach_station":
+            args_t = tick.get("args") if isinstance(tick.get("args"), dict) else {}
+            if args_t.get("station") == "crafting_table" and ft in {"station_not_reached", "navigation_failed"}:
+                crafting_table_unreachable = True
+
+        if action in {
+            "craft_planks", "craft_sticks", "craft_item", "craft_crafting_table",
+            "craft_torches", "craft_iron_pickaxe", "craft_iron_sword",
+            "craft_shield", "craft_bucket", "craft_furnace", "craft_chest",
+        }:
+            station_needed = result.get("station_needed")
+            if stop == "no_crafting_table_nearby" or (
+                ft == "missing_station" and station_needed == "crafting_table"
+            ):
+                crafting_table_unreachable = True
+
+    if not (no_logs_nearby or planks_low):
+        return None
+    if not (workspace_area_cramped or return_to_surface_failed or crafting_table_unreachable):
+        return None
+
+    return {
+        "active": True,
+        "kind": "underground_no_wood_no_workspace",
+        "facts": {
+            "no_logs_nearby": no_logs_nearby,
+            "planks_low": planks_low,
+            "workspace_area_cramped": workspace_area_cramped,
+            "return_to_surface_failed": return_to_surface_failed,
+            "crafting_table_unreachable_or_missing": crafting_table_unreachable,
+        },
+        "condition_change_needed": True,
+    }
+
+
+def _rts_position_stuck_from_ticks(recent_ticks: list[dict[str, Any]], window: int = 10) -> bool:
+    """Return True when 2+ of the most recent return_to_surface ticks were no_progress
+    from approximately the same horizontal position (< 4 blocks apart), with no
+    position-changing successful action in between.
+
+    recent_ticks is newest-first.
+    """
+    no_progress_positions: list[dict[str, Any]] = []
+
+    for tick in recent_ticks[:window]:
+        if not isinstance(tick, dict):
+            continue
+        action = tick.get("action")
+        if action != "return_to_surface":
+            # Observation-only actions do not break the chain.
+            if is_observation_action(action or ""):
+                continue
+            # Any other action (navigation, mining, crafting…) that ran could have
+            # changed position — treat it as a chain break.
+            break
+        result, verifier = _tick_payloads(tick)
+        ft = str(verifier.get("failure_type") or result.get("failure_type") or "")
+        if ft == "no_progress":
+            pos = result.get("start_position") or result.get("end_position")
+            if isinstance(pos, dict):
+                no_progress_positions.append(pos)
+        else:
+            # Success or partial progress — no longer stuck.
+            break
+
+    if len(no_progress_positions) < 2:
+        return False
+
+    first = no_progress_positions[0]
+    for p in no_progress_positions[1:]:
+        try:
+            dx = float(p.get("x", 0)) - float(first.get("x", 0))
+            dz = float(p.get("z", 0)) - float(first.get("z", 0))
+            if (dx * dx + dz * dz) ** 0.5 >= 4.0:
+                return False
+        except (TypeError, ValueError):
+            return False
+    return True
+
+
+_WORKSPACE_NAV_STUCK_ACTIONS: frozenset[str] = frozenset({
+    "setup_workspace", "find_safe_workspace", "return_to_surface", "approach_station",
+})
+_WORKSPACE_NAV_STUCK_FTS: dict[str, frozenset[str]] = {
+    "setup_workspace": frozenset({"no_safe_workspace", "no_safe_placement"}),
+    "find_safe_workspace": frozenset({"no_safe_workspace", "no_safe_placement", "navigation_failed"}),
+    "return_to_surface": frozenset({"no_progress", "action_timeout", "navigation_failed", "partial_progress_timeout"}),
+    "approach_station": frozenset({"station_not_reached", "navigation_failed", "action_timeout"}),
+}
+
+
+def _wood_access_status_from_ticks(
+    recent_ticks: list[dict[str, Any]],
+    window: int = 5,
+) -> dict[str, Any] | None:
+    """Return a wood_access_status dict when the most recent collect_wood call failed fast
+    because no log candidates were found nearby.
+
+    Returns None when collect_wood succeeded, wasn't called recently, or failed for
+    a reason other than zero candidates (e.g. path failure after finding logs).
+    """
+    for tick in recent_ticks[:window]:
+        action = tick.get("action")
+        if action != "collect_wood":
+            continue
+        if _tick_ok(tick) is not False:
+            return None  # succeeded — no wood access problem
+        result, verifier = _tick_payloads(tick)
+        ft = str(verifier.get("failure_type") or result.get("failure_type") or "")
+        stop = str(result.get("stop_reason") or result.get("stop") or "")
+        diag = result.get("diagnostics") or {}
+        candidates = diag.get("targetCandidatesFound")
+        if ft == "target_not_found" or stop == "no_logs_nearby" or candidates == 0:
+            return {
+                "logs_nearby": False,
+                "needs_position_change": True,
+                "last_collect_wood_failed_fast": True,
+                "failure_type": ft or None,
+                "stop_reason": stop or None,
+            }
+        return None  # collect_wood failed but for a different reason
+    return None
+
+
+def _workspace_navigation_stuck_state(
+    recent_ticks: list[dict[str, Any]],
+    current_summary: dict[str, Any],  # noqa: ARG001
+    window: int = 8,
+    min_failures: int = 3,
+) -> dict[str, Any] | None:
+    """Detect a stuck loop of workspace/station/surface navigation failures.
+
+    Fires when recent ticks show min_failures+ failures among setup_workspace,
+    find_safe_workspace, return_to_surface, and approach_station — regardless of inventory.
+
+    Clears when any of those actions succeeds, unstuck_escape succeeds, or position
+    changes significantly between ticks.
+    """
+    ticks = [t for t in recent_ticks[:window] if isinstance(t, dict)]
+    if not ticks:
+        return None
+
+    # Clearing: any relevant success clears the state.
+    for tick in ticks:
+        if _tick_ok(tick) is not True:
+            continue
+        action = tick.get("action")
+        if action in _WORKSPACE_NAV_STUCK_ACTIONS or action == "unstuck_escape":
+            return None
+
+    # Clearing: significant position change between any two consecutive ticks.
+    prev_pos: dict[str, Any] | None = None
+    for tick in reversed(ticks):  # oldest-first for meaningful delta
+        state_after = tick.get("after_state") or _decode_jsonish(tick.get("after_state_json"))
+        pos = _position_from_tick_state(state_after)
+        if pos and prev_pos and _position_distance(pos, prev_pos) >= 5.0:
+            return None
+        if pos:
+            prev_pos = pos
+
+    # Signal counting.
+    failure_count = 0
+    failed_actions: set[str] = set()
+    for tick in ticks:
+        if _tick_ok(tick) is not False:
+            continue
+        action = tick.get("action")
+        if not isinstance(action, str) or action not in _WORKSPACE_NAV_STUCK_ACTIONS:
+            continue
+        result, verifier = _tick_payloads(tick)
+        ft = str(verifier.get("failure_type") or result.get("failure_type") or "")
+        stop = str(result.get("stop_reason") or verifier.get("stop_reason") or "")
+        expected = _WORKSPACE_NAV_STUCK_FTS.get(action, frozenset())
+        if ft in expected or stop in {"area_cramped", "no_progress", "no_safe_workspace"}:
+            failure_count += 1
+            failed_actions.add(action)
+
+    if failure_count < min_failures:
+        return None
+
+    return {
+        "active": True,
+        "kind": "workspace_navigation_stuck",
+        "failure_count": failure_count,
+        "failed_actions": sorted(failed_actions),
+        "condition_change_needed": True,
+    }
+
+
 def _continuation_facts_from_ticks(recent_ticks: list[dict[str, Any]], window: int = 6) -> list[dict[str, Any]]:
     facts: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -2521,9 +3122,15 @@ def _compact_last_action_result(last_result: dict[str, Any] | None) -> dict[str,
     }
     diagnostics = result.get("diagnostics")
     if isinstance(diagnostics, dict):
+        _PROFILER_DIAG_KEYS = frozenset({
+            "currentSubstep", "timeout_classification", "distance_moved", "y_delta",
+            "inventory_delta", "progress_made", "pathfinder_active", "path_goal",
+            "bot_position_start", "bot_position_end", "action_elapsed_ms",
+            "timeout_config", "needs_condition_change",
+        })
         compact["diagnostics"] = {
             key: value for key, value in diagnostics.items()
-            if key.startswith("rejected") or key == "candidatesChecked"
+            if key.startswith("rejected") or key in {"candidatesChecked"} or key in _PROFILER_DIAG_KEYS
         }
     flags = _result_flags(last_result.get("result"))
     if flags:
@@ -2563,6 +3170,7 @@ def _compact_failure_summary(
 
     failure_type = compact.get("failure_type")
     is_partial_progress = failure_type == "partial_progress_timeout"
+    is_no_progress_timeout = failure_type == "no_progress_timeout"
 
     summary: dict[str, Any] = {
         "action": compact.get("action"),
@@ -2602,6 +3210,26 @@ def _compact_failure_summary(
             summary["accessCandidatesFound"] = diag["accessCandidatesFound"]
         if diag.get("excavatedBlocks") is not None:
             summary["excavatedBlocks"] = diag["excavatedBlocks"]
+        if diag.get("currentSubstep"):
+            summary["currentSubstep"] = diag["currentSubstep"]
+        if diag.get("timeout_classification"):
+            summary["timeout_classification"] = diag["timeout_classification"]
+
+    # For no_progress_timeout expose zero-progress facts so the LLM understands why it's blocked.
+    if is_no_progress_timeout:
+        verifier = (compact.get("verifier") or {})
+        diag = verifier.get("diagnostics") or compact.get("diagnostics") or {}
+        summary["no_progress"] = True
+        summary["needs_condition_change"] = True
+        summary["repeatable_now"] = False
+        if diag.get("distance_moved") is not None:
+            summary["distance_moved"] = diag["distance_moved"]
+        if diag.get("currentSubstep"):
+            summary["currentSubstep"] = diag["currentSubstep"]
+        if diag.get("timeout_classification"):
+            summary["timeout_classification"] = diag["timeout_classification"]
+        if diag.get("timeout_config"):
+            summary["timeout_config"] = diag["timeout_config"]
 
     if summary.get("failure_type") == "no_safe_workspace" or summary.get("stop_reason") == "area_cramped":
         summary["priority"] = "placement_repair"
@@ -3955,3 +4583,238 @@ def _short(value: Any, limit: int = 160) -> str | None:
         return None
     text = str(value)
     return text if len(text) <= limit else text[: limit - 3] + "..."
+
+
+# ── Episode strategic summary ─────────────────────────────────────────────────
+
+def _infer_game_phase(milestones_completed: list[str], inventory: dict[str, int]) -> str:
+    """Heuristic: infer current Minecraft win-plan phase from milestones and inventory."""
+    ms = set(milestones_completed)
+    if "entered_end" in ms:
+        return "end_fight"
+    if "has_eye_of_ender" in ms or "has_ender_pearl" in ms:
+        return "stronghold_route"
+    if "entered_nether" in ms or "has_blaze_rod" in ms:
+        return "nether_resources"
+    if "has_nether_portal" in ms or "has_obsidian" in ms or "has_flint_and_steel" in ms:
+        return "nether_access"
+    if (
+        "has_iron_ingot" in ms
+        or "has_raw_iron" in ms
+        or inventory.get("iron_ingot", 0) > 0
+        or inventory.get("raw_iron", 0) > 0
+    ):
+        return "iron_tools"
+    return "early_survival"
+
+
+def _phase_strategic_intent(phase: str) -> str:
+    return {
+        "early_survival": "Get food, wood, crafting table, and stone tools for a stable base.",
+        "iron_tools": "Smelt iron and craft iron pickaxe, shield, and bucket to prepare Nether access.",
+        "nether_access": "Find lava and water sources, build obsidian, and light a Nether portal.",
+        "nether_resources": "Navigate the Nether safely, find a fortress, and collect blaze rods.",
+        "stronghold_route": "Get ender pearls, craft eyes of ender, and throw them to locate the stronghold.",
+        "end_fight": "Enter the End, destroy end crystals, and defeat the Ender Dragon.",
+    }.get(phase, "Continue advancing toward beating Minecraft.")
+
+
+def _compact_episode_memory_for_planner(episode_memory: dict[str, Any]) -> dict[str, Any]:
+    """Extract the fields that go into the LLM state packet (compact, token-efficient)."""
+    strategy = episode_memory.get("next_50_tick_strategy") or {}
+    progress = episode_memory.get("win_condition_progress") or {}
+    return {
+        "current_phase": episode_memory.get("current_game_phase"),
+        "phase_confidence": episode_memory.get("phase_confidence"),
+        "current_strategic_intent": strategy.get("strategic_intent"),
+        "why_this_advances_the_game": strategy.get("why_this_advances_the_game"),
+        "priority_order": (strategy.get("priority_order") or [])[:4],
+        "avoid": (strategy.get("avoid") or [])[:3],
+        "what_advanced": (progress.get("what_advanced") or [])[:4],
+        "new_capabilities": (progress.get("new_capabilities_unlocked") or [])[:3],
+        "blocking_gaps": [g.get("gap") for g in (episode_memory.get("blocking_gaps") or [])[:3] if isinstance(g, dict)],
+        "lessons_learned": (episode_memory.get("lessons_learned") or [])[:3],
+        "minecraft_win_plan": _COMPACT_WIN_PLAN,
+        "episode_index": episode_memory.get("episode_index"),
+        "tick_range": episode_memory.get("tick_range"),
+    }
+
+
+def _build_episode_evidence(
+    episode_ticks: list[dict[str, Any]],
+    last_status: dict[str, Any] | None,
+    milestones: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Build structured evidence for the episode summary LLM."""
+    action_counts: Counter = Counter()
+    action_ok: Counter = Counter()
+    failure_counts: Counter = Counter()
+
+    for tick in episode_ticks:
+        action = tick.get("action", "unknown")
+        if not isinstance(action, str):
+            action = "unknown"
+        ok = bool(tick.get("ok"))
+        action_counts[action] += 1
+        if ok:
+            action_ok[action] += 1
+        ft = tick.get("failure_type")
+        if ft and ft not in ("none", "unknown", None):
+            failure_counts[ft] += 1
+
+    action_summary = [
+        {"action": a, "count": c, "ok": action_ok.get(a, 0), "fail": c - action_ok.get(a, 0)}
+        for a, c in action_counts.most_common(12)
+    ]
+
+    # Inventory from last_status
+    inventory: dict[str, int] = {}
+    if isinstance(last_status, dict):
+        inv = last_status.get("inventory") or last_status.get("inventory_counts")
+        if isinstance(inv, list):
+            for slot in inv:
+                if isinstance(slot, dict):
+                    inventory[slot.get("name", "?")] = inventory.get(slot.get("name", "?"), 0) + slot.get("count", 0)
+        elif isinstance(inv, dict):
+            inventory = {k: v for k, v in inv.items() if isinstance(v, int)}
+
+    # Milestones
+    milestones_completed: list[str] = []
+    newly_completed_milestones: list[str] = []
+    if isinstance(milestones, dict):
+        milestones_completed = milestones.get("completed_milestones") or [
+            k for k, v in (milestones.get("completed") or {}).items() if v
+        ]
+        newly_completed_milestones = milestones.get("newly_completed_milestones") or []
+
+    dimension = "overworld"
+    if isinstance(last_status, dict):
+        dimension = str(last_status.get("dimension") or "overworld")
+
+    total_ticks = len(episode_ticks)
+    ok_ticks = sum(1 for t in episode_ticks if t.get("ok"))
+
+    return {
+        "episode_actions": action_summary,
+        "episode_failures": dict(failure_counts.most_common(10)),
+        "inventory_at_end": inventory,
+        "milestones_completed": milestones_completed,
+        "newly_completed_milestones": newly_completed_milestones,
+        "dimension": dimension,
+        "total_ticks": total_ticks,
+        "ok_ticks": ok_ticks,
+        "fail_ticks": total_ticks - ok_ticks,
+    }
+
+
+def _heuristic_episode_summary(
+    *,
+    episode_index: int,
+    tick_range: list[int],
+    milestones_completed: list[str],
+    inventory_counts: dict[str, int],
+    episode_ticks: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Produce a minimal heuristic episode summary when the LLM is unavailable."""
+    phase = _infer_game_phase(milestones_completed, inventory_counts)
+    intent = _phase_strategic_intent(phase)
+    total = len(episode_ticks)
+    ok_count = sum(1 for t in episode_ticks if t.get("ok"))
+    actions_used = sorted({t.get("action") for t in episode_ticks if isinstance(t.get("action"), str)})[:5]
+    top_items = [k for k, v in sorted(inventory_counts.items(), key=lambda x: -x[1])[:6]]
+
+    return {
+        "episode_index": episode_index,
+        "tick_range": tick_range,
+        "self_summary": (
+            f"Episode {episode_index} ({tick_range[0]}-{tick_range[1]}): "
+            f"{ok_count}/{total} ticks succeeded. "
+            f"Actions used: {', '.join(actions_used[:3])}."
+        ),
+        "current_game_phase": phase,
+        "phase_confidence": "low",
+        "win_condition_progress": {
+            "what_advanced": milestones_completed[-4:] if milestones_completed else [],
+            "new_capabilities_unlocked": [],
+            "why_this_matters_for_beating_game": f"Progressing through the {phase} phase moves toward the Ender Dragon win condition.",
+        },
+        "current_assets": {
+            "important_items": top_items,
+            "stations": [],
+            "resources": [],
+        },
+        "blocking_gaps": [],
+        "lessons_learned": [],
+        "next_50_tick_strategy": {
+            "strategic_intent": intent,
+            "why_this_advances_the_game": f"The {phase} phase is required to progress toward Nether access and defeating the Ender Dragon.",
+            "priority_order": [intent],
+            "avoid": ["Repeating failed actions without changing position or state"],
+        },
+        "summary_source": "heuristic_fallback",
+    }
+
+
+def generate_episode_summary(
+    *,
+    episode_index: int,
+    tick_range: list[int],
+    episode_ticks: list[dict[str, Any]],
+    last_status: dict[str, Any] | None = None,
+    milestones: dict[str, Any] | None = None,
+    llm_config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Generate a strategic episode summary.
+
+    Calls the LLM with a structured analyst prompt. Falls back to a heuristic
+    summary if the LLM is unavailable, returns fake output, or fails to parse.
+    """
+    evidence = _build_episode_evidence(episode_ticks, last_status, milestones)
+    milestones_completed: list[str] = evidence.get("milestones_completed") or []
+    inventory: dict[str, int] = evidence.get("inventory_at_end") or {}
+
+    requested_provider = str(
+        (llm_config or {}).get("provider") or os.getenv("VTUBER_LLM_PROVIDER") or ""
+    ).strip().lower()
+    if requested_provider == "fake":
+        return _heuristic_episode_summary(
+            episode_index=episode_index,
+            tick_range=tick_range,
+            milestones_completed=milestones_completed,
+            inventory_counts=inventory,
+            episode_ticks=episode_ticks,
+        )
+
+    resolved_config = resolve_llm_config(llm_config, default_max_tokens=600)
+
+    user_content = json.dumps(
+        {"episode_index": episode_index, "tick_range": tick_range, **evidence},
+        separators=(",", ":"),
+        default=str,
+    )
+
+    try:
+        parsed, _raw, _resp, _diag = chat_completion_json(
+            config=resolved_config,
+            messages=[
+                {"role": "system", "content": EPISODE_SUMMARY_SYSTEM_PROMPT},
+                {"role": "user", "content": user_content},
+            ],
+        )
+        if not isinstance(parsed, dict) or "current_game_phase" not in parsed:
+            raise ValueError("Episode summary missing required fields.")
+        parsed.setdefault("episode_index", episode_index)
+        parsed.setdefault("tick_range", tick_range)
+        parsed["summary_source"] = "llm"
+        return parsed
+    except Exception as exc:
+        fallback = _heuristic_episode_summary(
+            episode_index=episode_index,
+            tick_range=tick_range,
+            milestones_completed=milestones_completed,
+            inventory_counts=inventory,
+            episode_ticks=episode_ticks,
+        )
+        fallback["summary_source"] = "heuristic_fallback"
+        fallback["llm_error"] = str(exc)
+        return fallback

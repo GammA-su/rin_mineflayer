@@ -1,0 +1,20 @@
+{
+  "run_id": "20260521T114407Z",
+  "started_at": "2026-05-21T11:44:07.090810+00:00",
+  "mission": "Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, strategic episode memory, action results, stuck-state facts, failed requirements, and current state to recover naturally.",
+  "user": "AI_VTuber",
+  "api_url": "http://127.0.0.1:8000",
+  "llm_provider": "local_openai_compatible",
+  "llm_model": "Qwen3.6-27B-Q4_K_M.gguf",
+  "llm_base_url": "http://127.0.0.1:8087/v1",
+  "context_mode": "episodic",
+  "full_context_max_ticks": 1000,
+  "full_context_window_ticks": 200,
+  "full_context_include_raw_results": false,
+  "full_context_include_planner_debug": false,
+  "episode_ticks": 50,
+  "episode_summary_provider": "same",
+  "episode_memory_max_episodes": 20,
+  "max_ticks_per_batch": 25,
+  "tick_delay_sec": 1.0
+}

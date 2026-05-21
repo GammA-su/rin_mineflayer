@@ -1,0 +1,72 @@
+Stream loop starting — output: out/stream_runs/20260521T111046Z
+  mission      : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, stuck-state facts, failed requirements, and current state to recover naturally.
+  api_url      : http://127.0.0.1:8000/agent/tick
+  context_mode : full
+  max_ticks    : 1000
+  llm          : provider=local_openai_compatible model=Qwen3.6-27B-Q4_K_M.gguf base_url=http://127.0.0.1:8087/v1 api_key_env=(provider default)
+  ticks/batch  : 25  tick_delay: 1.0s
+  personality  : http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] craft_planks {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: no logs or stems found in inventory.'
+[2] collect_wood {"count":4} -> ok=false failure=partial_progress_timeout stop=partial_progress_timeout error='Timed out collect_wood after 66000ms.'
+[3] craft_planks {} -> ok=true failure=none
+[4] craft_sticks {} -> ok=true failure=none
+[5] craft_wooden_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (14.0 blocks).'
+[6] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[7] craft_wooden_pickaxe {} -> ok=true failure=none
+[8] mine_iron_ore {} -> ok=false failure=missing_tool stop=missing_required_tool error='Missing tool: stone_pickaxe or better is required.'
+[9] craft_stone_pickaxe {} -> ok=true failure=none
+[10] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=partial_progress_timeout error='Timed out mine_iron_ore after 30000ms.'
+[11] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[12] navigate_to_block_type {"targets":["iron_ore"],"radius":32} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[13] explore_nearby {} -> ok=false failure=partial_progress_timeout stop=partial_progress_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[14] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=partial_progress_timeout error='Timed out mine_iron_ore after 30000ms.'
+[15] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[16] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[17] mine_coal {} -> ok=false failure=partial_progress_timeout stop=drop_deep_unreachable collected=0 error='Mined target block but drop fell deep and unreachable (vertDelta=-4.2, noSafeStand): abandoning this drop'
+[18] status {} -> ok=true failure=none
+[19] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[20] status {} -> ok=true failure=none
+[21] mine_coal {} -> ok=true failure=none stop=partial_collected collected=1
+[22] status {} -> ok=true failure=none
+[23] status {} -> ok=true failure=none
+[24] status {} -> ok=true failure=none
+[25] status {} -> ok=true failure=none
+  [batch 1 saved  ticks 1-25]
+[26] status {} -> ok=true failure=none
+[27] status {} -> ok=true failure=none
+[28] status {} -> ok=true failure=none
+[29] status {} -> ok=true failure=none
+[30] status {} -> ok=true failure=none
+[31] status {} -> ok=true failure=none
+[32] status {} -> ok=true failure=none
+[33] status {} -> ok=true failure=none
+[34] status {} -> ok=true failure=none
+[35] status {} -> ok=true failure=none
+[36] status {} -> ok=true failure=none
+[37] status {} -> ok=true failure=none
+[38] status {} -> ok=true failure=none
+[39] status {} -> ok=true failure=none
+[40] status {} -> ok=true failure=none
+[41] status {} -> ok=true failure=none
+[42] status {} -> ok=true failure=none
+[43] status {} -> ok=true failure=none
+[44] status {} -> ok=true failure=none
+[45] status {} -> ok=true failure=none
+[46] status {} -> ok=true failure=none
+[47] status {} -> ok=true failure=none
+[48] status {} -> ok=true failure=none
+[49] status {} -> ok=true failure=none
+[50] status {} -> ok=true failure=none
+  [batch 2 saved  ticks 26-50]
+[51] status {} -> ok=true failure=none
+[52] status {} -> ok=true failure=none
+[53] status {} -> ok=true failure=none
+[54] status {} -> ok=true failure=none
+[55] status {} -> ok=true failure=none
+[56] status {} -> ok=true failure=none
+[57] status {} -> ok=true failure=none
+  [batch 3 saved  ticks 51-57 (partial)]
+
+Stopped. 57 ticks total. Output: out/stream_runs/20260521T111046Z

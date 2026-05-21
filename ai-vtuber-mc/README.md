@@ -58,6 +58,54 @@ Node.js:
 - exposes `POST /action`
 - executes only whitelisted actions
 
+## LLM Provider Selection
+
+Local Qwen remains the default path:
+
+```bash
+export VTUBER_LLM_PROVIDER=local_openai_compatible
+export VTUBER_LLM_BASE_URL=http://127.0.0.1:8087/v1
+export VTUBER_LLM_MODEL=Qwen3.5-9B-Q4_K_M.gguf
+export VTUBER_LLM_API_KEY=dummy
+```
+
+OpenAI GPT-5.5:
+
+```bash
+export VTUBER_LLM_PROVIDER=openai
+export OPENAI_API_KEY="..."
+export VTUBER_OPENAI_MODEL=gpt-5.5
+```
+
+Stream with local Qwen:
+
+```bash
+uv run python scripts/run_stream_loop.py \
+  --api-url http://127.0.0.1:8000 \
+  --mission "Beat Minecraft while playing naturally and surviving." \
+  --user AI_VTuber \
+  --llm-provider local_openai_compatible \
+  --llm-model Qwen3.5-9B-Q4_K_M.gguf
+```
+
+Stream with GPT-5.5:
+
+```bash
+uv run python scripts/run_stream_loop.py \
+  --api-url http://127.0.0.1:8000 \
+  --mission "Beat Minecraft while playing naturally and surviving." \
+  --user AI_VTuber \
+  --llm-provider openai \
+  --llm-model gpt-5.5
+```
+
+One-shot provider smoke tests:
+
+```bash
+uv run python scripts/test_llm_provider.py --provider openai --model gpt-5.5
+uv run python scripts/test_llm_provider.py --provider local_openai_compatible --model Qwen3.5-9B-Q4_K_M.gguf --base-url http://127.0.0.1:8087/v1
+```
+
 ## 3. Requirements
 
 Windows 11 PowerShell:
@@ -574,15 +622,16 @@ Invoke-RestMethod `
 Use the LLM planner for autonomous agent steps:
 
 ```powershell
-$env:VTUBER_LLM_BASE_URL = "http://localhost:1234/v1"
+$env:VTUBER_LLM_PROVIDER = "local_openai_compatible"
+$env:VTUBER_LLM_BASE_URL = "http://127.0.0.1:8087/v1"
 $env:VTUBER_LLM_API_KEY = "dummy"
-$env:VTUBER_LLM_MODEL = "local-model"
+$env:VTUBER_LLM_MODEL = "Qwen3.5-9B-Q4_K_M.gguf"
 $env:VTUBER_LLM_MAX_TOKENS = "96"
-$env:VTUBER_LLM_TIMEOUT_SEC = "120"
+$env:VTUBER_LLM_TIMEOUT_SEC = "180"
 uv run uvicorn vtuber_ai.main:app --reload --port 8000
 ```
 
-Then set the request body `planner` to `llm` or `hybrid`. `hybrid` uses only emergency survival reflexes first, then the LLM. If the LLM is unavailable or unusable, the fallback is the neutral `status` action, not a hardcoded Minecraft progression plan. `/agent/tick` returns `llm_latency_sec`, `prompt_size_chars`, `llm_state_packet_preview`, `available_actions_count`, and arg-sanitization diagnostics so you can see what the planner received.
+Then set the request body `planner` to `llm` or `hybrid`. `hybrid` uses only emergency survival reflexes first, then the LLM. If the LLM is unavailable or unusable, the fallback is the neutral `status` action, not a hardcoded Minecraft progression plan. `/agent/tick` returns `llm_provider`, `llm_model`, `llm_base_url_host`, `llm_request_ms`, `llm_retried_due_to_param_compat`, `llm_latency_sec`, `prompt_size_chars`, `llm_state_packet_preview`, `available_actions_count`, and arg-sanitization diagnostics so you can see what the planner received.
 
 The older curriculum endpoints can still use the environment planner mode:
 
@@ -742,11 +791,12 @@ $body = @{
 `hybrid` is the default for the gameplay brain. It uses deterministic emergency reflexes only for immediate survival, then asks an OpenAI-compatible LLM to choose a short-term objective and one high-level skill. If the LLM is unavailable or returns invalid JSON, it falls back to the neutral `status` action. `llm` skips emergency reflexes and asks the model directly. `fallback` uses only the neutral fallback.
 
 ```powershell
-$env:VTUBER_LLM_BASE_URL = "http://localhost:1234/v1"
+$env:VTUBER_LLM_PROVIDER = "local_openai_compatible"
+$env:VTUBER_LLM_BASE_URL = "http://127.0.0.1:8087/v1"
 $env:VTUBER_LLM_API_KEY = "dummy"
-$env:VTUBER_LLM_MODEL = "local-model"
+$env:VTUBER_LLM_MODEL = "Qwen3.5-9B-Q4_K_M.gguf"
 $env:VTUBER_LLM_MAX_TOKENS = "96"
-$env:VTUBER_LLM_TIMEOUT_SEC = "120"
+$env:VTUBER_LLM_TIMEOUT_SEC = "180"
 uv run uvicorn vtuber_ai.main:app --reload --port 8000
 ```
 
@@ -768,15 +818,24 @@ Chat goal planner providers:
 $env:VTUBER_LLM_PROVIDER = "fake"
 ```
 
-OpenAI-compatible provider example:
+Local OpenAI-compatible provider example:
 
 ```powershell
-$env:VTUBER_LLM_PROVIDER = "openai_compatible"
-$env:VTUBER_LLM_BASE_URL = "http://localhost:1234/v1"
-$env:VTUBER_LLM_API_KEY = ""
-$env:VTUBER_LLM_MODEL = "local-model"
+$env:VTUBER_LLM_PROVIDER = "local_openai_compatible"
+$env:VTUBER_LLM_BASE_URL = "http://127.0.0.1:8087/v1"
+$env:VTUBER_LLM_API_KEY = "dummy"
+$env:VTUBER_LLM_MODEL = "Qwen3.5-9B-Q4_K_M.gguf"
 $env:VTUBER_LLM_MAX_TOKENS = "96"
-$env:VTUBER_LLM_TIMEOUT_SEC = "120"
+$env:VTUBER_LLM_TIMEOUT_SEC = "180"
+```
+
+OpenAI provider example:
+
+```powershell
+$env:VTUBER_LLM_PROVIDER = "openai"
+$env:OPENAI_API_KEY = "..."
+$env:VTUBER_OPENAI_MODEL = "gpt-5.5"
+$env:VTUBER_LLM_REASONING_EFFORT = "minimal"
 ```
 
 Even with an LLM provider, model output is treated as untrusted. Agent LLM actions still pass through `policy.validate_action` and the Mineflayer bridge whitelist. For the gameplay brain, invalid actions become structured failure feedback for the next tick instead of a hardcoded strategic override.

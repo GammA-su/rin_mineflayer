@@ -1,0 +1,90 @@
+Stream loop starting — output: out/stream_runs/20260520T135826Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, stuck-state facts, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  llm        : provider=openai model=gpt-5.5 base_url=(env) api_key_env=(provider default)
+  ticks/batch: 5  tick_delay: 1.0s
+  personality: http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] craft_furnace {} -> ok=true failure=none
+[2] collect_wood {"count":8} -> ok=true failure=none stop=path_timeout_before_target collected=2
+[3] place_furnace {} -> ok=true failure=none
+[4] craft_sticks {"count":4} -> ok=true failure=none
+[5] craft_planks {} -> ok=true failure=none
+  [batch 1 saved  ticks 1-5]
+[6] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 60000ms.'
+[7] craft_furnace {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (17.4 blocks).'
+[8] approach_station {"station":"crafting_table","radius":3} -> ok=true failure=none
+[9] craft_furnace {} -> ok=true failure=none
+[10] place_furnace {} -> ok=true failure=none
+  [batch 2 saved  ticks 6-10]
+[11] smelt_iron {} -> ok=true failure=none
+[12] mine_iron_ore {"count":1} -> ok=false failure=resource_acquisition_failed stop=action_timeout error='Timed out mine_iron_ore after 60000ms.'
+[13] explore_nearby {} -> ok=false failure=partial_progress stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[14] approach_station {"station":"furnace"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[15] return_to_workspace {} -> ok=true failure=none
+  [batch 3 saved  ticks 11-15]
+[16] approach_station {"station":"furnace","radius":6} -> ok=true failure=none
+[17] smelt_iron {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Furnace is visible but too far to use (6.2 blocks).'
+[18] approach_station {"station":"furnace","radius":3} -> ok=true failure=none
+[19] smelt_iron {} -> ok=true failure=none
+[20] return_to_workspace {} -> ok=true failure=none
+  [batch 4 saved  ticks 16-20]
+[21] place_crafting_table {} -> ok=true failure=none stop=station_already_available
+[22] craft_iron_pickaxe {} -> ok=true failure=none
+[23] find_lava_pool {} -> ok=true failure=none
+[24] craft_furnace {} -> ok=false failure=missing_station stop=no_crafting_table_nearby error='No crafting table found within radius 24.'
+[25] place_crafting_table {} -> ok=true failure=none
+  [batch 5 saved  ticks 21-25]
+[26] craft_furnace {} -> ok=true failure=none
+[27] place_furnace {} -> ok=true failure=none
+[28] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[29] explore_nearby {} -> ok=false failure=partial_progress stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[30] mine_iron_ore {} -> ok=true failure=none stop=collected_drop collected=3
+  [batch 6 saved  ticks 26-30]
+[31] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[32] approach_station {"station":"furnace"} -> ok=true failure=none
+[33] smelt_iron {} -> ok=true failure=none
+[34] craft_shield {} -> ok=true failure=none
+[35] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+  [batch 7 saved  ticks 31-35]
+[36] explore_nearby {} -> ok=false failure=partial_progress stop=action_timeout error='Timed out explore_nearby after 15000ms.'
+[37] mine_iron_ore {} -> ok=true failure=none stop=collected_drop collected=3
+[38] return_to_workspace {} -> ok=false failure=navigation_failed stop=path_timeout error='Could not reach position: Timed out pathing to return position after 20000ms.'
+[39] setup_workspace {} -> ok=true failure=none
+[40] craft_crafting_table {} -> ok=true failure=none
+  [batch 8 saved  ticks 36-40]
+[41] place_crafting_table {} -> ok=true failure=none
+[42] craft_furnace {} -> ok=true failure=none
+[43] place_furnace {} -> ok=true failure=none
+[44] smelt_iron {} -> ok=true failure=none
+[45] craft_bucket {} -> ok=true failure=none
+  [batch 9 saved  ticks 41-45]
+[46] collect_water {} -> ok=false failure=action_failed stop=action_failed error='Water bucket not in inventory after collection.'
+[47] scan_for_liquids {} -> ok=true failure=none collected=4
+[48] collect_water {} -> ok=false failure=action_failed stop=action_failed error='Water bucket not in inventory after collection.'
+[49] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[50] approach_station {"station":"crafting_table","radius":6} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+  [batch 10 saved  ticks 46-50]
+[51] dig_staircase {} -> ok=true failure=none
+[52] approach_station {"station":"crafting_table","radius":6} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[53] return_to_workspace {} -> ok=true failure=none
+[54] approach_station {"station":"crafting_table","radius":6} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[55] approach_station {"station":"crafting_table","radius":6} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+  [batch 11 saved  ticks 51-55]
+[56] approach_station {"station":"crafting_table","radius":6} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[57] look_around {} -> ok=true failure=none
+[58] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[59] explore_nearby {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe nearby exploration target found within radius 16.'
+[60] find_safe_workspace {"radius":32,"purpose":"general"} -> ok=false failure=navigation_failed stop=path_timeout error='Path to workspace failed: Timed out pathing after 20000ms.'
+  [batch 12 saved  ticks 56-60]
+[61] approach_station {"station":"crafting_table"} -> ok=true failure=none
+[62] mine_iron_ore {} -> ok=false failure=resource_acquisition_failed stop=targets_found_but_not_accessible collected=0 error='Timed out pathing to target block after 12000ms.'
+[63] navigate_to_block_type {"targets":["iron_ore"],"radius":32} -> ok=true failure=none
+[64] mine_iron_ore {"count":8} -> ok=true failure=none stop=path_timeout_before_target collected=4
+[65] return_to_workspace {} -> ok=true failure=none
+  [batch 13 saved  ticks 61-65]
+[66] craft_furnace {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (24.1 blocks).'
+  [batch 14 saved  ticks 66-66 (partial)]
+
+Stopped. 66 ticks total. Output: out/stream_runs/20260520T135826Z

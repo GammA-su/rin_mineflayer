@@ -1,5 +1,6 @@
 from pathlib import Path
 import asyncio
+import os
 import tempfile
 import sys
 from unittest.mock import AsyncMock, patch
@@ -10,7 +11,12 @@ sys.path.insert(0, str(ROOT / "src"))
 from vtuber_ai.agent import plan_objective_action
 from vtuber_ai.autonomy import _is_stale_workspace_loop, run_agent_live, run_agent_tick
 from vtuber_ai.curriculum import inventory_counts, recommend_objective
-from vtuber_ai.game_brain import find_blocked_family
+from vtuber_ai.game_brain import (
+    AUTONOMOUS_ALLOWED_ACTIONS,
+    find_blocked_family,
+    _rts_position_stuck_from_ticks,
+    _workspace_navigation_stuck_state,
+)
 from vtuber_ai.memory import is_low_information_action, is_observation_action
 from vtuber_ai.schemas import ActionRequest, ActionResult, AgentLiveRequest
 from vtuber_ai.verifier import verify_action, verify_step
@@ -1627,13 +1633,12 @@ def main() -> None:
         "max_ticks": 1,
     })()
 
-    import tempfile
     with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as _tf:
         _db_path = _tf.name
 
     with (
-        patch("vtuber_ai.autonomy.get_bot_status", new=AsyncMock(return_value=(_bot_status, None))),
-        patch("vtuber_ai.autonomy.get_bridge_actions", new=AsyncMock(return_value=(list(AUTONOMOUS_ALLOWED_ACTIONS), None))),
+        patch("vtuber_ai.autonomy.get_bot_status", new=AsyncMock(return_value=_bot_status)),
+        patch("vtuber_ai.autonomy.get_bridge_actions", new=AsyncMock(return_value=list(AUTONOMOUS_ALLOWED_ACTIONS))),
         patch("vtuber_ai.autonomy.get_recent_agent_ticks", return_value=_iron_fail_ticks),
         patch("vtuber_ai.autonomy.get_recent_events", return_value=[]),
         patch("vtuber_ai.autonomy.log_agent_tick"),
@@ -1653,25 +1658,28 @@ def main() -> None:
         _tick_result = asyncio.run(run_agent_tick(_tick_req))
 
     # In advisory mode, execution must NOT be skipped for a blocked family
-    assert _tick_result.get("action") == "mine_iron_ore", (
-        f"advisory mode must not skip mine_iron_ore; got action={_tick_result.get('action')}"
+    _tick_action = _tick_result.get("action")
+    _tick_action_name = _tick_action.action if hasattr(_tick_action, "action") else str(_tick_action)
+    assert _tick_action_name == "mine_iron_ore", (
+        f"advisory mode must not skip mine_iron_ore; got action={_tick_action_name}"
     )
-    _tick_planner_info = _tick_result.get("planner_info") or {}
+    _tick_planner_info = _tick_result.get("planner") or {}
     assert _tick_planner_info.get("action_execution_skipped") is not True, (
-        f"advisory mode must not skip execution; planner_info={_tick_planner_info}"
+        f"advisory mode must not skip execution; planner={_tick_planner_info}"
     )
     assert _tick_planner_info.get("repetition_warning") is True, (
-        f"advisory mode must set repetition_warning in planner_info; got {_tick_planner_info}"
+        f"advisory mode must set repetition_warning in planner; got {_tick_planner_info}"
     )
-    result_ft = (_tick_result.get("result") or {}).get("failure_type")
+    _tick_action_result = _tick_result.get("result")
+    result_ft = (getattr(_tick_action_result, "result", None) or {}).get("failure_type")
     assert result_ft != "blocked_repetition", (
         f"advisory mode must not return blocked_repetition; got failure_type={result_ft}"
     )
 
     # Hard-block mode: execution IS skipped
     with (
-        patch("vtuber_ai.autonomy.get_bot_status", new=AsyncMock(return_value=(_bot_status, None))),
-        patch("vtuber_ai.autonomy.get_bridge_actions", new=AsyncMock(return_value=(list(AUTONOMOUS_ALLOWED_ACTIONS), None))),
+        patch("vtuber_ai.autonomy.get_bot_status", new=AsyncMock(return_value=_bot_status)),
+        patch("vtuber_ai.autonomy.get_bridge_actions", new=AsyncMock(return_value=list(AUTONOMOUS_ALLOWED_ACTIONS))),
         patch("vtuber_ai.autonomy.get_recent_agent_ticks", return_value=_iron_fail_ticks),
         patch("vtuber_ai.autonomy.get_recent_events", return_value=[]),
         patch("vtuber_ai.autonomy.log_agent_tick"),
@@ -1692,14 +1700,140 @@ def main() -> None:
         os.environ.pop("VTUBER_HARD_BLOCK_REPETITIONS", None)
 
     assert _hard_tick_result.get("ok") is False, _hard_tick_result
-    _hard_result = _hard_tick_result.get("result") or {}
-    assert _hard_result.get("failure_type") == "blocked_repetition", (
-        f"hard-block mode must return blocked_repetition; got {_hard_result.get('failure_type')}"
+    _hard_action_result = _hard_tick_result.get("result")
+    _hard_result_dict = getattr(_hard_action_result, "result", None) or {}
+    assert _hard_result_dict.get("failure_type") == "blocked_repetition", (
+        f"hard-block mode must return blocked_repetition; got {_hard_result_dict.get('failure_type')}"
     )
-    _hard_planner = _hard_tick_result.get("planner_info") or {}
+    _hard_planner = _hard_tick_result.get("planner") or {}
     assert _hard_planner.get("action_execution_skipped") is True, (
         f"hard-block mode must mark action_execution_skipped; got {_hard_planner}"
     )
+
+    # --- VERIFIER: unstuck_escape no_progress → failed_because with kind=no_progress ---
+    unstuck_req = ActionRequest(action="unstuck_escape", args={"radius": 8, "mode": "any"}, speech="", reason="")
+    unstuck_no_progress = ActionResult(
+        ok=False,
+        action="unstuck_escape",
+        error="No position change and no terrain modification.",
+        result={
+            "failure_type": "no_progress",
+            "stop_reason": "no_progress",
+            "distance_moved": 0.1,
+            "y_delta": 0.0,
+            "blocks_dug": 0,
+            "clearance_created": False,
+            "local_space_before": 4,
+            "local_space_after": 4,
+            "escape_strategy_used": None,
+            "progress_made": False,
+        },
+    )
+    v_unstuck = verify_action(empty_status, empty_status, unstuck_req, unstuck_no_progress)
+    assert v_unstuck["failure_type"] == "no_progress", \
+        f"unstuck_escape no_progress must be no_progress, got {v_unstuck['failure_type']}"
+    fb_unstuck = v_unstuck.get("failed_because") or []
+    assert isinstance(fb_unstuck, list) and len(fb_unstuck) == 1, \
+        f"unstuck_escape must produce one failed_because entry, got: {fb_unstuck}"
+    assert fb_unstuck[0]["kind"] == "no_progress", fb_unstuck[0]
+    assert fb_unstuck[0]["action"] == "unstuck_escape", fb_unstuck[0]
+    assert v_unstuck.get("repeatable_now") is True
+
+    # --- POLICY: unstuck_escape validates radius and mode ---
+    from vtuber_ai.policy import validate_action, PolicyError
+
+    valid_unstuck = validate_action(
+        ActionRequest(action="unstuck_escape", args={"radius": 10, "mode": "dig_clearance"}, speech="", reason="")
+    )
+    assert valid_unstuck.action == "unstuck_escape"
+    assert valid_unstuck.args["radius"] == 10
+    assert valid_unstuck.args["mode"] == "dig_clearance"
+
+    import pytest
+    with pytest.raises(PolicyError):
+        validate_action(ActionRequest(action="unstuck_escape", args={"mode": "fly"}, speech="", reason=""))
+
+    # --- GAME BRAIN: unstuck_escape in AUTONOMOUS_ALLOWED_ACTIONS ---
+    assert "unstuck_escape" in AUTONOMOUS_ALLOWED_ACTIONS, \
+        "unstuck_escape must be in AUTONOMOUS_ALLOWED_ACTIONS"
+
+    # --- GAME BRAIN: _rts_position_stuck_from_ticks ---
+    def _rts_tick(ft: str, x: float, z: float, ok: bool = False) -> dict:
+        return {
+            "action": "return_to_surface",
+            "ok": ok,
+            "result": {
+                "failure_type": ft,
+                "start_position": {"x": x, "y": 30.0, "z": z},
+                "end_position": {"x": x, "y": 30.0, "z": z},
+            },
+            "verifier": {"failure_type": ft},
+        }
+
+    # Two no_progress ticks at same position → stuck
+    assert _rts_position_stuck_from_ticks([
+        _rts_tick("no_progress", 10.0, 10.0),
+        _rts_tick("no_progress", 10.5, 10.5),
+    ]), "two no_progress at same position must trigger stuck"
+
+    # Two no_progress ticks far apart → not stuck
+    assert not _rts_position_stuck_from_ticks([
+        _rts_tick("no_progress", 10.0, 10.0),
+        _rts_tick("no_progress", 50.0, 50.0),
+    ]), "no_progress at different positions must not trigger stuck"
+
+    # One no_progress tick → not stuck (need 2)
+    assert not _rts_position_stuck_from_ticks([
+        _rts_tick("no_progress", 10.0, 10.0),
+    ]), "single no_progress must not trigger stuck"
+
+    # partial_progress then no_progress → chain broken, not stuck
+    assert not _rts_position_stuck_from_ticks([
+        _rts_tick("no_progress", 10.0, 10.0),
+        _rts_tick("partial_progress_timeout", 10.0, 10.0),
+    ]), "partial_progress between failures must break chain"
+
+    # No_progress, then observation action, then no_progress → still stuck (observation doesn't break chain)
+    stuck_with_obs = [
+        _rts_tick("no_progress", 10.0, 10.0),
+        {"action": "status", "ok": True, "result": {}, "verifier": {}},
+        _rts_tick("no_progress", 10.2, 10.2),
+    ]
+    assert _rts_position_stuck_from_ticks(stuck_with_obs), \
+        "observation tick between no_progress failures must not break chain"
+
+    # --- CATALOG: unstuck_escape has category=recovery and structured args_schema ---
+    from vtuber_ai.action_catalog import CATALOG
+    _ue = CATALOG["unstuck_escape"]
+    assert _ue.category == "recovery", f"unstuck_escape category must be 'recovery'; got {_ue.category}"
+    assert isinstance(_ue.args_schema.get("mode"), dict), \
+        f"unstuck_escape args_schema.mode must be a structured dict; got {_ue.args_schema}"
+    assert _ue.args_schema["mode"]["enum"] == ["safe_random_walk", "dig_clearance", "upward_step", "any"], \
+        f"unstuck_escape mode enum mismatch; got {_ue.args_schema['mode']}"
+
+    # --- _workspace_navigation_stuck_state fires on stream-like stuck loop ---
+    _bare = {"inventory_counts": {}, "nearby_blocks": {}}
+    _stream_ticks = [
+        {"action": "approach_station", "ok": 0, "args": {"station": "crafting_table"},
+         "result": {"failure_type": "station_not_reached"}, "verifier": {"failure_type": "station_not_reached"},
+         "before_state": {"position": {"x": 0, "y": 30, "z": 0}},
+         "after_state": {"position": {"x": 0, "y": 30, "z": 0}}},
+        {"action": "setup_workspace", "ok": 0, "args": {},
+         "result": {"failure_type": "no_safe_workspace"}, "verifier": {"failure_type": "no_safe_workspace"},
+         "before_state": {"position": {"x": 0, "y": 30, "z": 0}},
+         "after_state": {"position": {"x": 0, "y": 30, "z": 0}}},
+        {"action": "return_to_surface", "ok": 0, "args": {},
+         "result": {"failure_type": "no_progress"}, "verifier": {"failure_type": "no_progress"},
+         "before_state": {"position": {"x": 0, "y": 30, "z": 0}},
+         "after_state": {"position": {"x": 0, "y": 30, "z": 0}}},
+        {"action": "find_safe_workspace", "ok": 0, "args": {},
+         "result": {"failure_type": "no_safe_workspace"}, "verifier": {"failure_type": "no_safe_workspace"},
+         "before_state": {"position": {"x": 0, "y": 30, "z": 0}},
+         "after_state": {"position": {"x": 0, "y": 30, "z": 0}}},
+    ]
+    _ws_stuck = _workspace_navigation_stuck_state(_stream_ticks, _bare)
+    assert _ws_stuck is not None and _ws_stuck["active"] is True, \
+        f"stream-like stuck loop must trigger workspace_navigation_stuck; got {_ws_stuck}"
 
     print("manual agent tests passed")
 

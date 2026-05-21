@@ -1,0 +1,177 @@
+Stream loop starting — output: out/stream_runs/20260521T111902Z
+  mission      : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, stuck-state facts, failed requirements, and current state to recover naturally. Do not choose status repeatedly unless new safety information is needed.
+  api_url      : http://127.0.0.1:8000/agent/tick
+  context_mode : full-window
+  window_ticks : 50
+  llm          : provider=local_openai_compatible model=Qwen3.6-27B-Q4_K_M.gguf base_url=http://127.0.0.1:8087/v1 api_key_env=(provider default)
+  ticks/batch  : 25  tick_delay: 1.0s
+  personality  : http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] craft_iron_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: iron_ingot x1, stick x2.'
+[2] craft_sticks {} -> ok=true failure=none
+[3] craft_iron_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: iron_ingot x1.'
+[4] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[5] navigate_to_block_type {"targets":["iron_ore","deepslate_iron_ore"],"radius":64} -> ok=false failure=navigation_failed stop=path_timeout error='No accessible target block found. Try explore_nearby or choose a different target.'
+[6] explore_nearby {} -> ok=false failure=partial_progress_timeout stop=partial_progress_timeout error='Exploration path failed: Timed out pathing after 20000ms.'
+[7] craft_iron_pickaxe {} -> ok=false failure=missing_materials stop=missing_required_item error='Missing materials: iron_ingot x1.'
+[8] mine_iron_ore {} -> ok=false failure=missing_tool stop=missing_required_tool error='Missing tool: stone_pickaxe or better is required.'
+[9] craft_stone_pickaxe {} -> ok=false failure=missing_station stop=station_visible_but_too_far error='Crafting table is visible but too far to use (8.3 blocks).'
+[10] approach_station {"station":"crafting_table"} -> ok=false failure=station_not_reached stop=still_outside_requested_radius error='Approached station but did not reach requested radius.'
+[11] craft_stone_pickaxe {} -> ok=true failure=none
+[12] mine_iron_ore {} -> ok=false failure=navigation_failed stop=targets_found_but_not_accessible collected=0 error='No accessible target block found. Try navigate_to_block_type or move closer to exposed blocks.'
+[13] explore_nearby {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe nearby exploration target found within radius 16.'
+[14] find_safe_workspace {"radius":16,"purpose":"general"} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[15] setup_workspace {} -> ok=false failure=no_safe_workspace stop=area_cramped error='No safe workspace found within radius 16.'
+[16] return_to_surface {} -> ok=false failure=partial_progress_timeout stop=partial_progress_timeout error='Timed out return_to_surface after 30000ms.'
+[17] status {} -> ok=true failure=none
+[18] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=partial_progress_timeout error='Timed out mine_iron_ore after 30000ms.'
+[19] status {} -> ok=true failure=none
+[20] unstuck_escape {"radius":8,"mode":"any"} -> ok=true failure=none
+[21] mine_iron_ore {} -> ok=false failure=partial_progress_timeout stop=partial_progress_timeout error='Timed out mine_iron_ore after 30000ms.'
+[22] status {} -> ok=true failure=none
+[23] status {} -> ok=true failure=none
+[24] status {} -> ok=true failure=none
+[25] status {} -> ok=true failure=none
+  [batch 1 saved  ticks 1-25]
+[26] status {} -> ok=true failure=none
+[27] status {} -> ok=true failure=none
+[28] status {} -> ok=true failure=none
+[29] status {} -> ok=true failure=none
+[30] status {} -> ok=true failure=none
+[31] status {} -> ok=true failure=none
+[32] status {} -> ok=true failure=none
+[33] status {} -> ok=true failure=none
+[34] status {} -> ok=true failure=none
+[35] status {} -> ok=true failure=none
+[36] status {} -> ok=true failure=none
+[37] status {} -> ok=true failure=none
+[38] status {} -> ok=true failure=none
+[39] status {} -> ok=true failure=none
+[40] status {} -> ok=true failure=none
+[41] status {} -> ok=true failure=none
+[42] status {} -> ok=true failure=none
+[43] status {} -> ok=true failure=none
+[44] status {} -> ok=true failure=none
+[45] status {} -> ok=true failure=none
+[46] status {} -> ok=true failure=none
+[47] status {} -> ok=true failure=none
+[48] status {} -> ok=true failure=none
+[49] status {} -> ok=true failure=none
+[50] status {} -> ok=true failure=none
+  [batch 2 saved  ticks 26-50]
+[51] status {} -> ok=true failure=none
+[52] status {} -> ok=true failure=none
+[53] status {} -> ok=true failure=none
+[54] status {} -> ok=true failure=none
+[55] status {} -> ok=true failure=none
+[56] status {} -> ok=true failure=none
+[57] status {} -> ok=true failure=none
+[58] status {} -> ok=true failure=none
+[59] status {} -> ok=true failure=none
+[60] status {} -> ok=true failure=none
+[61] status {} -> ok=true failure=none
+[62] status {} -> ok=true failure=none
+[63] status {} -> ok=true failure=none
+[64] status {} -> ok=true failure=none
+[65] status {} -> ok=true failure=none
+[66] status {} -> ok=true failure=none
+[67] status {} -> ok=true failure=none
+[68] status {} -> ok=true failure=none
+[69] status {} -> ok=true failure=none
+[70] status {} -> ok=true failure=none
+[71] status {} -> ok=true failure=none
+[72] status {} -> ok=true failure=none
+[73] status {} -> ok=true failure=none
+[74] status {} -> ok=true failure=none
+[75] status {} -> ok=true failure=none
+  [batch 3 saved  ticks 51-75]
+[76] status {} -> ok=true failure=none
+[77] status {} -> ok=true failure=none
+[78] status {} -> ok=true failure=none
+[79] status {} -> ok=true failure=none
+[80] status {} -> ok=true failure=none
+[81] status {} -> ok=true failure=none
+[82] status {} -> ok=true failure=none
+[83] status {} -> ok=true failure=none
+[84] status {} -> ok=true failure=none
+[85] status {} -> ok=true failure=none
+[86] status {} -> ok=true failure=none
+[87] status {} -> ok=true failure=none
+[88] status {} -> ok=true failure=none
+[89] status {} -> ok=true failure=none
+[90] status {} -> ok=true failure=none
+[91] status {} -> ok=true failure=none
+[92] status {} -> ok=true failure=none
+[93] status {} -> ok=true failure=none
+[94] status {} -> ok=true failure=none
+[95] status {} -> ok=true failure=none
+[96] status {} -> ok=true failure=none
+[97] status {} -> ok=true failure=none
+[98] status {} -> ok=true failure=none
+[99] status {} -> ok=true failure=none
+[100] status {} -> ok=true failure=none
+  [batch 4 saved  ticks 76-100]
+[101] status {} -> ok=true failure=none
+[102] status {} -> ok=true failure=none
+[103] status {} -> ok=true failure=none
+[104] status {} -> ok=true failure=none
+[105] status {} -> ok=true failure=none
+[106] status {} -> ok=true failure=none
+[107] status {} -> ok=true failure=none
+[108] status {} -> ok=true failure=none
+[109] status {} -> ok=true failure=none
+[110] status {} -> ok=true failure=none
+[111] status {} -> ok=true failure=none
+[112] status {} -> ok=true failure=none
+[113] status {} -> ok=true failure=none
+[114] status {} -> ok=true failure=none
+[115] status {} -> ok=true failure=none
+[116] status {} -> ok=true failure=none
+[117] status {} -> ok=true failure=none
+[118] status {} -> ok=true failure=none
+[119] status {} -> ok=true failure=none
+[120] status {} -> ok=true failure=none
+[121] status {} -> ok=true failure=none
+[122] status {} -> ok=true failure=none
+[123] status {} -> ok=true failure=none
+[124] status {} -> ok=true failure=none
+[125] status {} -> ok=true failure=none
+  [batch 5 saved  ticks 101-125]
+[126] status {} -> ok=true failure=none
+[127] status {} -> ok=true failure=none
+[128] status {} -> ok=true failure=none
+[129] status {} -> ok=true failure=none
+[130] status {} -> ok=true failure=none
+[131] status {} -> ok=true failure=none
+[132] status {} -> ok=true failure=none
+[133] status {} -> ok=true failure=none
+[134] status {} -> ok=true failure=none
+[135] status {} -> ok=true failure=none
+[136] status {} -> ok=true failure=none
+[137] status {} -> ok=true failure=none
+[138] status {} -> ok=true failure=none
+[139] status {} -> ok=true failure=none
+[140] status {} -> ok=true failure=none
+[141] status {} -> ok=true failure=none
+[142] status {} -> ok=true failure=none
+[143] status {} -> ok=true failure=none
+[144] status {} -> ok=true failure=none
+[145] status {} -> ok=true failure=none
+[146] status {} -> ok=true failure=none
+[147] status {} -> ok=true failure=none
+[148] status {} -> ok=true failure=none
+[149] status {} -> ok=true failure=none
+[150] status {} -> ok=true failure=none
+  [batch 6 saved  ticks 126-150]
+[151] status {} -> ok=true failure=none
+[152] status {} -> ok=true failure=none
+[153] status {} -> ok=true failure=none
+[154] status {} -> ok=true failure=none
+[155] status {} -> ok=true failure=none
+[156] status {} -> ok=true failure=none
+[157] status {} -> ok=true failure=none
+[158] status {} -> ok=true failure=none
+  [batch 7 saved  ticks 151-158 (partial)]
+
+Stopped. 158 ticks total. Output: out/stream_runs/20260521T111902Z

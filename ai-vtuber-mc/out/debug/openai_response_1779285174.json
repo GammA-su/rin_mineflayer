@@ -1,0 +1,22 @@
+{
+  "id": "resp_cli_test_123",
+  "status": "completed",
+  "output_text": "{\"objective\": \"survive\", \"action\": \"status\", \"args\": {}, \"speech\": \"All good.\", \"mood\": \"neutral\", \"reason\": \"ok\"}",
+  "output": [
+    {
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"objective\": \"survive\", \"action\": \"status\", \"args\": {}, \"speech\": \"All good.\", \"mood\": \"neutral\", \"reason\": \"ok\"}"
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 100,
+    "completion_tokens": 50,
+    "total_tokens": 150
+  }
+}

@@ -46,6 +46,12 @@ const WOOD_BLOCK_NAMES = new Set([
   'warped_stem'
 ])
 const COLLECT_WOOD_RADIUS = 32
+// Outer safety net for the withActionTimeout wrapper around collectWood.
+// collectWood manages its own per-candidate timeouts (PER_CANDIDATE_PATH_MS × max
+// 8 candidates + preflight overhead), so the outer net is sized to never fire
+// during normal operation: 8 × 7s + 10s buffer = 66s. Falls back to
+// RESOURCE_ACTION_TIMEOUT_MS if the env variable is not set.
+const COLLECT_WOOD_OUTER_TIMEOUT_MS = numberEnv('COLLECT_WOOD_OUTER_TIMEOUT_MS', 66000)
 const COLLECT_WOOD_DEFAULT_COUNT = 4
 const COLLECT_WOOD_MAX_COUNT = 16
 const CRAFT_MAX_COUNT = 64
@@ -545,6 +551,8 @@ const ACTIONS = new Set([
   'set_sneak',
   'set_sprint',
   'recover_position',
+  'unstuck_escape',
+  'seek_open_area',
   'check_inventory',
   'check_time_of_day',
   'check_light_level',
@@ -703,7 +711,7 @@ function actionCategory(name) {
   if ([
     'find_safe_workspace', 'setup_workspace', 'approach_station', 'dig_staircase', 'pillar_up', 'bridge_gap',
     'place_block_in_direction', 'mlg_water_bucket', 'enter_boat', 'exit_boat',
-    'set_sneak', 'set_sprint'
+    'set_sneak', 'set_sprint', 'unstuck_escape'
   ].includes(name)) return 'movement'
   if ([
     'collect_wood', 'mine_stone', 'collect_water', 'collect_lava', 'collect_obsidian'
@@ -863,7 +871,14 @@ function createActionArgSchemas() {
   }
 
   defineCountSchema(schemas, 'collect_wood', COLLECT_WOOD_DEFAULT_COUNT, 1, COLLECT_WOOD_MAX_COUNT)
-  defineCountSchema(schemas, 'mine_stone', MINE_STONE_DEFAULT_COUNT, 1, MINE_STONE_MAX_COUNT)
+  defineSchema(schemas, 'mine_stone', {
+    allowedKeys: ['count', 'radius'],
+    defaults: { count: MINE_STONE_DEFAULT_COUNT, radius: ACQUIRE_BLOCKS_DEFAULT_RADIUS },
+    clamp: {
+      count: { min: 1, max: MINE_STONE_MAX_COUNT, integer: true },
+      radius: { min: ACQUIRE_BLOCKS_MIN_RADIUS, max: ACQUIRE_BLOCKS_MAX_RADIUS, integer: true }
+    }
+  })
   defineSchema(schemas, 'mine_coal', {
     allowedKeys: ['count', 'radius', 'allowExcavate', 'accessMode'],
     defaults: {
@@ -878,7 +893,14 @@ function createActionArgSchemas() {
     },
     enums: { accessMode: Array.from(ACQUIRE_ACCESS_MODES) }
   })
-  defineCountSchema(schemas, 'mine_iron_ore', MINE_IRON_DEFAULT_COUNT, 1, ORE_MINE_MAX_COUNT)
+  defineSchema(schemas, 'mine_iron_ore', {
+    allowedKeys: ['count', 'radius'],
+    defaults: { count: MINE_IRON_DEFAULT_COUNT, radius: ACQUIRE_BLOCKS_DEFAULT_RADIUS },
+    clamp: {
+      count: { min: 1, max: ORE_MINE_MAX_COUNT, integer: true },
+      radius: { min: ACQUIRE_BLOCKS_MIN_RADIUS, max: ACQUIRE_BLOCKS_MAX_RADIUS, integer: true }
+    }
+  })
   defineCountSchema(schemas, 'collect_obsidian', 1, 1, 14)
   defineCountSchema(schemas, 'craft_planks', 4, 1, CRAFT_MAX_COUNT)
   defineCountSchema(schemas, 'craft_sticks', 1, 1, CRAFT_MAX_COUNT)
@@ -895,6 +917,18 @@ function createActionArgSchemas() {
     defaults: { radius: WORKSPACE_DEFAULT_RADIUS },
     clamp: { radius: { min: 8, max: WORKSPACE_MAX_RADIUS, integer: true } },
     enums: { purpose: Array.from(WORKSPACE_PURPOSES) }
+  })
+  defineSchema(schemas, 'unstuck_escape', {
+    allowedKeys: ['radius', 'mode'],
+    defaults: { radius: 8, mode: 'any' },
+    clamp: { radius: { min: 4, max: 16, integer: true } },
+    enums: { mode: ['safe_random_walk', 'dig_clearance', 'upward_step', 'any'] }
+  })
+  defineSchema(schemas, 'seek_open_area', {
+    allowedKeys: ['radius', 'preferSurface'],
+    defaults: { radius: 32, preferSurface: true },
+    clamp: { radius: { min: 8, max: 64, integer: true } },
+    booleans: ['preferSurface']
   })
   defineSchema(schemas, 'setup_workspace', {
     allowedKeys: ['need_crafting_table', 'need_furnace', 'need_chest', 'radius'],
@@ -1177,10 +1211,19 @@ let lastDisconnectReason = null
 let lastError = null
 let lastActionStartedAt = null
 let currentActionName = null
+let previousActionName = null
 let actionRunning = false
 let lastPathGoal = null
 let lastPathCancelReason = null
+let pathGoalChangedDuringAction = false
 const _lastAcquireTargetByAction = new Map()
+// Tracks which dy offsets (8..64) yielded < 2 blocks of movement per horizontal position bucket.
+// Cleared when the bot moves to a different bucket or reaches the surface.
+const _rtsExhaustedDy = new Map()
+// Timeout investigation profiler state
+let currentSubstep = null
+let lastActionTimeoutClassification = null
+let actionPositionStart = null
 
 function connectBot() {
   if (shuttingDown || isConnecting || (bot && bot.player)) {
@@ -1498,6 +1541,9 @@ function disconnectedActionResult(action) {
 }
 
 function bridgeDiagnostics() {
+  const pfMoving = Boolean(
+    bot && bot.pathfinder && typeof bot.pathfinder.isMoving === 'function' && bot.pathfinder.isMoving()
+  )
   return {
     lastKickReason,
     lastDisconnectReason,
@@ -1506,8 +1552,19 @@ function bridgeDiagnostics() {
     lastActionStartedAt,
     currentActionName,
     currentActionElapsedMs: lastActionStartedAt ? Date.now() - lastActionStartedAt : null,
+    currentSubstep,
+    previousActionName,
     lastPathGoal,
-    lastPathCancelReason
+    lastPathCancelReason,
+    pathGoalChangedDuringAction,
+    pathfinder_goal: lastPathGoal,
+    pathfinder_moving: pfMoving,
+    lastActionTimeoutClassification,
+    timeout_config: {
+      action_timeout_ms: ACTION_TIMEOUT_MS,
+      resource_action_timeout_ms: RESOURCE_ACTION_TIMEOUT_MS,
+      navigation_timeout_ms: NAVIGATION_TIMEOUT_MS,
+    },
   }
 }
 
@@ -1531,18 +1588,78 @@ function fail(action, error, result = {}) {
   return { ok: false, action, result: enriched, error }
 }
 
-function actionTimeoutFailure(action, timeoutMs) {
+function actionTimeoutFailure(action, timeoutMs, profiler) {
+  const p = profiler || {}
+  const distanceMoved = typeof p.distance_moved === 'number' ? p.distance_moved : null
+  const inventoryDelta = p.inventory_delta || null
+  const hasInventoryGain = inventoryDelta !== null && Object.values(inventoryDelta).some((v) => v > 0)
+  const hasMoved = typeof distanceMoved === 'number' && distanceMoved >= 0.5
+  const isPartialProgress = hasMoved || hasInventoryGain
+  const isNoProgress = !isPartialProgress && (distanceMoved === null || distanceMoved < 0.5) && !hasInventoryGain
+  const failureType = isPartialProgress ? 'partial_progress_timeout' : 'action_timeout'
+  const classification = p.timeout_classification || 'timeout_unknown'
+  const substep = p.currentSubstep !== undefined ? p.currentSubstep : (currentSubstep || null)
+
+  const failedBecauseEntry = {
+    kind: isPartialProgress ? 'partial_progress_timeout' : 'action_timeout',
+    action,
+    timeout_ms: timeoutMs,
+    timeout_classification: classification,
+    currentSubstep: substep,
+    distance_moved: distanceMoved,
+    inventory_delta: inventoryDelta,
+    progress_made: isPartialProgress,
+    recoverable: true,
+  }
+  if (isPartialProgress) {
+    failedBecauseEntry.continuation_relevant = true
+    failedBecauseEntry.partial_success = true
+    failedBecauseEntry.progress_signals = {
+      ...(hasMoved ? { distance_moved: distanceMoved } : {}),
+      ...(hasInventoryGain ? { inventory_delta: inventoryDelta } : {}),
+    }
+  }
+  if (isNoProgress) {
+    failedBecauseEntry.needs_condition_change = true
+  }
+
+  const timeoutConfig = p.timeout_config || {
+    action_timeout_ms: ACTION_TIMEOUT_MS,
+    resource_action_timeout_ms: RESOURCE_ACTION_TIMEOUT_MS,
+    navigation_timeout_ms: NAVIGATION_TIMEOUT_MS,
+  }
+
   return fail(action, `Timed out ${action} after ${timeoutMs}ms.`, {
-    failure_type: 'action_timeout',
-    stop_reason: 'action_timeout',
-    repeatable_now: true,
+    failure_type: failureType,
+    stop_reason: failureType,
+    repeatable_now: isPartialProgress ? true : !isNoProgress,
     can_retry: true,
-    failed_because: [{ kind: 'action_timeout', action, timeout_ms: timeoutMs }],
+    ...(isPartialProgress ? { partial_success: true, continuation_relevant: true } : {}),
+    ...(isNoProgress ? { needs_condition_change: true } : {}),
+    failed_because: [failedBecauseEntry],
     diagnostics: {
       timeout_ms: timeoutMs,
       currentActionName,
-      currentActionElapsedMs: lastActionStartedAt ? Date.now() - lastActionStartedAt : null
-    }
+      previousActionName,
+      currentSubstep: substep,
+      pathfinder_active: p.pathfinder_active !== undefined ? p.pathfinder_active : null,
+      path_goal: p.path_goal !== undefined ? p.path_goal : lastPathGoal,
+      pathGoalChangedDuringAction,
+      currentActionElapsedMs: p.action_elapsed_ms !== undefined
+        ? p.action_elapsed_ms
+        : (lastActionStartedAt ? Date.now() - lastActionStartedAt : null),
+      action_started_at_ms: p.action_started_at_ms,
+      action_elapsed_ms: p.action_elapsed_ms,
+      bot_position_start: p.bot_position_start,
+      bot_position_end: p.bot_position_end,
+      distance_moved: distanceMoved,
+      y_delta: p.y_delta,
+      inventory_delta: inventoryDelta,
+      progress_made: isPartialProgress,
+      timeout_classification: classification,
+      timeout_config: timeoutConfig,
+      ...(isNoProgress ? { needs_condition_change: true } : {}),
+    },
   })
 }
 
@@ -1900,15 +2017,44 @@ async function executeAction(request) {
   return attachArgDiagnostics(result, validation)
 }
 
+// Atomically stop the pathfinder and clear all control states, then wait for
+// the pathfinder event loop to process the cancellation before any new goal is set.
+async function clearPathfinder() {
+  stopMovement()
+  await delay(100)
+}
+
+function classifyTimeout({ currentSubstepAtTimeout, distanceMoved, inventoryDelta, pathfinderActive }) {
+  const substep = currentSubstepAtTimeout || ''
+  const hasInventoryDelta = inventoryDelta !== null && inventoryDelta !== undefined && Object.keys(inventoryDelta).length > 0
+  const hasMoved = typeof distanceMoved === 'number' && distanceMoved >= 0.5
+
+  if (substep.includes('drop') || substep.includes('collect_drop')) return 'timeout_drop_collection'
+  if (substep === 'no_target_found' || substep.includes('no_target')) return 'timeout_no_target'
+  if (substep === 'find_target' || substep === 'scan') return 'timeout_no_target'
+  if (hasMoved) return 'timeout_path_execution_with_movement'
+  if (substep.includes('path') || substep.includes('pathfind') || pathfinderActive) return 'timeout_path_execution_no_movement'
+  if (substep.includes('close_range') || substep === 'dig_target' || substep === 'staircase') return 'timeout_path_computation'
+  if (!hasMoved && !hasInventoryDelta && substep && substep !== 'init') return 'timeout_body_stuck'
+  return 'timeout_unknown'
+}
+
 async function withActionTimeout(action, fn, timeoutMs) {
-  const previousActionName = currentActionName
+  const _prevActionNameLocal = currentActionName
+  previousActionName = currentActionName
   const previousActionStartedAt = lastActionStartedAt
   currentActionName = action
   lastActionStartedAt = Date.now()
+  const actionStartMs = lastActionStartedAt
   actionRunning = true
+  pathGoalChangedDuringAction = false
+  currentSubstep = 'init'
 
-  stopMovement()
-  await yieldToEventLoop()
+  const startPos = bot && bot.entity ? Object.assign({}, positionJson(bot.entity.position)) : null
+  actionPositionStart = startPos
+  const startInventory = inventorySnapshot()
+
+  await clearPathfinder()
 
   let timedOut = false
   let timeoutId = null
@@ -1916,7 +2062,61 @@ async function withActionTimeout(action, fn, timeoutMs) {
     timeoutId = setTimeout(() => {
       timedOut = true
       stopMovement()
-      resolve(actionTimeoutFailure(action, timeoutMs))
+
+      const now = Date.now()
+      const endPos = bot && bot.entity ? positionJson(bot.entity.position) : null
+      let distanceMoved = null
+      let yDelta = null
+      if (startPos && endPos) {
+        const dx = endPos.x - startPos.x
+        const dy = endPos.y - startPos.y
+        const dz = endPos.z - startPos.z
+        distanceMoved = Math.round(Math.sqrt(dx * dx + dy * dy + dz * dz) * 10) / 10
+        yDelta = Math.round(dy * 10) / 10
+      }
+
+      const endInventory = inventorySnapshot()
+      const invDelta = {}
+      for (const [name, count] of Object.entries(endInventory)) {
+        const diff = count - (startInventory[name] || 0)
+        if (diff > 0) invDelta[name] = diff
+      }
+      const inventoryDelta = Object.keys(invDelta).length > 0 ? invDelta : null
+      const pfActive = Boolean(
+        bot && bot.pathfinder && typeof bot.pathfinder.isMoving === 'function' && bot.pathfinder.isMoving()
+      )
+      const substepAtTimeout = currentSubstep
+      const classification = classifyTimeout({
+        action,
+        currentSubstepAtTimeout: substepAtTimeout,
+        distanceMoved,
+        inventoryDelta,
+        pathfinderActive: pfActive,
+      })
+      lastActionTimeoutClassification = classification
+
+      const profiler = {
+        action_started_at_ms: actionStartMs,
+        action_elapsed_ms: now - actionStartMs,
+        currentSubstep: substepAtTimeout,
+        pathfinder_active: pfActive,
+        path_goal: lastPathGoal,
+        bot_position_start: startPos,
+        bot_position_end: endPos,
+        distance_moved: distanceMoved,
+        y_delta: yDelta,
+        inventory_delta: inventoryDelta,
+        progress_made: Boolean(
+          (distanceMoved !== null && distanceMoved >= 0.5) || inventoryDelta !== null
+        ),
+        timeout_classification: classification,
+        timeout_config: {
+          action_timeout_ms: ACTION_TIMEOUT_MS,
+          resource_action_timeout_ms: RESOURCE_ACTION_TIMEOUT_MS,
+          navigation_timeout_ms: NAVIGATION_TIMEOUT_MS,
+        },
+      }
+      resolve(actionTimeoutFailure(action, timeoutMs, profiler))
     }, timeoutMs)
   })
 
@@ -1924,12 +2124,19 @@ async function withActionTimeout(action, fn, timeoutMs) {
     return await Promise.race([Promise.resolve().then(fn), timeout])
   } catch (error) {
     if (isGoalChangedError(error)) {
+      pathGoalChangedDuringAction = true
       lastPathCancelReason = 'path_goal_changed'
       return fail(action, errorMessage(error), {
         failure_type: 'navigation_cancelled',
         stop_reason: 'path_goal_changed',
         repeatable_now: true,
-        failed_because: [{ kind: 'path_goal_changed', action, recoverable: true }]
+        failed_because: [{ kind: 'path_goal_changed', action, recoverable: true }],
+        diagnostics: {
+          currentActionName: action,
+          previousActionName,
+          lastPathGoal,
+          pathGoalChangedDuringAction: true,
+        }
       })
     }
     stopMovement()
@@ -1940,19 +2147,22 @@ async function withActionTimeout(action, fn, timeoutMs) {
     })
   } finally {
     if (timeoutId) clearTimeout(timeoutId)
-    stopMovement()
-    await delay(150)
+    await clearPathfinder()
     actionRunning = false
-    currentActionName = previousActionName
+    currentActionName = _prevActionNameLocal
     lastActionStartedAt = previousActionStartedAt
+    currentSubstep = null
   }
 }
 
 function timeoutForAction(action) {
-  if (['navigate_to_block_type', 'explore_nearby', 'return_to_workspace', 'return_to_known_position'].includes(action)) {
+  if (['navigate_to_block_type', 'explore_nearby', 'seek_open_area', 'return_to_workspace', 'return_to_known_position'].includes(action)) {
     return NAVIGATION_TIMEOUT_MS
   }
-  if (['collect_wood', 'acquire_blocks', 'mine_stone', 'mine_coal', 'mine_iron_ore'].includes(action)) {
+  if (action === 'collect_wood') {
+    return COLLECT_WOOD_OUTER_TIMEOUT_MS
+  }
+  if (['acquire_blocks', 'mine_stone', 'mine_coal', 'mine_iron_ore'].includes(action)) {
     return RESOURCE_ACTION_TIMEOUT_MS
   }
   return ACTION_TIMEOUT_MS
@@ -2076,13 +2286,13 @@ async function executeNormalizedAction(action, args) {
       return await craftWoodenPickaxe()
 
     case 'mine_stone':
-      return await mineStone(args.count)
+      return await mineStone(args)
 
     case 'mine_coal':
       return await mineCoal(args)
 
     case 'mine_iron_ore':
-      return await mineIronOre(args.count)
+      return await mineIronOre(args)
 
     case 'craft_stone_pickaxe':
       return await craftStonePickaxe()
@@ -2149,6 +2359,12 @@ async function executeNormalizedAction(action, args) {
 
     case 'recover_position':
       return await recoverPosition()
+
+    case 'unstuck_escape':
+      return await unstuckEscape(args)
+
+    case 'seek_open_area':
+      return await seekOpenArea(args)
 
     case 'check_inventory':
       return checkInventory()
@@ -2662,9 +2878,9 @@ function actionHasOnlyArgs(action, args) {
     place_furnace: ['radius', 'allowPrepareArea'],
     place_torch: [],
     craft_wooden_pickaxe: [],
-    mine_stone: ['count'],
-    mine_coal: ['count'],
-    mine_iron_ore: ['count'],
+    mine_stone: ['count', 'radius'],
+    mine_coal: ['count', 'radius', 'allowExcavate', 'accessMode'],
+    mine_iron_ore: ['count', 'radius'],
     craft_stone_pickaxe: [],
     craft_blaze_powder: [],
     craft_diamond_pickaxe: [],
@@ -3053,21 +3269,285 @@ async function lookAround(requestedRadius) {
 
 async function exploreNearby(requestedRadius) {
   const radius = requestedRadius === undefined ? EXPLORE_DEFAULT_RADIUS : requestedRadius
+  currentSubstep = 'find_target'
   const target = await findSafeExplorePosition(radius)
   if (!target) {
+    currentSubstep = 'no_target_found'
     return fail('explore_nearby', `No safe nearby exploration target found within radius ${radius}.`)
   }
 
+  currentSubstep = 'navigate'
   try {
     await gotoPositionWithTimeout(target, EXPLORE_TIMEOUT_MS)
   } catch (error) {
-    return fail('explore_nearby', `Exploration path failed: ${errorMessage(error)}`)
+    const endPos = bot && bot.entity ? positionJson(bot.entity.position) : null
+    const startPos = actionPositionStart
+    let distanceMoved = null
+    let yDelta = null
+    if (startPos && endPos) {
+      const dx = endPos.x - startPos.x
+      const dy = endPos.y - startPos.y
+      const dz = endPos.z - startPos.z
+      distanceMoved = Math.round(Math.sqrt(dx * dx + dy * dy + dz * dz) * 10) / 10
+      yDelta = Math.round(dy * 10) / 10
+    }
+    const hasMoved = typeof distanceMoved === 'number' && distanceMoved >= 0.5
+    const classification = hasMoved
+      ? 'timeout_path_execution_with_movement'
+      : 'timeout_path_execution_no_movement'
+    lastActionTimeoutClassification = classification
+    const failType = hasMoved ? 'partial_progress_timeout' : 'action_timeout'
+    return fail('explore_nearby', `Exploration path failed: ${errorMessage(error)}`, {
+      failure_type: failType,
+      stop_reason: failType,
+      partial_success: hasMoved,
+      ...(hasMoved ? { continuation_relevant: true } : { needs_condition_change: true }),
+      failed_because: [{
+        kind: failType,
+        action: 'explore_nearby',
+        timeout_classification: classification,
+        currentSubstep: 'navigate',
+        distance_moved: distanceMoved,
+        y_delta: yDelta,
+        progress_made: hasMoved,
+        recoverable: true,
+        ...(hasMoved ? {
+          continuation_relevant: true,
+          progress_signals: { distance_moved: distanceMoved },
+        } : {
+          needs_condition_change: true,
+        }),
+      }],
+      diagnostics: {
+        currentSubstep: 'navigate',
+        bot_position_start: startPos,
+        bot_position_end: endPos,
+        distance_moved: distanceMoved,
+        y_delta: yDelta,
+        timeout_classification: classification,
+        progress_made: hasMoved,
+        timeout_config: {
+          action_timeout_ms: ACTION_TIMEOUT_MS,
+          resource_action_timeout_ms: RESOURCE_ACTION_TIMEOUT_MS,
+          navigation_timeout_ms: NAVIGATION_TIMEOUT_MS,
+        },
+      },
+    })
   }
 
   return ok('explore_nearby', {
     radius,
     target: positionJson(target),
-    position: bot.entity ? positionJson(bot.entity.position) : null
+    position: bot.entity ? positionJson(bot.entity.position) : null,
+  })
+}
+
+// Seek a more open, surface-adjacent, or wood-accessible nearby position.
+// Scores candidates by sky-light, height gain, nearby logs/leaves, and danger avoidance.
+async function seekOpenArea(args) {
+  const ACTION = 'seek_open_area'
+  const radius = (args && typeof args.radius === 'number')
+    ? Math.max(8, Math.min(64, Math.round(args.radius))) : 32
+  const preferSurface = !(args && args.preferSurface === false)
+
+  if (!bot || !bot.entity) return fail(ACTION, 'Bot entity not ready.', { failure_type: 'bot_disconnected' })
+
+  const startVec = bot.entity.position.clone()
+  const startPos = positionJson(startVec)
+  const startFeet = startVec.floored()
+
+  // Sky light before
+  const startAbove = bot.blockAt(startFeet.offset(0, 1, 0))
+  const skyLightBefore = (startAbove && typeof startAbove.skyLight === 'number') ? startAbove.skyLight : null
+
+  // Nearby wood count before
+  const woodIds = Array.from(WOOD_BLOCK_NAMES)
+    .map(n => bot.registry.blocksByName[n]).filter(bt => bt).map(bt => bt.id)
+  const logScanRadius = Math.min(radius, 48)
+  const nearbyLogsBefore = woodIds.length > 0
+    ? (bot.findBlocks({ matching: woodIds, maxDistance: logScanRadius, count: 64 }) || []).length : 0
+
+  currentSubstep = 'find_target'
+
+  const NATURE_NAMES = new Set([
+    'grass_block', 'dirt', 'coarse_dirt', 'rooted_dirt', 'podzol', 'moss_block', 'moss_carpet',
+    'oak_leaves', 'spruce_leaves', 'birch_leaves', 'jungle_leaves', 'acacia_leaves',
+    'dark_oak_leaves', 'mangrove_leaves', 'cherry_leaves', 'azalea_leaves',
+    'flowering_azalea_leaves', 'short_grass', 'grass', 'tall_grass', 'fern', 'large_fern',
+  ])
+
+  let bestTarget = null
+  let bestScore = -Infinity
+  let selectedStrategy = 'none'
+
+  // Sample 16 candidate positions (8 directions × 2 distances)
+  for (let angle = 0; angle < 8; angle++) {
+    const rad = (angle * Math.PI) / 4
+    for (const scale of [1.0, 0.6]) {
+      await yieldToEventLoop()
+      if (!bot.entity) break
+
+      const horizontal = startFeet.offset(
+        Math.round(Math.cos(rad) * radius * scale),
+        0,
+        Math.round(Math.sin(rad) * radius * scale)
+      )
+      const safe = nearestSafeStandPosition(horizontal, 8)
+      if (!safe) continue
+      if (isDangerousAdjacent(safe)) continue
+
+      const floor = bot.blockAt(safe.offset(0, -1, 0))
+      if (floor && isLiquidBlock(floor)) continue
+
+      const above = bot.blockAt(safe.offset(0, 1, 0))
+      const skyLight = (above && typeof above.skyLight === 'number') ? above.skyLight : 0
+
+      let score = 0
+      score += (safe.y - startFeet.y) * 0.8   // height gain
+      score += skyLight * 1.5                  // sky exposure
+      if (preferSurface && skyLight >= 12) score += 25
+
+      // Bonus for nature and wood nearby (small scan cube)
+      for (let ndx = -4; ndx <= 4; ndx++) {
+        for (let ndz = -4; ndz <= 4; ndz++) {
+          for (let ndy = -1; ndy <= 3; ndy++) {
+            const b = bot.blockAt(safe.offset(ndx, ndy, ndz))
+            if (!b) continue
+            if (WOOD_BLOCK_NAMES.has(b.name)) score += 4
+            else if (NATURE_NAMES.has(b.name)) score += 0.5
+          }
+        }
+      }
+
+      if (score > bestScore) {
+        bestScore = score
+        bestTarget = safe
+        selectedStrategy = (preferSurface && skyLight >= 12) ? 'surface_candidate' : 'open_area_candidate'
+      }
+    }
+  }
+
+  // If nothing found and preferSurface, scan directly upward for the first safe stand
+  if (!bestTarget && preferSurface) {
+    for (let dy = 1; dy <= 16; dy++) {
+      const testFeet = startFeet.offset(0, dy, 0)
+      const fl = bot.blockAt(testFeet.offset(0, -1, 0))
+      const bd = bot.blockAt(testFeet)
+      const hd = bot.blockAt(testFeet.offset(0, 1, 0))
+      if (fl && isSolidBlock(fl) && bd && canReplaceBlock(bd) && hd && canReplaceBlock(hd)
+          && !isLiquidBlock(fl) && !isLiquidBlock(bd) && !isLiquidBlock(hd)) {
+        bestTarget = testFeet
+        selectedStrategy = 'upward_escape'
+        break
+      }
+    }
+  }
+
+  const _noTarget = () => fail(ACTION, `No accessible open-area candidate within radius ${radius}.`, {
+    failure_type: 'target_not_found',
+    stop_reason: 'no_open_area_candidate',
+    repeatable_now: false,
+    needs_condition_change: true,
+    diagnostics: {
+      start_position: startPos, end_position: startPos,
+      distance_moved: 0, y_delta: 0,
+      sky_visible_before: skyLightBefore !== null ? skyLightBefore >= 12 : null,
+      sky_visible_after: null,
+      nearby_logs_before: nearbyLogsBefore, nearby_logs_after: nearbyLogsBefore,
+      selected_strategy: 'none', progress_made: false, failed_because: 'no_candidate_found',
+    },
+  })
+
+  if (!bestTarget) {
+    currentSubstep = null
+    return _noTarget()
+  }
+
+  // --- Navigate ---
+  currentSubstep = 'navigate'
+  let navSucceeded = false
+  let failedBecause = null
+
+  try {
+    await gotoPositionWithTimeout(bestTarget, EXPLORE_TIMEOUT_MS)
+    navSucceeded = true
+  } catch (err) {
+    stopMovement()
+    failedBecause = errorMessage(err)
+  }
+
+  // Local fallback: short hops if main path failed
+  if (!navSucceeded && bot.entity) {
+    currentSubstep = 'local_fallback'
+    const feetNow = bot.entity.position.floored()
+    for (const c of findEscapeCandidates(feetNow, Math.min(radius, 8)).slice(0, 6)) {
+      if (!bot.entity) break
+      try {
+        await withTimeout(
+          bot.pathfinder.goto(new goals.GoalBlock(c.pos.x, c.pos.y, c.pos.z)),
+          3000, 'seek_open_area local hop'
+        )
+      } catch (_) {}
+      if (bot.entity && bot.entity.position.distanceTo(startVec) >= 1.5) {
+        navSucceeded = true
+        selectedStrategy = 'local_fallback'
+        break
+      }
+    }
+  }
+
+  // --- Finalize ---
+  currentSubstep = null
+  stopMovement()
+
+  const endVec = bot.entity ? bot.entity.position : startVec
+  const endPos = positionJson(endVec)
+  const endFeet = endVec.floored()
+  const endAbove = bot.blockAt(endFeet.offset(0, 1, 0))
+  const skyLightAfter = (endAbove && typeof endAbove.skyLight === 'number') ? endAbove.skyLight : null
+  const nearbyLogsAfter = woodIds.length > 0
+    ? (bot.findBlocks({ matching: woodIds, maxDistance: logScanRadius, count: 64 }) || []).length : 0
+
+  let distanceMoved = 0
+  let yDelta = endVec.y - startVec.y
+  try { distanceMoved = Math.round(endVec.distanceTo(startVec) * 10) / 10 } catch (_) {}
+
+  const progressMade = distanceMoved >= 1.5 || yDelta >= 1.0 || nearbyLogsAfter > nearbyLogsBefore
+
+  const diagnostics = {
+    start_position: startPos,
+    end_position: endPos,
+    distance_moved: distanceMoved,
+    y_delta: Math.round(yDelta * 10) / 10,
+    sky_visible_before: skyLightBefore !== null ? skyLightBefore >= 12 : null,
+    sky_visible_after: skyLightAfter !== null ? skyLightAfter >= 12 : null,
+    nearby_logs_before: nearbyLogsBefore,
+    nearby_logs_after: nearbyLogsAfter,
+    selected_strategy: selectedStrategy,
+    progress_made: progressMade,
+    failed_because: failedBecause,
+  }
+
+  if (progressMade) {
+    return ok(ACTION, diagnostics)
+  }
+
+  if (distanceMoved >= 0.5 || Math.abs(yDelta) >= 0.5) {
+    return fail(ACTION, 'Partial movement: position changed but not enough to change conditions.', {
+      failure_type: 'partial_progress_timeout',
+      stop_reason: 'seek_open_area_partial_progress',
+      partial_success: true,
+      continuation_relevant: true,
+      ...diagnostics,
+    })
+  }
+
+  return fail(ACTION, `No meaningful position change (moved ${distanceMoved.toFixed(1)} blocks).`, {
+    failure_type: 'no_progress',
+    stop_reason: 'seek_open_area_no_progress',
+    partial_success: false,
+    needs_condition_change: true,
+    ...diagnostics,
   })
 }
 
@@ -6575,35 +7055,242 @@ async function digStaircase(direction, maxSteps) {
   })
 }
 
+// 8-block horizontal bucket key — used to identify "same position" across invocations.
+function _rtsBucketKey(pos) {
+  const G = 8
+  return `rts:${Math.floor(pos.x / G) * G}:${Math.floor(pos.z / G) * G}`
+}
+
 // return_to_surface — pathfind up or dig staircase to reach open sky.
+// Tracks progress and reports partial_progress_timeout if vertical movement was made
+// without reaching the surface, or no_progress if nothing useful happened.
+// Cross-invocation: remembers which dy offsets moved < 2 blocks per position bucket
+// so repeated calls from the same spot skip proven-fruitless path targets.
 async function returnToSurface() {
   if (!bot.entity) return fail('return_to_surface', 'Bot not ready.')
 
-  const base = bot.entity.position.floored()
-  if (isSkyVisible(base)) {
-    return ok('return_to_surface', { already_at_surface: true, position: positionJson(bot.entity.position) })
+  const startPos = bot.entity.position.clone()
+  const startY = startPos.y
+  let blocks_dug = 0
+  let pathAttempts = 0
+  let currentSubstep = 'init'
+
+  if (isSkyVisible(startPos.floored())) {
+    _rtsExhaustedDy.delete(_rtsBucketKey(startPos))
+    return ok('return_to_surface', {
+      already_at_surface: true,
+      position: positionJson(bot.entity.position),
+      start_y: startY,
+      end_y: startY,
+      vertical_delta: 0,
+      distance_moved: 0,
+      pathAttempts: 0,
+      blocks_dug: 0,
+      currentSubstep: 'already_at_surface',
+    })
   }
 
-  // Try pathfinding to progressively higher positions
-  for (let dy = 4; dy <= 64; dy += 4) {
+  // Phase 1: pathfind to progressively higher open positions.
+  // Use a shorter per-attempt timeout so we don't burn the whole action budget
+  // on a single unreachable target.
+  // Skip dy offsets already known to be fruitless from this position bucket.
+  const PATH_ATTEMPT_TIMEOUT_MS = Math.min(MOVEMENT_PATH_TIMEOUT_MS, 10000)
+  const startBucket = _rtsBucketKey(startPos)
+  const exhaustedDy = _rtsExhaustedDy.get(startBucket) ?? new Set()
+  let skippedDyCount = 0
+
+  currentSubstep = 'pathfind'
+  for (let dy = 8; dy <= 64; dy += 8) {
+    if (!bot.entity) break
+    if (exhaustedDy.has(dy)) { skippedDyCount++; continue }
+
+    const posBeforeAttempt = bot.entity.position.clone()
+    const base = bot.entity.position.floored()
     const target = nearestSafeStandPosition(base.offset(0, dy, 0), 4)
-    if (!target) continue
+    if (!target) { exhaustedDy.add(dy); _rtsExhaustedDy.set(startBucket, exhaustedDy); continue }
+    pathAttempts++
+    currentSubstep = `pathfind_dy_${dy}`
     try {
-      await gotoPositionWithTimeout(target, MOVEMENT_PATH_TIMEOUT_MS)
-      if (isSkyVisible(bot.entity.position.floored())) {
-        return ok('return_to_surface', { reached: true, position: positionJson(bot.entity.position) })
-      }
-    } catch (_) { continue }
-    break
+      await gotoPositionWithTimeout(target, PATH_ATTEMPT_TIMEOUT_MS)
+    } catch (_) { /* path failed, try next offset */ }
+
+    const movedThisAttempt = bot.entity ? posBeforeAttempt.distanceTo(bot.entity.position) : 0
+    if (movedThisAttempt >= 2.0) {
+      // Progress made — clear exhausted set so next invocation retries all offsets
+      _rtsExhaustedDy.delete(startBucket)
+      exhaustedDy.clear()
+    } else {
+      exhaustedDy.add(dy)
+      _rtsExhaustedDy.set(startBucket, exhaustedDy)
+    }
+
+    if (bot.entity && isSkyVisible(bot.entity.position.floored())) {
+      const endPos = bot.entity.position
+      _rtsExhaustedDy.delete(startBucket)
+      return ok('return_to_surface', {
+        reached: true,
+        position: positionJson(endPos),
+        start_position: positionJson(startPos),
+        end_position: positionJson(endPos),
+        start_y: startY,
+        end_y: endPos.y,
+        vertical_delta: endPos.y - startY,
+        distance_moved: startPos.distanceTo(endPos),
+        pathAttempts,
+        blocks_dug,
+        currentSubstep,
+      })
+    }
   }
 
-  // Fall back to dig staircase upward
-  const stairResult = await digStaircase('up_to_surface', 24)
-  return ok('return_to_surface', {
-    partial_success: stairResult.ok,
-    reached_surface: bot.entity ? isSkyVisible(bot.entity.position.floored()) : false,
-    position: bot.entity ? positionJson(bot.entity.position) : null,
-    can_retry: true
+  // Check surface again after pathfinding phase (may have made net progress without sky check).
+  if (bot.entity && isSkyVisible(bot.entity.position.floored())) {
+    const endPos = bot.entity.position
+    _rtsExhaustedDy.delete(startBucket)
+    return ok('return_to_surface', {
+      reached: true,
+      position: positionJson(endPos),
+      start_position: positionJson(startPos),
+      end_position: positionJson(endPos),
+      start_y: startY,
+      end_y: endPos.y,
+      vertical_delta: endPos.y - startY,
+      distance_moved: startPos.distanceTo(endPos),
+      pathAttempts,
+      blocks_dug,
+      currentSubstep,
+    })
+  }
+
+  // Phase 2: safe upward staircase digging.
+  // Pre-check each step for lava/water/dangerous adjacency before swinging pickaxe.
+  currentSubstep = 'stair_dig'
+  const dirVec = bot.entity ? yawToCardinalOffset(bot.entity.yaw) : new Vec3(0, 0, 1)
+  const SURFACE_STAIR_STEPS = 20
+
+  for (let i = 0; i < SURFACE_STAIR_STEPS; i++) {
+    if (!bot.entity) break
+    if (isSkyVisible(bot.entity.position.floored())) break
+
+    const feetPos = bot.entity.position.floored()
+    const todig = [
+      feetPos.offset(dirVec.x, 0, dirVec.z),
+      feetPos.offset(dirVec.x, 1, dirVec.z),
+      feetPos.offset(dirVec.x, 2, dirVec.z),
+    ]
+
+    // Hazard pre-check: abort this phase if any target block is dangerous.
+    let hazardFound = false
+    for (const pos of todig) {
+      const block = bot.blockAt(pos)
+      if (!block || canReplaceBlock(block)) continue
+      if (isLiquidBlock(block) || isDangerousAdjacent(block)) { hazardFound = true; break }
+      if (NEVER_MINE_BLOCK_NAMES.has(block.name) || block.name === 'bedrock') { hazardFound = true; break }
+    }
+    if (hazardFound) break
+
+    let stepFailed = false
+    for (const pos of todig) {
+      const block = bot.blockAt(pos)
+      if (!block || canReplaceBlock(block)) continue
+      try {
+        await equipBestPickaxe()
+        await bot.lookAt(block.position.offset(0.5, 0.5, 0.5), true)
+        await digBlockWithTimeout(block, STAIRCASE_DIG_TIMEOUT_MS)
+        blocks_dug++
+      } catch (_) { stepFailed = true; break }
+    }
+    if (stepFailed) break
+
+    const nextPos = feetPos.offset(dirVec.x, 1, dirVec.z)
+    try {
+      await withTimeout(
+        bot.pathfinder.goto(new goals.GoalBlock(nextPos.x, nextPos.y, nextPos.z)),
+        STAIRCASE_STEP_TIMEOUT_MS, 'surface stair step'
+      )
+    } catch (_) { /* partial step still counts */ }
+
+    await delay(100)
+  }
+
+  // Final state assessment.
+  const endPos = bot.entity ? bot.entity.position : startPos
+  const endY = endPos.y
+  const verticalDelta = endY - startY
+  const distanceMoved = startPos.distanceTo(endPos)
+  const atSurface = bot.entity ? isSkyVisible(bot.entity.position.floored()) : false
+
+  if (atSurface) {
+    return ok('return_to_surface', {
+      reached: true,
+      position: positionJson(endPos),
+      start_position: positionJson(startPos),
+      end_position: positionJson(endPos),
+      start_y: startY,
+      end_y: endY,
+      vertical_delta: verticalDelta,
+      distance_moved: distanceMoved,
+      pathAttempts,
+      blocks_dug,
+      currentSubstep,
+    })
+  }
+
+  // Partial progress: y increased ≥ 2 blocks or meaningful position change.
+  const Y_PROGRESS_THRESHOLD = 2.0
+  const DIST_PROGRESS_THRESHOLD = 3.0
+  const madeProgress = verticalDelta >= Y_PROGRESS_THRESHOLD || distanceMoved >= DIST_PROGRESS_THRESHOLD
+
+  if (madeProgress) {
+    return fail('return_to_surface', 'Partial progress made but surface not reached.', {
+      failure_type: 'partial_progress_timeout',
+      stop_reason: 'return_to_surface_partial_progress',
+      partial_success: true,
+      continuation_relevant: true,
+      can_retry: true,
+      start_position: positionJson(startPos),
+      end_position: positionJson(endPos),
+      start_y: startY,
+      end_y: endY,
+      vertical_delta: verticalDelta,
+      distance_moved: distanceMoved,
+      pathAttempts,
+      blocks_dug,
+      currentSubstep,
+      failed_because: [{
+        kind: 'partial_progress_timeout',
+        action: 'return_to_surface',
+        continuation_relevant: true,
+        recoverable: true,
+        progress_signals: { distance_moved: distanceMoved },
+      }],
+    })
+  }
+
+  // No meaningful progress: surface unreachable from current position.
+  // All attempted dy offsets have been added to the exhausted set so the next invocation
+  // from the same bucket will skip Phase 1 entirely and go straight to stair-dig.
+  return fail('return_to_surface', 'No meaningful upward progress made.', {
+    failure_type: 'no_progress',
+    stop_reason: 'no_progress',
+    partial_success: false,
+    can_retry: true,
+    start_position: positionJson(startPos),
+    end_position: positionJson(endPos),
+    start_y: startY,
+    end_y: endY,
+    vertical_delta: verticalDelta,
+    distance_moved: distanceMoved,
+    pathAttempts,
+    blocks_dug,
+    currentSubstep,
+    diagnostics: {
+      reason: 'Neither pathfinding nor stair digging made upward progress toward the surface.',
+      hazard_possible: true,
+      skipped_dy_count: skippedDyCount,
+      exhausted_dy_count: exhaustedDy.size,
+      position_bucket: startBucket,
+    },
   })
 }
 
@@ -6890,6 +7577,190 @@ async function recoverPosition() {
   })
 }
 
+// Count traversable (air-like) blocks within a flat radius around pos at body height.
+function countLocalAirBlocks(pos, radius) {
+  let count = 0
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dz = -radius; dz <= radius; dz++) {
+      for (let dy = 0; dy <= 1; dy++) {
+        const block = bot.blockAt(pos.offset(dx, dy, dz))
+        if (block && canReplaceBlock(block)) count++
+      }
+    }
+  }
+  return count
+}
+
+// Return candidate stand positions within radius, sorted by distance.
+function findEscapeCandidates(feetPos, radius) {
+  const candidates = []
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dz = -radius; dz <= radius; dz++) {
+      if (dx === 0 && dz === 0) continue
+      if (Math.abs(dx) + Math.abs(dz) > radius * 1.5) continue
+      for (let dy = -2; dy <= 3; dy++) {
+        const feet = feetPos.offset(dx, dy, dz)
+        const floor = bot.blockAt(feet.offset(0, -1, 0))
+        const body = bot.blockAt(feet)
+        const head = bot.blockAt(feet.offset(0, 1, 0))
+        if (
+          isSolidBlock(floor) &&
+          canReplaceBlock(body) &&
+          canReplaceBlock(head) &&
+          !isLiquidBlock(floor) &&
+          !isDangerousAdjacent(floor)
+        ) {
+          const d = Math.sqrt(dx * dx + dy * dy + dz * dz)
+          candidates.push({ pos: feet, dist: d })
+        }
+      }
+    }
+  }
+  candidates.sort((a, b) => a.dist - b.dist)
+  return candidates
+}
+
+async function unstuckEscape(args) {
+  const radius = (args && typeof args.radius === 'number') ? Math.max(4, Math.min(16, Math.round(args.radius))) : 8
+  const mode = (args && typeof args.mode === 'string') ? args.mode : 'any'
+
+  if (!bot.entity) return fail('unstuck_escape', 'Bot not ready.')
+
+  await clearPathfinder()
+
+  const startPos = bot.entity.position.clone()
+  const startY = startPos.y
+  const localSpaceBefore = countLocalAirBlocks(startPos.floored(), 2)
+
+  let blocksDug = 0
+  let clearanceCreated = false
+  let escapeStrategyUsed = null
+
+  const tryWalk = mode === 'safe_random_walk' || mode === 'any'
+  const tryDig = mode === 'dig_clearance' || mode === 'any'
+  const tryUpward = mode === 'upward_step' || mode === 'any'
+
+  // Strategy 1 & 2: pathfind to a nearby safe candidate (horizontal walk or upward step).
+  if (tryWalk || tryUpward) {
+    const feetPos = bot.entity.position.floored()
+    const allCandidates = findEscapeCandidates(feetPos, radius)
+    const candidates = (tryUpward && !tryWalk)
+      ? allCandidates.filter(c => c.pos.y > feetPos.y)
+      : allCandidates
+
+    for (const candidate of candidates.slice(0, 10)) {
+      if (!bot.entity) break
+      try {
+        await withTimeout(
+          bot.pathfinder.goto(new goals.GoalBlock(candidate.pos.x, candidate.pos.y, candidate.pos.z)),
+          4000, 'unstuck escape walk'
+        )
+      } catch (_) { /* try next candidate */ }
+      if (bot.entity && startPos.distanceTo(bot.entity.position) >= 1.5) {
+        escapeStrategyUsed = (tryUpward && !tryWalk) ? 'upward_step' : 'safe_random_walk'
+        break
+      }
+    }
+  }
+
+  // Strategy 3: dig body/head clearance if we haven't moved far enough yet.
+  const distAfterWalk = bot.entity ? startPos.distanceTo(bot.entity.position) : 0
+  if (tryDig && distAfterWalk < 1.5) {
+    const feetPos = bot.entity ? bot.entity.position.floored() : startPos.floored()
+    const digOffsets = [
+      // Horizontal body level
+      new Vec3(1, 0, 0), new Vec3(-1, 0, 0), new Vec3(0, 0, 1), new Vec3(0, 0, -1),
+      // Horizontal head level
+      new Vec3(1, 1, 0), new Vec3(-1, 1, 0), new Vec3(0, 1, 1), new Vec3(0, 1, -1),
+      // Head clearance directly above
+      new Vec3(0, 1, 0), new Vec3(0, 2, 0),
+    ]
+
+    for (const offset of digOffsets) {
+      if (blocksDug >= 3) break
+      if (!bot.entity) break
+      const targetPos = feetPos.offset(offset.x, offset.y, offset.z)
+      // Never dig below bot feet
+      if (targetPos.y < feetPos.y) continue
+      const block = bot.blockAt(targetPos)
+      if (!block || canReplaceBlock(block)) continue
+      if (isLiquidBlock(block)) continue
+      if (isDangerousAdjacent(block)) continue
+      if (NEVER_MINE_BLOCK_NAMES.has(block.name) || block.name === 'bedrock') continue
+
+      try {
+        await equipBestPickaxe()
+        await bot.lookAt(block.position.offset(0.5, 0.5, 0.5), true)
+        await digBlockWithTimeout(block, STAIRCASE_DIG_TIMEOUT_MS)
+        blocksDug++
+        clearanceCreated = true
+        escapeStrategyUsed = escapeStrategyUsed || 'dig_clearance'
+      } catch (_) { /* try next block */ }
+    }
+
+    // After digging, attempt a short walk into the newly cleared space.
+    if (clearanceCreated && bot.entity) {
+      const feetNow = bot.entity.position.floored()
+      const postDigCandidates = findEscapeCandidates(feetNow, Math.min(radius, 6))
+      for (const candidate of postDigCandidates.slice(0, 4)) {
+        if (!bot.entity) break
+        try {
+          await withTimeout(
+            bot.pathfinder.goto(new goals.GoalBlock(candidate.pos.x, candidate.pos.y, candidate.pos.z)),
+            3000, 'unstuck post-dig walk'
+          )
+        } catch (_) { /* ignore */ }
+        if (bot.entity && startPos.distanceTo(bot.entity.position) >= 1.5) break
+      }
+    }
+  }
+
+  // Final state assessment.
+  const endPos = bot.entity ? bot.entity.position : startPos
+  const yDelta = endPos.y - startY
+  const distanceMoved = startPos.distanceTo(endPos)
+  const localSpaceAfter = bot.entity ? countLocalAirBlocks(endPos.floored(), 2) : localSpaceBefore
+
+  const baseResult = {
+    start_position: positionJson(startPos),
+    end_position: positionJson(endPos),
+    distance_moved: distanceMoved,
+    y_delta: yDelta,
+    blocks_dug: blocksDug,
+    clearance_created: clearanceCreated,
+    local_space_before: localSpaceBefore,
+    local_space_after: localSpaceAfter,
+    escape_strategy_used: escapeStrategyUsed,
+    progress_made: distanceMoved >= 1.5 || clearanceCreated,
+  }
+
+  if (distanceMoved >= 1.5 || clearanceCreated) {
+    return ok('unstuck_escape', baseResult)
+  }
+
+  if (blocksDug > 0 || Math.abs(yDelta) >= 0.5) {
+    return fail('unstuck_escape', 'Partial escape: terrain changed but position did not shift enough.', {
+      failure_type: 'partial_progress_timeout',
+      stop_reason: 'unstuck_partial_progress',
+      partial_success: true,
+      can_retry: true,
+      ...baseResult,
+    })
+  }
+
+  return fail('unstuck_escape', 'No position change and no terrain modification.', {
+    failure_type: 'no_progress',
+    stop_reason: 'no_progress',
+    partial_success: false,
+    can_retry: true,
+    ...baseResult,
+    diagnostics: {
+      reason: 'No movement or digging succeeded. Bot may be fully enclosed or in an open space with no candidates.',
+      local_space_before: localSpaceBefore,
+    },
+  })
+}
+
 // ---------------------------------------------------------------------------
 // Inventory / equipment
 // ---------------------------------------------------------------------------
@@ -7051,8 +7922,12 @@ function scanForSpecificBlock(targets, requestedRadius) {
     return fail('scan_for_specific_block', `No valid block names in targets: ${targets.slice(0,4).join(', ')}.`)
   }
 
+  const MAX_SCAN_TARGETS = 6
+  const targetsUsed = validTargets.slice(0, MAX_SCAN_TARGETS)
+  const targetsTruncated = validTargets.length > MAX_SCAN_TARGETS
+
   const found = []
-  for (const name of validTargets.slice(0, 6)) {
+  for (const name of targetsUsed) {
     const bd = bot.registry.blocksByName[name]
     if (!bd) continue
     const block = bot.findBlock({ matching: bd.id, maxDistance: radius })
@@ -7062,7 +7937,15 @@ function scanForSpecificBlock(targets, requestedRadius) {
   }
   found.sort((a, b) => a.distance - b.distance)
 
-  return ok('scan_for_specific_block', { targets: validTargets, radius, count: found.length, found })
+  return ok('scan_for_specific_block', {
+    targets: validTargets,
+    targets_used: targetsUsed,
+    targets_truncated: targetsTruncated,
+    max_targets_per_scan: MAX_SCAN_TARGETS,
+    radius,
+    count: found.length,
+    found,
+  })
 }
 
 function scanForLiquids(requestedRadius) {
@@ -7802,14 +8685,283 @@ async function returnToSpawnOrHome() {
   })
 }
 
+// Paths to standPosition with a per-attempt hard timeout and a stuck detector.
+// Returns { reached: bool, reason: string } — never throws.
+async function pathToStandGuarded(standPosition, pathTimeoutMs, stuckTimeoutMs, stuckThresholdBlocks) {
+  if (!bot || !bot.entity) return { reached: false, reason: 'no_entity' }
+  if (bot.entity.position.distanceTo(standPosition) <= 2.5) return { reached: true, reason: 'already_adjacent' }
+
+  await clearPathfinder()
+
+  const goal = new goals.GoalNear(standPosition.x, standPosition.y, standPosition.z, 2)
+  lastPathGoal = { type: 'GoalNear', x: standPosition.x, y: standPosition.y, z: standPosition.z, radius: 2 }
+
+  return new Promise((resolve) => {
+    let done = false
+    let stuckIntervalId = null
+    let pathTimeoutId = null
+    let lastPos = bot.entity ? bot.entity.position.clone() : null
+    let stuckSince = Date.now()
+
+    const finish = (result) => {
+      if (done) return
+      done = true
+      if (stuckIntervalId) clearInterval(stuckIntervalId)
+      if (pathTimeoutId) clearTimeout(pathTimeoutId)
+      stopMovement()
+      resolve(result)
+    }
+
+    // Poll every 500ms; abort if the bot hasn't moved stuckThresholdBlocks in stuckTimeoutMs.
+    stuckIntervalId = setInterval(() => {
+      if (done || !bot.entity) return
+      const cur = bot.entity.position
+      const moved = lastPos ? cur.distanceTo(lastPos) : stuckThresholdBlocks
+      if (moved >= stuckThresholdBlocks) {
+        stuckSince = Date.now()
+        lastPos = cur.clone()
+      } else if (Date.now() - stuckSince >= stuckTimeoutMs) {
+        finish({ reached: false, reason: 'stuck_no_movement' })
+      }
+    }, 500)
+
+    pathTimeoutId = setTimeout(() => finish({ reached: false, reason: 'path_timeout' }), pathTimeoutMs)
+
+    bot.pathfinder.goto(goal)
+      .then(() => finish({ reached: true, reason: 'arrived' }))
+      .catch((err) => finish({ reached: false, reason: isGoalChangedError(err) ? 'path_goal_changed' : 'path_error' }))
+  })
+}
+
 async function collectWood(requestedCount) {
+  const ACTION = 'collect_wood'
   const targetCount = requestedCount === undefined ? COLLECT_WOOD_DEFAULT_COUNT : requestedCount
-  return await acquireBlocksForAction('collect_wood', {
-    targets: Array.from(WOOD_BLOCK_NAMES),
-    count: targetCount,
-    radius: COLLECT_WOOD_RADIUS,
-    allowExcavate: false,
-    accessMode: 'surface_first'
+  const targets = Array.from(WOOD_BLOCK_NAMES)
+  const targetSet = WOOD_BLOCK_NAMES
+
+  if (!bot || !bot.entity) return fail(ACTION, 'Bot entity not ready.', { failure_type: 'bot_disconnected' })
+
+  const actionStartMs = Date.now()
+  const startInventory = inventoryCounts()
+  const startPos = positionJson(bot.entity.position)
+  const startCount = inventoryCountForTargets(targets)
+
+  // emptyAcquireResult provides all fields collectNearbyDrops expects on its diagnostics argument.
+  const dropDiag = emptyAcquireResult({ targets, count: targetCount, radius: COLLECT_WOOD_RADIUS }, 'failed')
+  dropDiag.inventoryBefore = startInventory
+
+  const woodDiag = {
+    targetCandidatesFound: 0,
+    candidatesEvaluated: 0,
+    reachableCandidatesFound: 0,
+    nearestLogDistance: null,
+    nearestLogPosition: null,
+    selectedLogPosition: null,
+    selectedStandPosition: null,
+    pathAttempts: 0,
+    distance_moved: 0,
+    blocks_dug: 0,
+    collected: 0,
+    inventory_delta: {},
+    failed_because: null,
+    partial_success: false,
+    continuation_relevant: false,
+    timeout_ms_used: 0,
+  }
+
+  // ─── PREFLIGHT SCAN (synchronous, < 3 s) ─────────────────────────────────────
+  currentSubstep = 'scan'
+
+  const matchingIds = targets
+    .map(name => bot.registry.blocksByName[name])
+    .filter(bt => bt)
+    .map(bt => bt.id)
+
+  if (matchingIds.length === 0) {
+    currentSubstep = null
+    return fail(ACTION, 'No wood block types registered in this world.', {
+      failure_type: 'target_not_found',
+      stop_reason: 'no_logs_nearby',
+      repeatable_now: false,
+      needs_condition_change: true,
+      timeout_ms_used: Date.now() - actionStartMs,
+      diagnostics: woodDiag,
+    })
+  }
+
+  const rawPositions = bot.findBlocks({
+    matching: matchingIds,
+    maxDistance: Math.min(COLLECT_WOOD_RADIUS, 128),
+    count: 128,
+  }) || []
+
+  woodDiag.targetCandidatesFound = rawPositions.length
+
+  if (rawPositions.length === 0) {
+    currentSubstep = null
+    return fail(ACTION, `No wood logs or stems found within ${COLLECT_WOOD_RADIUS} blocks.`, {
+      failure_type: 'target_not_found',
+      stop_reason: 'no_logs_nearby',
+      repeatable_now: false,
+      needs_condition_change: true,
+      timeout_ms_used: Date.now() - actionStartMs,
+      diagnostics: woodDiag,
+    })
+  }
+
+  // Sort candidates nearest-first so we evaluate the closest logs first.
+  const botPos = bot.entity.position
+  const sortedBlocks = rawPositions
+    .map(pos => bot.blockAt(pos))
+    .filter(b => b && isTargetBlock(b, targetSet))
+    .sort((a, b) => botPos.distanceTo(a.position) - botPos.distanceTo(b.position))
+
+  if (sortedBlocks.length > 0) {
+    woodDiag.nearestLogDistance = Math.round(botPos.distanceTo(sortedBlocks[0].position) * 10) / 10
+    woodDiag.nearestLogPosition = positionJson(sortedBlocks[0].position)
+  }
+
+  await yieldToEventLoop()
+
+  // ─── PER-CANDIDATE EVALUATION ────────────────────────────────────────────────
+  currentSubstep = 'evaluate_candidates'
+
+  const reachableCandidates = []
+  for (const block of sortedBlocks) {
+    woodDiag.candidatesEvaluated += 1
+    if (isProtectedBlock(block)) continue
+    if (isDirectlyUnderBot(block)) continue
+    if (!canMineBlock(block)) continue
+    if (isDangerousAdjacent(block)) continue
+
+    const faceInfo = findExposedFace(block)
+    if (!faceInfo) continue
+
+    const standPosition = findSafeStandNearFace(block, faceInfo)
+    if (!standPosition) continue
+
+    reachableCandidates.push({ block, faceInfo, standPosition })
+    if (reachableCandidates.length >= 8) break
+  }
+
+  woodDiag.reachableCandidatesFound = reachableCandidates.length
+
+  if (reachableCandidates.length === 0) {
+    currentSubstep = null
+    return fail(ACTION, `Found ${woodDiag.targetCandidatesFound} wood candidate(s) but none are safely accessible.`, {
+      failure_type: 'target_unreachable',
+      stop_reason: 'logs_found_but_unreachable',
+      repeatable_now: false,
+      needs_condition_change: true,
+      timeout_ms_used: Date.now() - actionStartMs,
+      diagnostics: { ...woodDiag, inventory_delta: inventoryDeltaBetween(startInventory, inventoryCounts()) },
+    })
+  }
+
+  // ─── PER-CANDIDATE MINE LOOP ──────────────────────────────────────────────────
+  // 7 s per path attempt, abort candidate if stuck for 4 s with no movement.
+  const PER_CANDIDATE_PATH_MS = 7000
+  const STUCK_DETECT_MS = 4000
+  const STUCK_THRESHOLD = 0.5
+
+  let totalDug = 0
+
+  for (const { block, faceInfo, standPosition } of reachableCandidates) {
+    const currentGained = inventoryCountForTargets(targets) - startCount
+    if (currentGained >= targetCount) break
+
+    woodDiag.selectedLogPosition = positionJson(block.position)
+    woodDiag.selectedStandPosition = positionJson(standPosition)
+
+    // Path with per-candidate timeout and stuck detection.
+    currentSubstep = 'pathfind'
+    woodDiag.pathAttempts += 1
+
+    const pathResult = await pathToStandGuarded(standPosition, PER_CANDIDATE_PATH_MS, STUCK_DETECT_MS, STUCK_THRESHOLD)
+    if (!pathResult.reached) {
+      woodDiag.failed_because = pathResult.reason
+      continue
+    }
+
+    // Mine.
+    currentSubstep = 'dig_target'
+    try {
+      const freshBlock = bot.blockAt(block.position)
+      if (!freshBlock || !isTargetBlock(freshBlock, targetSet)) continue
+      await mineBlockSafe(freshBlock, targetSet)
+      totalDug += 1
+      woodDiag.blocks_dug = totalDug
+    } catch (err) {
+      woodDiag.failed_because = `dig_failed: ${err.message}`
+      continue
+    }
+
+    // Collect drops.
+    currentSubstep = 'collect_drop'
+    await collectNearbyDrops({
+      aroundPosition: block.position,
+      targets,
+      radius: DROP_COLLECTION_RADIUS,
+      timeoutMs: DROP_COLLECTION_TIMEOUT_MS,
+    }, dropDiag)
+  }
+
+  // ─── FINALIZE ─────────────────────────────────────────────────────────────────
+  currentSubstep = null
+
+  const endInventory = inventoryCounts()
+  woodDiag.inventory_delta = inventoryDeltaBetween(startInventory, endInventory)
+  woodDiag.collected = Math.max(0, inventoryCountForTargets(targets) - startCount)
+  woodDiag.blocks_dug = totalDug
+  woodDiag.timeout_ms_used = Date.now() - actionStartMs
+
+  if (bot.entity) {
+    try {
+      woodDiag.distance_moved = Math.round(
+        bot.entity.position.distanceTo(new Vec3(startPos.x, startPos.y, startPos.z)) * 10
+      ) / 10
+    } catch (_) {}
+  }
+
+  const finalCollected = woodDiag.collected
+
+  if (finalCollected >= targetCount) {
+    return ok(ACTION, {
+      collected: finalCollected,
+      requested: targetCount,
+      targets,
+      partial_success: false,
+      stop_reason: 'goal_reached',
+      ...woodDiag,
+    })
+  }
+
+  if (finalCollected > 0 || totalDug > 0) {
+    woodDiag.partial_success = true
+    woodDiag.continuation_relevant = true
+    return fail(ACTION, `Collected ${finalCollected}/${targetCount} wood (partial progress).`, {
+      failure_type: 'partial_progress_timeout',
+      stop_reason: 'collect_wood_partial_progress',
+      repeatable_now: true,
+      partial_success: true,
+      continuation_relevant: true,
+      collected: finalCollected,
+      requested: targetCount,
+      targets,
+      diagnostics: woodDiag,
+    })
+  }
+
+  const hadPathAttempts = woodDiag.pathAttempts > 0
+  return fail(ACTION, `No wood collected — ${woodDiag.reachableCandidatesFound} reachable candidate(s), ${woodDiag.pathAttempts} path attempt(s).`, {
+    failure_type: hadPathAttempts ? 'no_progress_timeout' : 'target_unreachable',
+    stop_reason: woodDiag.failed_because || (hadPathAttempts ? 'path_no_movement' : 'logs_found_but_unreachable'),
+    repeatable_now: false,
+    needs_condition_change: true,
+    collected: 0,
+    requested: targetCount,
+    targets,
+    diagnostics: woodDiag,
   })
 }
 
@@ -10735,6 +11887,7 @@ async function craftPlanks(requestedCount) {
   let remainingCrafts = targetCrafts
   let completedCrafts = 0
   const startingPlanks = countPlanksInInventory()
+  currentSubstep = 'check_logs'
 
   while (remainingCrafts > 0) {
     const logItem = firstInventoryItemByNames(Object.keys(LOG_TO_PLANK))
@@ -10754,6 +11907,7 @@ async function craftPlanks(requestedCount) {
       return fail('craft_planks', `No safe inventory recipe found for ${plankName}.`)
     }
 
+    currentSubstep = 'craft'
     try {
       await craftWithTimeout(recipe, craftCount, null)
     } catch (error) {
@@ -10761,6 +11915,7 @@ async function craftPlanks(requestedCount) {
     }
     completedCrafts += craftCount
     remainingCrafts -= craftCount
+    currentSubstep = 'check_logs'
   }
 
   const craftedPlanks = Math.max(0, countPlanksInInventory() - startingPlanks)
@@ -10781,6 +11936,7 @@ async function craftSticks(requestedCount) {
   const craftCount = requestedCount === undefined ? 1 : requestedCount
   const availablePlanks = countPlanksInInventory()
   const requiredPlanks = craftCount * 2
+  currentSubstep = 'check_planks'
 
   if (availablePlanks < requiredPlanks) {
     return fail('craft_sticks', `Missing materials: need ${requiredPlanks} planks, have ${availablePlanks}.`)
@@ -10796,6 +11952,7 @@ async function craftSticks(requestedCount) {
     return fail('craft_sticks', 'No safe inventory recipe found for sticks.')
   }
 
+  currentSubstep = 'craft'
   try {
     await craftWithTimeout(recipe, craftCount, null)
   } catch (error) {
@@ -11243,8 +12400,10 @@ async function craftWoodenPickaxe() {
   })
 }
 
-async function mineStone(requestedCount) {
-  const targetCount = requestedCount === undefined ? MINE_STONE_DEFAULT_COUNT : requestedCount
+async function mineStone(args) {
+  const argsObj = args && typeof args === 'object' ? args : {}
+  const targetCount = argsObj.count === undefined ? MINE_STONE_DEFAULT_COUNT : argsObj.count
+  const radius = argsObj.radius === undefined ? ACQUIRE_BLOCKS_DEFAULT_RADIUS : argsObj.radius
   if (!hasPickaxe()) {
     return fail('mine_stone', 'Missing tool: wooden_pickaxe or better is required.')
   }
@@ -11252,7 +12411,7 @@ async function mineStone(requestedCount) {
   return await acquireBlocksForAction('mine_stone', {
     targets: ['stone'],
     count: targetCount,
-    radius: ACQUIRE_BLOCKS_DEFAULT_RADIUS,
+    radius,
     allowExcavate: true,
     accessMode: 'safe_staircase'
   })
@@ -11512,8 +12671,10 @@ async function debugCollectDrops(targetItems, radius) {
   }
 }
 
-async function mineIronOre(requestedCount) {
-  const targetCount = requestedCount === undefined ? MINE_IRON_DEFAULT_COUNT : requestedCount
+async function mineIronOre(args) {
+  const argsObj = args && typeof args === 'object' ? args : {}
+  const targetCount = argsObj.count === undefined ? MINE_IRON_DEFAULT_COUNT : argsObj.count
+  const radius = argsObj.radius === undefined ? ACQUIRE_BLOCKS_DEFAULT_RADIUS : argsObj.radius
   if (!hasPickaxeAtLeast('stone_pickaxe')) {
     return fail('mine_iron_ore', 'Missing tool: stone_pickaxe or better is required.')
   }
@@ -11522,7 +12683,7 @@ async function mineIronOre(requestedCount) {
   const result = await acquireBlocksForAction('mine_iron_ore', {
     targets: ['iron_ore', 'deepslate_iron_ore'],
     count: targetCount,
-    radius: ACQUIRE_BLOCKS_DEFAULT_RADIUS,
+    radius,
     allowExcavate: true,
     accessMode: 'safe_staircase'
   })
@@ -11948,7 +13109,9 @@ async function yieldToEventLoop() {
   await new Promise((resolve) => setImmediate(resolve))
 }
 
-function gotoNearBlockWithTimeout(block, timeoutMs) {
+async function gotoNearBlockWithTimeout(block, timeoutMs) {
+  await clearPathfinder()
+
   let timeoutId = null
   const goal = new goals.GoalNear(block.position.x, block.position.y, block.position.z, 2)
   lastPathGoal = { type: 'GoalNear', x: block.position.x, y: block.position.y, z: block.position.z, radius: 2, target: block.name }
@@ -11960,14 +13123,18 @@ function gotoNearBlockWithTimeout(block, timeoutMs) {
     }, timeoutMs)
   })
 
-  return Promise.race([bot.pathfinder.goto(goal), timeout]).catch((err) => {
-    if (isGoalChangedError(err)) lastPathCancelReason = 'path_goal_changed'
-    throw err
-  }).finally(() => {
-    if (timeoutId) {
-      clearTimeout(timeoutId)
+  try {
+    return await Promise.race([bot.pathfinder.goto(goal), timeout])
+  } catch (err) {
+    if (isGoalChangedError(err)) {
+      pathGoalChangedDuringAction = true
+      lastPathCancelReason = 'path_goal_changed'
     }
-  })
+    throw err
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
+    stopMovement()
+  }
 }
 
 function digBlockWithTimeout(block, timeoutMs) {
@@ -11990,7 +13157,9 @@ function gotoPositionWithTimeout(position, timeoutMs) {
   return gotoPositionNearWithTimeout(position, 2, timeoutMs)
 }
 
-function gotoPositionNearWithTimeout(position, radius, timeoutMs) {
+async function gotoPositionNearWithTimeout(position, radius, timeoutMs) {
+  await clearPathfinder()
+
   let timeoutId = null
   const goal = new goals.GoalNear(position.x, position.y, position.z, radius)
   lastPathGoal = { type: 'GoalNear', x: position.x, y: position.y, z: position.z, radius }
@@ -12002,14 +13171,18 @@ function gotoPositionNearWithTimeout(position, radius, timeoutMs) {
     }, timeoutMs)
   })
 
-  return Promise.race([bot.pathfinder.goto(goal), timeout]).catch((err) => {
-    if (isGoalChangedError(err)) lastPathCancelReason = 'path_goal_changed'
-    throw err
-  }).finally(() => {
-    if (timeoutId) {
-      clearTimeout(timeoutId)
+  try {
+    return await Promise.race([bot.pathfinder.goto(goal), timeout])
+  } catch (err) {
+    if (isGoalChangedError(err)) {
+      pathGoalChangedDuringAction = true
+      lastPathCancelReason = 'path_goal_changed'
     }
-  })
+    throw err
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId)
+    stopMovement()
+  }
 }
 
 function consumeWithTimeout(timeoutMs) {

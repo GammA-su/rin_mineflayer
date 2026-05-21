@@ -1,0 +1,20 @@
+Stream loop starting — output: out/stream_runs/20260520T132343Z
+  mission    : Beat Minecraft while playing naturally and surviving. Continue even after failures; use current inventory, action results, stuck-state facts, failed requirements, and current state to recover naturally.
+  api_url    : http://127.0.0.1:8000/agent/tick
+  llm        : provider=openai model=gpt-5.5 base_url=(env) api_key_env=(provider default)
+  ticks/batch: 25  tick_delay: 1.0s
+  personality: http://127.0.0.1:8010/events/tick  timeout=0.75s
+Press Ctrl+C to stop.
+
+[1] status {} -> ok=true failure=none
+[2] status {} -> ok=true failure=none
+[3] status {} -> ok=true failure=none
+[4] status {} -> ok=true failure=none
+[5] status {} -> ok=true failure=none
+[6] status {} -> ok=true failure=none
+[7] status {} -> ok=true failure=none
+[8] status {} -> ok=true failure=none
+[9] status {} -> ok=true failure=none
+  [batch 1 saved  ticks 1-9 (partial)]
+
+Stopped. 9 ticks total. Output: out/stream_runs/20260520T132343Z
